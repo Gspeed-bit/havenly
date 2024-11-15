@@ -1,0 +1,26 @@
+# Ignore sensitive environment files for backend
+.env
+
+# Ignore node_modules (installed packages)
+node_modules/
+
+# Ignore log files
+logs/
+
+# Ignore generated files like build folders
+dist/
+build/
+
+# Ignore TypeScript and JavaScript source maps
+*.tsbuildinfo
+*.map
+
+# Ignore IDE settings or workspace configurations (optional)
+.vscode/
+.idea/
+
+# Ignore OS-specific files
+.DS_Store
+
+# Ignore any other sensitive files or folders
+*.log
