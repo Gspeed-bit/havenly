@@ -19,22 +19,27 @@ const userSchema: Schema = new Schema(
       match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
     },
     password: { type: String, required: true },
-    confirmPassword: { type: String},
+    confirmPassword: { type: String },
     isVerified: { type: Boolean, default: false },
     verificationCode: {
       type: String,
       default: null,
       validate: {
-        validator: function (this: any, v: string | null) {
-          if (!this.isVerified && (v === null || v === undefined)) {
-            return false;
-          }
-          return v === null || /^[0-9]{6}$/.test(v);
+        validator: function (value: string | null) {
+          if (value === null) return true; // Allow null value
+          return /^[A-Za-z0-9]{6}$/.test(value); // 6 characters, letters or digits
         },
-        message: 'Verification code must be a 6-digit number if not verified.',
+        message:
+          'Verification code must be a 6-character alphanumeric code if not verified.',
       },
     },
-    verificationCodeExpiration: { type: Date, required: true },
+    verificationCodeExpiration: {
+      type: Date,
+      required: function () {
+        // Only required if not verified
+        return !(this as any).isVerified;
+      },
+    },
     resetPasswordCode: { type: String, default: undefined },
     adminCode: { type: String, select: false },
     isAdmin: { type: Boolean, default: false },

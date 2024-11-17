@@ -7,9 +7,9 @@ export interface IUser {
   password: string;
   confirmPassword: string;
   isVerified: boolean;
-  verificationCode?: string;
+  verificationCode: string | null;
   resetPasswordCode?: string;
-  verificationCodeExpiration: Date;
+  verificationCodeExpiration: Date | null;
   adminCode?: string;
   isAdmin: boolean;
 }

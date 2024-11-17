@@ -36,9 +36,6 @@ export const authMiddleware = async (
     req.user = user as IUser;
     req.user.isAdmin =
       decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
-
-    console.log('Authenticated User:', req.user); // Log to check if isAdmin is set properly
-
     next();
   } catch (err) {
     res.status(401).json({ message: 'Token is not valid' });

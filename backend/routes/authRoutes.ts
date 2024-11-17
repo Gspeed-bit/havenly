@@ -5,6 +5,7 @@ import {
   requestNewCode,
   verify,
 } from '../controllers/authController';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
@@ -191,6 +192,13 @@ router.post('/verify', verify);
  *                   example: "Error requesting new code."
  */
 
-router.post('/verification-code/request', requestNewCode);
+// Set up rate limiter for /api/auth/request-new-code
+const requestNewCodeLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 3, // Limit each IP to 3 requests per windowMs
+  message: "Too many requests, please try again later.",
+});
+
+router.post('/verification-code/request', requestNewCodeLimiter, requestNewCode);
 
 export default router;

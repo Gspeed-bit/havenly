@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
@@ -5,7 +6,11 @@ import { Request, Response } from 'express';
 import User from '../models/userModel';
 
 const sendVerificationEmail = async (email: string, code: string) => {
+  if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
+    throw new Error('Email credentials are not set in environment variables.');
+  }
   const transporter = nodemailer.createTransport({
+    
     service: 'gmail',
     auth: {
       user: process.env.EMAIL,
@@ -50,7 +55,13 @@ const sendVerificationEmail = async (email: string, code: string) => {
   });
 };
 
-// Register user
+
+const generateVerificationCode = (length: number): string => {
+
+  return randomBytes(length).toString('hex').slice(0, length).toUpperCase();
+};
+
+// Usage in the registration logic
 export const register = async (req: Request, res: Response) => {
   try {
     const {
@@ -63,7 +74,6 @@ export const register = async (req: Request, res: Response) => {
       adminCode,
     } = req.body;
 
-    // check if all fields are filled
     if (
       !firstName ||
       !lastName ||
@@ -75,31 +85,30 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Please fill in all fields' });
     }
 
-    // check if password and confirm password are the same
     if (password !== confirmPassword) {
       return res.status(400).json({ message: 'Passwords do not match' });
     }
 
-    // Check if phone number already exists
-    const existingUser = await User.findOne({ phoneNumber });
+    const existingUser = await User.findOne({
+      $or: [{ phoneNumber }, { email }],
+    });
     if (existingUser) {
-      return res.status(400).json({
-        message: 'Phone number is already registered',
-      });
-    }
-    // Check if email already exists
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({ message: 'Email already exists.' });
+      return res
+        .status(400)
+        .json({ message: 'Phone number or email is already registered' });
     }
 
     const isAdmin = adminCode === process.env.ADMIN_CODE;
 
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-    const verificationCodeExpiration = new Date(Date.now() + 2 * 60 * 1000);
-
+    // Generate a 6-digit verification code using crypto
+    const verificationCode = generateVerificationCode(6); // Generates a 6-character code
+    const codeExpirationMinutes = parseInt(
+      process.env.CODE_EXPIRATION_MINUTES || '2',
+      10
+    );
+    const verificationCodeExpiration = new Date(
+      Date.now() + codeExpirationMinutes * 60 * 1000
+    );
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
@@ -120,10 +129,12 @@ export const register = async (req: Request, res: Response) => {
     res
       .status(201)
       .json({ message: 'Registration successful. Verify your email.' });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Error registering user', error });
   }
 };
+
 
 // Login user
 export const login = async (req: Request, res: Response) => {
@@ -148,8 +159,7 @@ export const login = async (req: Request, res: Response) => {
         expiresIn: '1h',
       }
     );
-
-    const { adminCode, ...userData } = user.toObject();
+    const {...userData } = user.toObject();
 
     res.json({
       message: 'Login successful',
@@ -171,16 +181,33 @@ export const verify = async (req: Request, res: Response) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user || user.verificationCode !== verificationCode) {
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Check if the user has a verification code stored
+    if (!user.verificationCode) {
+      return res
+        .status(400)
+        .json({ message: 'No verification code found for this user' });
+    }
+    // Directly compare the stored verification code with the user input
+    if (user.verificationCode !== verificationCode) {
       return res.status(400).json({ message: 'Invalid verification code' });
     }
 
-    if (new Date() > user.verificationCodeExpiration) {
-      return res.status(400).json({ message: 'Verification code expired.' });
+    // Check if the verification code has expired
+    if (
+      !user.verificationCodeExpiration ||
+      new Date() > user.verificationCodeExpiration
+    ) {
+      return res.status(400).json({ message: 'Verification code expired' });
     }
 
+    // Proceed with verifying the user's account
     user.isVerified = true;
-    user.verificationCode = null as any;
+    user.verificationCode = null; // Remove the verification code after successful verification
+    user.verificationCodeExpiration = null; // Clear expiration time as well
     await user.save();
 
     res.json({ message: 'Account verified successfully' });
@@ -188,6 +215,7 @@ export const verify = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
 
 export const requestNewCode = async (req: Request, res: Response) => {
   try {
@@ -199,14 +227,19 @@ export const requestNewCode = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User not found.' });
     }
 
-    // Generate a new verification code
-    const newVerificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    // Generate a new verification code using crypto
+    const newVerificationCode = generateVerificationCode(6); // Generates a 6-character code
 
     // Update the user's verification code and expiration time
     user.verificationCode = newVerificationCode;
-    user.verificationCodeExpiration = new Date(Date.now() + 1 * 60 * 1000); // Set the expiration time to 2 minutes from now
+    const codeExpirationMinutes = parseInt(
+      process.env.CODE_EXPIRATION_MINUTES || '2',
+      10
+    );
+    user.verificationCodeExpiration = new Date(
+      Date.now() + codeExpirationMinutes * 60 * 1000
+    ); // Set expiration time
+
     await user.save();
 
     // Send the new verification code email
@@ -214,7 +247,6 @@ export const requestNewCode = async (req: Request, res: Response) => {
 
     res.json({ message: 'New verification code sent to your email.' });
   } catch (error: any) {
-    console.error(error);
     res.status(500).json({ message: 'Error requesting new code.', error });
   }
 };

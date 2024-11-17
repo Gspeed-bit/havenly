@@ -13,8 +13,7 @@
     "baseUrl": "./",
     "paths": {
       "@types/*": ["backend/types/*"],
-      "@models/*": ["backend/models/*"],
-      "@emails/*": ["backend/emails/*"]
+      "@models/*": ["backend/models/*"]
     },
     "typeRoots": ["./types", "./node_modules/@types"]
   },

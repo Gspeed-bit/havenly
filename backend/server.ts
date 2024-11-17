@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 import { connectToMongoose } from './config/mongoose'; // Import the mongoose connection function
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import userRoutes from 'routes/userRoutes';
+import userRoutes from './routes/userRoutes';
+import cron from 'node-cron'; // Import node-cron
+import User from './models/userModel'; // Import User model
 
 dotenv.config(); // Load environment variables
 
@@ -62,8 +64,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes); // All routes under /api/auth
 app.use('/user', userRoutes); // All routes under /user/me
-// MongoDB connection
 
+// MongoDB connection
 connectToMongoose()
   .then(() => {
     console.log('MongoDB connected');
@@ -71,6 +73,21 @@ connectToMongoose()
   .catch((err) => {
     console.error('Error connecting to MongoDB:', err);
   });
+
+// Schedule a cron job to clean up expired verification codes every 24 hours (at midnight)
+cron.schedule('0 0 * * *', async () => {
+  // Runs at midnight every day
+  const now = new Date();
+  try {
+    await User.updateMany(
+      { verificationCodeExpiration: { $lt: now } },
+      { $set: { verificationCode: null, verificationCodeExpiration: null } }
+    );
+    console.log('Cleaned up expired verification codes');
+  } catch (error) {
+    console.error('Error cleaning up expired verification codes:', error);
+  }
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
