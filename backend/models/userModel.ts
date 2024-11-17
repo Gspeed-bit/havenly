@@ -8,7 +8,6 @@ const userSchema: Schema = new Schema(
     phoneNumber: {
       type: String,
       required: true,
-      unique: true,
       match: [/^\+?\d{10,15}$/, 'Please enter a valid phone number'],
     },
     email: {
@@ -20,17 +19,31 @@ const userSchema: Schema = new Schema(
       match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
     },
     password: { type: String, required: true },
+    confirmPassword: { type: String},
     isVerified: { type: Boolean, default: false },
-    verificationCode: { type: String, default: undefined }, // No null values stored
-    resetPasswordCode: { type: String, default: undefined }, // No null values stored
-    adminCode: { type: String, select: false }, // Hidden from database queries
+    verificationCode: {
+      type: String,
+      default: null,
+      validate: {
+        validator: function (this: any, v: string | null) {
+          if (!this.isVerified && (v === null || v === undefined)) {
+            return false;
+          }
+          return v === null || /^[0-9]{6}$/.test(v);
+        },
+        message: 'Verification code must be a 6-digit number if not verified.',
+      },
+    },
+    verificationCodeExpiration: { type: Date, required: true },
+    resetPasswordCode: { type: String, default: undefined },
+    adminCode: { type: String, select: false },
     isAdmin: { type: Boolean, default: false },
   },
   {
     timestamps: true,
     toJSON: {
       transform: (_doc, ret) => {
-        delete ret.adminCode; // Ensure `adminCode` is never in query results
+        delete ret.adminCode;
         return ret;
       },
     },

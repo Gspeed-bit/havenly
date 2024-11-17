@@ -37,6 +37,8 @@ const router = express.Router();
  *                   type: string
  *                 isVerified:
  *                   type: boolean
+ *                 isAdmin:
+ *                   type: boolean
  *       401:
  *         description: Unauthorized - Missing or invalid token
  *       404:

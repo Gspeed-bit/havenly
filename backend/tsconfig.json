@@ -4,6 +4,7 @@
     "module": "commonjs",
     "lib": ["es2020"],
     "strict": true,
+    "jsx": "react",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,7 +13,8 @@
     "baseUrl": "./",
     "paths": {
       "@types/*": ["backend/types/*"],
-      "@models/*": ["backend/models/*"]
+      "@models/*": ["backend/models/*"],
+      "@emails/*": ["backend/emails/*"]
     },
     "typeRoots": ["./types", "./node_modules/@types"]
   },

@@ -1,6 +1,10 @@
 import express from 'express';
-import { login, register, verify } from '../controllers/authController';
-
+import {
+  login,
+  register,
+  requestNewCode,
+  verify,
+} from '../controllers/authController';
 
 const router = express.Router();
 
@@ -35,14 +39,19 @@ const router = express.Router();
  *                 type: string
  *               password:
  *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *               adminCode:
+ *                 type: string
  *     responses:
  *       201:
  *         description: User registered successfully, verification email sent
  *       400:
- *         description: User already exists
+ *         description: Validation error (e.g., passwords don't match)
  *       500:
  *         description: Server error
  */
+
 router.post('/register', register);
 
 /**
@@ -128,5 +137,60 @@ router.post('/login', login);
  *         description: Server error
  */
 router.post('/verify', verify);
+
+// Request new verification code (if expired)
+/**
+ * @swagger
+ * /api/auth/verification-code/request:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request a new verification code
+ *     description: Allows a user to request a new verification code if the previous one expired.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: The email address of the user requesting a new verification code.
+ *                 example: "user@example.com"
+ *     responses:
+ *       200:
+ *         description: New verification code sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "New verification code sent to your email."
+ *       400:
+ *         description: User not found or validation error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User not found."
+ *       500:
+ *         description: Server error while processing the request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error requesting new code."
+ */
+
+router.post('/verification-code/request', requestNewCode);
 
 export default router;
