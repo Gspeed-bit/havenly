@@ -12,6 +12,7 @@ import basicAuth from 'express-basic-auth'; // Import basic-auth
 import { KEYS } from './config/config';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
+import inquiryRoutes from '@controllers/routes/inquiryRoutes';
 
 dotenv.config({ path: '.env' });
 
@@ -92,6 +93,7 @@ app.get('/', (req, res) => {
 app.use('/', authRoutes); // All routes under /api/auth
 app.use('/', companyRoutes); // All routes under /api/auth
 app.use('/', propertyRoutes); // All routes under /api/auth
+app.use('/', inquiryRoutes); // All routes under /api/auth
 
 app.use('/user', userRoutes); // All routes under /user/me
 
