@@ -36,11 +36,15 @@ const userSchema: Schema = new Schema(
     verificationCodeExpiration: {
       type: Date,
       required: function () {
-        // Only required if not verified
-        return !(this as any).isVerified;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return !(this as any).isVerified; // Only required if not verified
+      },
+      default: function () {
+        return new Date(Date.now() + 3600000); // Default to 1 hour from now if not verified
       },
     },
-    resetPasswordCode: { type: String, default: undefined },
+    resetPasswordCode: { type: String, default: undefined }, // Optional field
+    resetPasswordExpiration: { type: Date }, // Optional field
     adminCode: { type: String, select: false },
     isAdmin: { type: Boolean, default: false },
   },

@@ -1,8 +1,4 @@
-// backend/types/express.d.ts
-
-import express from 'express';
-import { IUser } from './userTypes';
-
+import { IUser } from 'src/components/user/types/userTypes';
 declare global {
   namespace Express {
     export interface Request {

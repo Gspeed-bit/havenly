@@ -3,6 +3,8 @@ import {
   login,
   register,
   requestNewCode,
+  requestResetPassword,
+  resetPassword,
   verify,
 } from '../controllers/authController';
 import rateLimit from 'express-rate-limit';
@@ -10,15 +12,15 @@ import rateLimit from 'express-rate-limit';
 const router = express.Router();
 
 /**
- * @swagger
+ * @openapi
  * tags:
  *   name: Authentication
  *   description: Endpoints for user authentication
  */
 
 /**
- * @swagger
- * /api/auth/register:
+ * @openapi
+ * /register:
  *   post:
  *     tags:
  *       - Authentication
@@ -52,12 +54,11 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-
 router.post('/register', register);
 
 /**
- * @swagger
- * /api/auth/login:
+ * @openapi
+ * /login:
  *   post:
  *     tags:
  *       - Authentication
@@ -112,8 +113,8 @@ router.post('/register', register);
 router.post('/login', login);
 
 /**
- * @swagger
- * /api/auth/verify:
+ * @openapi
+ * /verify:
  *   post:
  *     tags:
  *       - Authentication
@@ -139,15 +140,13 @@ router.post('/login', login);
  */
 router.post('/verify', verify);
 
-// Request new verification code (if expired)
 /**
- * @swagger
- * /api/auth/verification-code/request:
+ * @openapi
+ * /verification-code/request:
  *   post:
  *     tags:
  *       - Authentication
- *     summary: Request a new verification code
- *     description: Allows a user to request a new verification code if the previous one expired.
+ *     summary: Request a new verification code if expired
  *     requestBody:
  *       required: true
  *       content:
@@ -157,48 +156,82 @@ router.post('/verify', verify);
  *             properties:
  *               email:
  *                 type: string
- *                 description: The email address of the user requesting a new verification code.
- *                 example: "user@example.com"
  *     responses:
  *       200:
- *         description: New verification code sent successfully.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "New verification code sent to your email."
+ *         description: New verification code sent
  *       400:
- *         description: User not found or validation error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "User not found."
+ *         description: User not found
  *       500:
- *         description: Server error while processing the request.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Error requesting new code."
+ *         description: Server error
  */
-
-// Set up rate limiter for /api/auth/request-new-code
 const requestNewCodeLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 3, // Limit each IP to 3 requests per windowMs
-  message: "Too many requests, please try again later.",
+  message: 'Too many requests, please try again later.',
 });
+router.post(
+  '/verification-code/request',
+  requestNewCodeLimiter,
+  requestNewCode
+);
 
-router.post('/verification-code/request', requestNewCodeLimiter, requestNewCode);
+/**
+ * @openapi
+ * /request-reset-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request a password reset email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset password email sent
+ *       400:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/request-reset-password', requestResetPassword);
+
+/**
+ * @openapi
+ * /reset-password/{token}:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Reset the password using the provided token
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         description: The password reset token
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password has been reset successfully
+ *       400:
+ *         description: Invalid or expired reset token
+ *       500:
+ *         description: Server error
+ */
+router.post('/reset-password/:token', resetPassword);
 
 export default router;

@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { KEYS } from './config';
 
 dotenv.config(); // Load environment variables
 
-const mongoURI = process.env.MONGODB_URI || '';
+const mongoURI = KEYS.mongoUri;
 
 if (!mongoURI) {
   throw new Error('Please define the MONGODB_URI environment variable');

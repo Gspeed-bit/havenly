@@ -4,19 +4,24 @@
     "module": "commonjs",
     "lib": ["es2020"],
     "strict": true,
-    "jsx": "react",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "baseUrl": "./",
+    "baseUrl": "./src", // This makes 'src' the root of your path resolution
     "paths": {
-      "@types/*": ["backend/types/*"],
-      "@models/*": ["backend/models/*"]
+      "@types/*": ["components/user/types/*"], // Adjust paths to match your structure
+      "@models/*": ["components/user/models/*"],
+      "@controllers/*": ["components/user/*"],
+      "@middleware/*": ["middleware/*"],
+      "config/*": ["config/*"]
     },
-    "typeRoots": ["./types", "./node_modules/@types"]
+    "typeRoots": [
+      "src/components/user/types", // Include this path for type definitions
+      "./node_modules/@types"
+    ]
   },
-  "include": ["**/*.ts", "types/**/*.d.ts"],
+  "include": ["src/**/*.ts", "src/components/user/types/**/*.d.ts"], // Include the appropriate files
   "exclude": ["node_modules", "dist"]
 }

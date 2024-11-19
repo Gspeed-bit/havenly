@@ -3,8 +3,14 @@ import {
   getAllAdmins,
   getAllUsers,
   getUser,
-} from '../controllers/userController';
-import { authMiddleware } from '../middleware/authMiddleware';
+} from '@controllers/controllers/userController';
+import { authMiddleware } from '@middleware/authMiddleware';
+import {
+  ApiError,
+  catchApiError,
+  StatusCodes,
+  successResponse,
+} from 'utils/apiResponse';
 
 const router = express.Router();
 
@@ -46,7 +52,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', authMiddleware, getUser);
+router.get('/me', authMiddleware, catchApiError(getUser));
 
 /**
  * @swagger
@@ -87,12 +93,18 @@ router.get('/me', authMiddleware, getUser);
  *       500:
  *         description: Server error
  */
-router.get('/', authMiddleware, (req, res) => {
-  if (!req.user?.isAdmin) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-  getAllUsers(req, res); // Admin-only route to get all non-admin users
-});
+router.get(
+  '/',
+  authMiddleware,
+  catchApiError(async (req, res) => {
+    if (!req.user?.isAdmin) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, {
+        message: 'Access denied',
+      });
+    }
+    await getAllUsers(req, res); // Admin-only route to get all non-admin users
+  })
+);
 
 /**
  * @swagger
@@ -133,12 +145,18 @@ router.get('/', authMiddleware, (req, res) => {
  *       500:
  *         description: Server error
  */
-
-router.get('/admin', authMiddleware, (req, res) => {
-  if (!req.user?.isAdmin) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-  getAllAdmins(req, res); // Admin-only route to get all admins
-});
+router.get(
+  '/admin',
+  authMiddleware,
+  catchApiError(async (req, res) => {
+    if (!req.user?.isAdmin) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, {
+        message: 'Access denied',
+      });
+    }
+    const admins = await getAllAdmins(req, res);
+    return successResponse(res, admins, 'Admins retrieved successfully');
+  })
+);
 
 export default router;

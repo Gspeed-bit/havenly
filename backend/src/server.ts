@@ -1,15 +1,19 @@
 import express from 'express';
 import cors from 'cors';
-import authRoutes from './routes/authRoutes'; // Your routes
+import authRoutes from './components/user/routes/authRoutes'; // Your routes
 import dotenv from 'dotenv';
 import { connectToMongoose } from './config/mongoose'; // Import the mongoose connection function
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import userRoutes from './routes/userRoutes';
+import userRoutes from './components/user/routes/userRoutes';
 import cron from 'node-cron'; // Import node-cron
-import User from './models/userModel'; // Import User model
+import User from '@models/userModel'; // Import User model
+import basicAuth from 'express-basic-auth'; // Import basic-auth
+import { KEYS } from './config/config';
+import propertyRoutes from 'components/property/routes/propertyRoutes';
+import companyRoutes from 'components/property/routes/companyRoutes';
 
-dotenv.config(); // Load environment variables
+dotenv.config({ path: '.env' });
 
 const app = express();
 
@@ -27,13 +31,18 @@ const swaggerOptions = {
       title: 'Havenly API',
       version: '1.0.0',
       description: 'API documentation for Havenly project',
+      contact: {
+        name: 'Havenly dev team',
+        email: 'Havenlydev@gmail.com',
+      },
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 5000}`,
-        description: 'Development server',
+        url: `http://${KEYS.host}:${KEYS.port}`,
+        description: `${KEYS.appEnv} Server`,
       },
     ],
+
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -49,20 +58,41 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./routes/*.ts'], // Specify your route files
+  apis: [
+    './src/components/user/routes/**/*.ts',
+    './src/components/property/routes/**/*.ts',
+  ], // Specify your route files
 };
 
 export default swaggerOptions;
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Set up basic authentication
+app.use(
+  '/api-docs', // Protect this route with authentication
+  basicAuth({
+    users: {
+      [KEYS.serverUsername]: KEYS.serverPassword, // Dynamically use env variables
+    },
+    challenge: true, // Will prompt the user with a login dialog
+    realm: 'Protected API', // This is the prompt message
+  }),
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs)
+);
 
 // Routes
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 });
 
-app.use('/api/auth', authRoutes); // All routes under /api/auth
+// app.use('/', authRoutes, propertyRoutes, companyRoutes); // All routes under /api/auth
+
+app.use('/', authRoutes); // All routes under /api/auth
+app.use('/', companyRoutes); // All routes under /api/auth
+app.use('/', propertyRoutes); // All routes under /api/auth
+
 app.use('/user', userRoutes); // All routes under /user/me
 
 // MongoDB connection
@@ -90,7 +120,7 @@ cron.schedule('0 0 * * *', async () => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const port = process.env.PORT;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
