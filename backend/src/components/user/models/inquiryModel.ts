@@ -1,14 +1,10 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 interface IInquiry extends Document {
   userId: mongoose.Types.ObjectId;
   propertyId: mongoose.Types.ObjectId;
   message: string;
-  contactInfo: {
-    email: string;
-    phoneNumber: string;
-  };
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'Submitted' | 'Under Review' | 'Answered';
 }
 
 const inquirySchema = new Schema<IInquiry>(
@@ -24,14 +20,10 @@ const inquirySchema = new Schema<IInquiry>(
       required: true,
     },
     message: { type: String, required: true },
-    contactInfo: {
-      email: { type: String, required: true },
-      phoneNumber: { type: String, required: true },
-    },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
+      enum: ['Submitted', 'Under Review', 'Answered'],
+      default: 'Submitted',
     },
   },
   { timestamps: true }

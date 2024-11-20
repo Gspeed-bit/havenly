@@ -1,10 +1,11 @@
 import express from 'express';
-import { authMiddleware } from '@middleware/authMiddleware'; 
+import { authMiddleware } from '@middleware/authMiddleware';
 import {
   sendInquiry,
   getInquiries,
   updateInquiryStatus,
-} from '../controllers/inquiryController'; 
+} from '../controllers/inquiryController';
+import { userMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
 
@@ -12,21 +13,21 @@ const router = express.Router();
  * @openapi
  * tags:
  *   name: Inquiries
- *   description: Endpoints for managing property inquiries
+ *   description: Manage property inquiries.
  */
 
 /**
  * @openapi
- * /api/inquiries/send:
+ * /inquiries/send:
  *   post:
- *     summary: Send an inquiry for a property
- *     description: Send an inquiry with the property ID, user message, and contact info.
+ *     summary: Send an inquiry
+ *     description: Users can send inquiries about properties.
  *     tags:
  *       - Inquiries
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       description: Inquiry details to send.
+ *       description: Inquiry details.
  *       required: true
  *       content:
  *         application/json:
@@ -38,56 +39,172 @@ const router = express.Router();
  *                 description: ID of the property.
  *               message:
  *                 type: string
- *                 description: Message from the user.
- *               contactInfo:
- *                 type: object
- *                 properties:
- *                   email:
- *                     type: string
- *                   phone:
- *                     type: string
+ *                 description: User's message.
  *     responses:
  *       201:
- *         description: Inquiry sent successfully
- *       400:
- *         description: Bad request
+ *         description: Inquiry sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Inquiry sent successfully!
+ *                 inquiry:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     userId:
+ *                       type: string
+ *                     propertyId:
+ *                       type: string
+ *                     message:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       example: pending
+ *                     createdAt:
+ *                       type: string
+ *                     updatedAt:
+ *                       type: string
  *       401:
- *         description: Unauthorized access
+ *         description: Unauthorized.
+ *       404:
+ *         description: Property not found.
  *       500:
- *         description: Internal server error
+ *         description: Server error.
  */
-router.post('/inquiries/send', authMiddleware, sendInquiry);
+router.post('/inquiries/send', userMiddleware, sendInquiry);
+
 
 /**
  * @openapi
- * /api/inquiries:
+ * /inquiries:
  *   get:
- *     summary: Retrieve a list of inquiries
- *     description: Retrieve inquiries based on filters (userId, propertyId, status).
+ *     summary: Retrieve inquiries
+ *     description: Retrieve inquiries based on filters. Users can see their own inquiries; admins can see all inquiries.
  *     tags:
  *       - Inquiries
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [Submitted, Under Review, Answered]
+ *         description: Filter inquiries by status.
+ *       - in: query
+ *         name: propertyId
+ *         schema:
+ *           type: string
+ *         description: Filter inquiries by property ID.
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: (Admin-only) Filter inquiries by user ID.
  *     responses:
  *       200:
- *         description: List of inquiries
+ *         description: List of inquiries retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Response message.
+ *                   example: Inquiries retrieved successfully.
+ *                 inquiries:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         description: Inquiry ID.
+ *                       userId:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                             description: User's name.
+ *                           email:
+ *                             type: string
+ *                             description: User's email.
+ *                       propertyId:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             description: Property title.
+ *                           location:
+ *                             type: string
+ *                             description: Property location.
+ *                           price:
+ *                             type: number
+ *                             description: Property price.
+ *                       message:
+ *                         type: string
+ *                         description: Inquiry message.
+ *                       status:
+ *                         type: string
+ *                         enum: [Submitted, Under Review, Answered]
+ *                         description: Inquiry status.
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: When the inquiry was created.
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: When the inquiry was last updated.
+ *       404:
+ *         description: No inquiries found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Response message.
+ *                   example: No inquiries found.
+ *                 inquiries:
+ *                   type: array
+ *                   items: {}
+ *                   description: An empty array.
+ *                   example: []
+ *       401:
+ *         description: Unauthorized.
  *       500:
- *         description: Internal server error
+ *         description: Server error.
  */
-router.get('/inquiries', authMiddleware, getInquiries);
+
+router.get('/inquiries', userMiddleware, getInquiries);
 
 /**
  * @openapi
- * /api/inquiries/{id}:
+ * /inquiries/{id}:
  *   put:
- *     summary: Update the status of an inquiry
- *     description: Admin-only endpoint to update inquiry status.
+ *     summary: Update inquiry status
+ *     description: Admin-only endpoint to update inquiry statuses.
  *     tags:
  *       - Inquiries
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inquiry ID.
  *     requestBody:
- *       description: Inquiry status update.
+ *       description: Status to update.
  *       required: true
  *       content:
  *         application/json:
@@ -96,19 +213,23 @@ router.get('/inquiries', authMiddleware, getInquiries);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [pending, contacted, resolved]
+ *                 enum: [Submitted, Under Review, Answered]
  *     responses:
  *       200:
- *         description: Inquiry status updated
+ *         description: Inquiry status updated.
  *       400:
- *         description: Invalid status
+ *         description: Invalid status.
  *       403:
- *         description: Access denied (Admin only)
+ *         description: Access denied (Admin only).
  *       404:
- *         description: Inquiry not found
+ *         description: Inquiry not found.
  *       500:
- *         description: Internal server error
+ *         description: Server error.
  */
-router.put('/inquiries/:id', authMiddleware, updateInquiryStatus);
+router.put(
+  '/inquiries/:id',
+  authMiddleware,
+  updateInquiryStatus
+);
 
 export default router;

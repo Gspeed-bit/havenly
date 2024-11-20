@@ -1,34 +1,65 @@
 import { Request, Response } from 'express';
-
 import Property from 'components/property/models/propertyModel';
 import Inquiry from '@models/inquiryModel';
+import { sendInquiryEmail } from 'utils/emailUtils';
 
-
+// Controller for sending inquiries
 export const sendInquiry = async (req: Request, res: Response) => {
   try {
-    const { propertyId, message, contactInfo } = req.body;
-    const userId = req.user?.id; // Assuming user info is available from auth middleware
+    const { propertyId, message } = req.body;
+    const user = req.user; // Assuming `userMiddleware` attaches user data to the request
 
-    if (!userId) {
-      return res.status(400).json({ message: 'User not found. Please log in.' });
+    if (!user) {
+      return res.status(401).json({ message: 'User not authenticated.' });
     }
 
-    // Validate that the property exists
+    // Validate the property exists
     const property = await Property.findById(propertyId);
     if (!property) {
       return res.status(404).json({ message: 'Property not found.' });
     }
 
-    // Create a new inquiry
+    // Check for existing inquiry
+    const existingInquiry = await Inquiry.findOne({
+      userId: user._id,
+      propertyId,
+    });
+
+    if (existingInquiry) {
+      return res
+        .status(400)
+        .json({
+          message: 'You have already sent an inquiry for this property.',
+        });
+    }
+
+    // Validate message length
+    if (!message || message.trim().length < 10) {
+      return res
+        .status(400)
+        .json({ message: 'Message must be at least 10 characters long.' });
+    }
+
+    // Create the inquiry
     const newInquiry = new Inquiry({
-      userId,
+      userId: user._id,
       propertyId,
       message,
-      contactInfo,
     });
 
     await newInquiry.save();
-    res.status(201).json({ message: 'Inquiry sent successfully!', inquiry: newInquiry });
+
+    // Send confirmation email to the user
+    await sendInquiryEmail(
+      user.email,
+      property.title,
+      property.location,
+      property.price.toString(),
+      property.description
+    );
+    res
+      .status(201)
+      .json({ message: 'Inquiry sent successfully!', inquiry: newInquiry });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error });
@@ -37,37 +68,50 @@ export const sendInquiry = async (req: Request, res: Response) => {
 
 export const getInquiries = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
-    const { propertyId, status } = req.query;
+    const { status, propertyId, userId } = req.query;
 
-    // If the user is an admin, show all inquiries, else show only the user's inquiries
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = userId ? { userId } : {};
+    // Admins can retrieve all inquiries, users only their own
+    const filters: Record<string, unknown> = req.user?.isAdmin
+      ? {}
+      : { userId: req.user?._id };
 
-    if (propertyId) query.propertyId = propertyId;
-    if (status) query.status = status;
+    if (status) filters.status = status;
+    if (propertyId) filters.propertyId = propertyId;
+    if (req.user?.isAdmin && userId) filters.userId = userId;
 
-    const inquiries = await Inquiry.find(query).populate('propertyId').populate('userId');
+    const inquiries = await Inquiry.find(filters)
+      .populate('propertyId', 'title location price')
+      .populate('userId', 'name email');
 
-    res.json({ inquiries });
+    if (inquiries.length === 0) {
+      return res
+        .status(200)
+        .json({ message: 'No inquiries found.', inquiries: [] });
+    }
+
+    res.json({ message: 'Inquiries retrieved successfully.', inquiries });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: 'Failed to retrieve inquiries.', error });
   }
 };
 
+
 export const updateInquiryStatus = async (req: Request, res: Response) => {
   try {
+    // Check if the user is an admin
+    if (!req.user.isAdmin) {
+      return res
+        .status(403)
+        .json({ message: 'Permission denied. Admins only.' });
+    }
+
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'contacted', 'resolved'].includes(status)) {
+    // Validate the status
+    if (!['Submitted', 'Under Review', 'Answered'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' });
-    }
-
-    // Check if the user is an admin
-    if (!req.user?.isAdmin) {
-      return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
     // Update the inquiry status
@@ -87,3 +131,4 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+

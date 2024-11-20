@@ -4,11 +4,10 @@ import User from '@models/userModel';
 import { IUser } from '../components/user/types/userTypes';
 
 interface UserPayload {
-  isAdmin: boolean;
   id: string;
 }
 
-export const authMiddleware = async (
+export const userMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -33,12 +32,10 @@ export const authMiddleware = async (
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Attach user data to the request object
     req.user = user as IUser;
-    req.user.isAdmin =
-      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
     next();
   } catch (err) {
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
-
