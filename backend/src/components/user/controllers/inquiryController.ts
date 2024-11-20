@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-import Inquiry from '@models/inquiryModel';
+import Inquiry, { IInquiry } from '@models/inquiryModel';
 import Notification from '@models/notificationModel';
 import Property from 'components/property/models/propertyModel';
 import { sendInquiryEmail } from 'utils/emailUtils';
+import { IUser } from '../types/userTypes';
+import { createNotification } from './notificationController';
+import mongoose from 'mongoose';
 
 export const sendInquiry = async (req: Request, res: Response) => {
   try {
@@ -69,20 +72,46 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid status.' });
     }
 
-    const updatedInquiry = await Inquiry.findByIdAndUpdate(
+    const updatedInquiry = (await Inquiry.findByIdAndUpdate(
       id,
       { status, customMessage },
       { new: true, runValidators: true }
+    ).populate<{ userId: IUser }>('userId')) as unknown as IInquiry & {
+      userId: IUser;
+      _id: mongoose.Types.ObjectId;
+    };
+
+    if (!updatedInquiry) {
+      return res.status(404).json({ message: 'Inquiry not found.' });
+    }
+
+    const inquiryId = updatedInquiry._id.toString();
+    const userId = updatedInquiry.userId?._id.toString();
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ message: 'User not found for this inquiry.' });
+    }
+
+    // Create a notification for the user
+    const notificationMessage = `Your inquiry status has been updated to "${status}". ${
+      customMessage || ''
+    }`;
+    await createNotification(
+      userId,
+      inquiryId,
+      notificationMessage,
+      propertySold || false
     );
 
-    if (updatedInquiry && propertySold) {
-      await Notification.markPropertyAsSold(
-        updatedInquiry.propertyId.toString()
-      );
+    // Mark property as sold if applicable
+    if (propertySold) {
+      await markPropertyAsSold(updatedInquiry.propertyId.toString());
     }
 
     res.json({
-      message: 'Inquiry status updated successfully.',
+      message: 'Inquiry status updated successfully, and notification sent.',
       inquiry: updatedInquiry,
     });
   } catch (error) {
@@ -90,6 +119,8 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+
 
 export const getInquiries = async (req: Request, res: Response) => {
   try {

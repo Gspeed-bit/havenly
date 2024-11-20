@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface IInquiry extends Document {
+export interface IInquiry extends Document {
   userId: mongoose.Types.ObjectId;
   propertyId: mongoose.Types.ObjectId;
   message: string;
   status: 'Submitted' | 'Under Review' | 'Answered';
   customMessage?: string;
+
 }
 
 const inquirySchema = new Schema<IInquiry>(

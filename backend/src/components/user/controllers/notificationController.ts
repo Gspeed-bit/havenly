@@ -69,12 +69,14 @@ export const createNotification = async (
 
 // Handle property sale
 export const markPropertyAsSold = async (
-  propertyId: mongoose.Types.ObjectId
+  propertyId: mongoose.Types.ObjectId | string
 ) => {
+  const id =
+    typeof propertyId === 'string' ? propertyId : propertyId.toString();
   try {
     const notifications = await Notification.find({
       propertySold: false,
-      inquiryId: { $in: [propertyId] },
+      inquiryId: { $in: [id] },
     });
 
     for (const notification of notifications) {
