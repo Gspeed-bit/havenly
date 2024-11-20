@@ -5,6 +5,7 @@ interface IInquiry extends Document {
   propertyId: mongoose.Types.ObjectId;
   message: string;
   status: 'Submitted' | 'Under Review' | 'Answered';
+  customMessage?: string;
 }
 
 const inquirySchema = new Schema<IInquiry>(
@@ -25,8 +26,9 @@ const inquirySchema = new Schema<IInquiry>(
       enum: ['Submitted', 'Under Review', 'Answered'],
       default: 'Submitted',
     },
+    customMessage: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true } // Automatically add createdAt and updatedAt fields
 );
 
 const Inquiry = mongoose.model<IInquiry>('Inquiry', inquirySchema);

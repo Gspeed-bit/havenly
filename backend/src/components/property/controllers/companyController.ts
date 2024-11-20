@@ -8,6 +8,14 @@ export const createCompany = async (req: Request, res: Response) => {
     const { name, email, phoneNumber, address, logo, website, description } =
       req.body;
 
+    // Check if the company already exists
+    const existingCompany = await Company.findOne({ email }).exec();
+    if (existingCompany) {
+      return res.status(400).json({
+        message: 'Company with this email already exists.',
+      });
+    }
+
     // Create a new company object
     const company = new Company({
       name,
@@ -45,7 +53,6 @@ export const getAllCompanies = async (req: Request, res: Response) => {
   }
 };
 
-
 // Get a specific company by ID
 export const getCompanyById = async (req: Request, res: Response) => {
   try {
@@ -61,14 +68,15 @@ export const getCompanyById = async (req: Request, res: Response) => {
   }
 };
 
-
 // Update a company
 export const updateCompany = async (req: Request, res: Response) => {
   try {
     const companyId = req.params.id;
     const updateData = req.body;
 
-    const company = await Company.findByIdAndUpdate(companyId, updateData, { new: true }).exec();
+    const company = await Company.findByIdAndUpdate(companyId, updateData, {
+      new: true,
+    }).exec();
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
     }
@@ -78,7 +86,6 @@ export const updateCompany = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update company', error });
   }
 };
-
 
 // Delete a company
 export const deleteCompany = async (req: Request, res: Response) => {
@@ -102,10 +109,13 @@ export const deleteCompany = async (req: Request, res: Response) => {
 
     // If no associated properties, delete the company
     await company.deleteOne();
-    res.status(StatusCodes.SUCCESS).json({ message: 'Company deleted successfully' });
+    res
+      .status(StatusCodes.SUCCESS)
+      .json({ message: 'Company deleted successfully' });
   } catch (error) {
     console.error(error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Failed to delete company', error });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Failed to delete company', error });
   }
 };
-

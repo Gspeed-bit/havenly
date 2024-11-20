@@ -22,7 +22,7 @@ const router = express.Router();
  * /properties:
  *   post:
  *     summary: Create a new property listing
- *     description: Creates a new property listing. Only accessible by authenticated users.
+ *     description: Creates a new property listing. Only accessible by admins.
  *     tags:
  *       - Properties
  *     security:
@@ -97,7 +97,7 @@ const router = express.Router();
  *       400:
  *         description: Bad request (validation errors)
  *       401:
- *         description: Unauthorized access
+ *         description: Unauthorized access (Admin only)
  *       500:
  *         description: Internal server error
  */
@@ -107,39 +107,90 @@ const router = express.Router();
  * /properties:
  *   get:
  *     summary: Get a list of properties
- *     description: Retrieves a paginated list of properties.
+ *     description: Retrieves a paginated list of properties based on various filters.
  *     tags:
  *       - Properties
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: The page number for pagination.
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: The number of properties to return per page.
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: city
+ *         required: false
+ *         description: Filter properties by city.
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: propertyType
+ *         required: false
+ *         description: Filter properties by property type (e.g., House, Apartment).
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: priceRange
+ *         required: false
+ *         description: Filter properties by price range (e.g., "100000-500000").
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: rooms
+ *         required: false
+ *         description: Filter properties by the number of rooms.
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: A list of properties
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   title:
- *                     type: string
- *                   description:
- *                     type: string
- *                   price:
- *                     type: number
- *                   location:
- *                     type: string
- *                   propertyType:
- *                     type: string
- *                   rooms:
- *                     type: number
- *                   company:
- *                     type: string
- *                   amenities:
- *                     type: array
- *                     items:
- *                       type: string
- *                   isPublished:
- *                     type: boolean
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       location:
+ *                         type: string
+ *                       propertyType:
+ *                         type: string
+ *                       rooms:
+ *                         type: number
+ *                       company:
+ *                         type: string
+ *                       amenities:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       isPublished:
+ *                         type: boolean
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     currentPage:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       500:
  *         description: Internal server error
  */
@@ -198,7 +249,7 @@ const router = express.Router();
  * /properties/{id}:
  *   put:
  *     summary: Update a property listing
- *     description: Updates an existing property listing. Only accessible by authenticated users.
+ *     description: Updates an existing property listing. Only accessible by admins.
  *     tags:
  *       - Properties
  *     security:
@@ -260,7 +311,7 @@ const router = express.Router();
  *       400:
  *         description: Bad request (validation errors)
  *       401:
- *         description: Unauthorized access
+ *         description: Unauthorized access (Admin only)
  *       404:
  *         description: Property not found
  *       500:
@@ -272,7 +323,7 @@ const router = express.Router();
  * /properties/{id}:
  *   delete:
  *     summary: Delete a property listing
- *     description: Deletes an existing property listing. Only accessible by authenticated users.
+ *     description: Deletes an existing property listing. Only accessible by admins.
  *     tags:
  *       - Properties
  *     security:
@@ -290,12 +341,13 @@ const router = express.Router();
  *       400:
  *         description: Bad request
  *       401:
- *         description: Unauthorized access
+ *         description: Unauthorized access (Admin only)
  *       404:
  *         description: Property not found
  *       500:
  *         description: Internal server error
  */
+
 
 router.post('/properties', authMiddleware, createProperty);
 router.get('/properties', getProperties);

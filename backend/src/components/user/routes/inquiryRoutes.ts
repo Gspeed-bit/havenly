@@ -9,6 +9,7 @@ import { userMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
 
+
 /**
  * @openapi
  * tags:
@@ -67,8 +68,10 @@ const router = express.Router();
  *                       example: pending
  *                     createdAt:
  *                       type: string
+ *                       format: date-time
  *                     updatedAt:
  *                       type: string
+ *                       format: date-time
  *       401:
  *         description: Unauthorized.
  *       404:
@@ -76,6 +79,7 @@ const router = express.Router();
  *       500:
  *         description: Server error.
  */
+
 router.post('/inquiries/send', userMiddleware, sendInquiry);
 
 
@@ -204,7 +208,7 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *           type: string
  *         description: Inquiry ID.
  *     requestBody:
- *       description: Status to update.
+ *       description: Status and optional custom message to update the inquiry.
  *       required: true
  *       content:
  *         application/json:
@@ -214,9 +218,39 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *               status:
  *                 type: string
  *                 enum: [Submitted, Under Review, Answered]
+ *                 description: New status for the inquiry.
+ *               customMessage:
+ *                 type: string
+ *                 description: Optional custom message for the inquiry update.
+ *                 example: "Our team is now reviewing your inquiry. We will get back to you shortly."
  *     responses:
  *       200:
  *         description: Inquiry status updated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Inquiry status updated successfully.
+ *                 inquiry:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: Inquiry ID.
+ *                     status:
+ *                       type: string
+ *                       enum: [Submitted, Under Review, Answered]
+ *                       description: Updated status of the inquiry.
+ *                     customMessage:
+ *                       type: string
+ *                       description: Custom message included in the notification.
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Timestamp of the last update.
  *       400:
  *         description: Invalid status.
  *       403:
@@ -226,10 +260,9 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *       500:
  *         description: Server error.
  */
-router.put(
-  '/inquiries/:id',
-  authMiddleware,
-  updateInquiryStatus
-);
+
+router.put('/inquiries/:id', authMiddleware, updateInquiryStatus);
+
+
 
 export default router;

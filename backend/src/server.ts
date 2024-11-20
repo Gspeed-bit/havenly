@@ -13,6 +13,7 @@ import { KEYS } from './config/config';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
 import inquiryRoutes from '@controllers/routes/inquiryRoutes';
+import notificationRoutes from '@controllers/routes/notificationRoutes';
 
 dotenv.config({ path: '.env' });
 
@@ -88,12 +89,19 @@ app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 });
 
-// app.use('/', authRoutes, propertyRoutes, companyRoutes); // All routes under /api/auth
+app.use(
+  '/',
+  authRoutes,
+  propertyRoutes,
+  companyRoutes,
+  notificationRoutes ,
+  inquiryRoutes
+);
 
-app.use('/', authRoutes); // All routes under /api/auth
-app.use('/', companyRoutes); // All routes under /api/auth
-app.use('/', propertyRoutes); // All routes under /api/auth
-app.use('/', inquiryRoutes); // All routes under /api/auth
+// app.use('/', authRoutes); // All routes under /api/auth
+// app.use('/', companyRoutes); // All routes under /api/auth
+// app.use('/', propertyRoutes); // All routes under /api/auth
+// app.use('/', inquiryRoutes); // All routes under /api/auth
 
 app.use('/user', userRoutes); // All routes under /user/me
 

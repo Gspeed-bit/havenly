@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface ICompany extends Document {
+export interface ICompany extends Document {
   name: string;
   email: string;
   phoneNumber: string;
@@ -16,7 +16,12 @@ interface ICompany extends Document {
 const companySchema = new Schema<ICompany>(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      match: /\S+@\S+\.\S+/,
+    }, // Simple email validation
     phoneNumber: { type: String, required: true },
     address: { type: String, required: true },
     logo: { type: String }, // URL or path to the company logo

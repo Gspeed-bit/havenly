@@ -59,4 +59,8 @@ const userSchema: Schema = new Schema(
   }
 );
 
+userSchema.virtual('name').get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
+
 export default mongoose.model<IUser & Document>('User', userSchema);

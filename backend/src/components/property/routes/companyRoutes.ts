@@ -161,7 +161,7 @@ router.put('/companies/:id', authMiddleware, updateCompany);
  * /companies/{id}:
  *   delete:
  *     summary: Delete a company by ID
- *     description: Deletes a specific company by its ID.
+ *     description: Deletes an existing company by its ID.
  *     tags:
  *       - Companies
  *     parameters:
@@ -174,6 +174,8 @@ router.put('/companies/:id', authMiddleware, updateCompany);
  *     responses:
  *       200:
  *         description: Company deleted successfully
+ *       400:
+ *         description: Cannot delete company due to associated properties
  *       404:
  *         description: Company not found
  *       500:

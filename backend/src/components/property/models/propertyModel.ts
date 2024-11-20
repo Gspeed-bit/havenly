@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { ICompany } from './companyModel'; 
 
 interface IProperty extends Document {
   title: string;
@@ -8,12 +9,13 @@ interface IProperty extends Document {
   location: string;
   propertyType: string;
   rooms: number;
-  company: mongoose.Schema.Types.ObjectId; // Reference to the real estate company
+  company: ICompany;
   status: 'listed' | 'sold' | 'under review'; // Enum for property status
   amenities: string[]; // List of amenities
   coordinates?: { lat: number; lng: number }; // Geolocation coordinates
   isPublished: boolean; // Indicates if the property is published
   agent?: { name: string; contact: string }; // Agent managing the property
+  sold: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,7 +31,7 @@ const propertySchema = new Schema<IProperty>(
     rooms: { type: Number, required: true },
     company: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Company', // Assuming a Company model exists
+      ref: 'Company', // Reference to the company (property owner)
       required: true,
     },
     status: {
@@ -38,15 +40,16 @@ const propertySchema = new Schema<IProperty>(
       default: 'listed',
     },
     amenities: { type: [String], default: [] },
-    coordinates: { 
-      lat:Number,
-      lng:Number
+    coordinates: {
+      lat: Number,
+      lng: Number,
     },
     isPublished: { type: Boolean, default: false },
     agent: {
       name: { type: String },
       contact: { type: String },
     },
+    sold: { type: Boolean, default: false },
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );

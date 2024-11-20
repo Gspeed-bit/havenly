@@ -36,6 +36,6 @@ export const userMiddleware = async (
     req.user = user as IUser;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Token is not valid' });
+    res.status(401).json({ message: 'Invalid token.' });
   }
 };
