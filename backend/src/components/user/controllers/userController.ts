@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import User from '@models/userModel';
 import { StatusCodes } from 'utils/apiResponse';
 import { sanitizeUser } from 'utils/sanitizeUser';
+import {
+  generateVerificationCode,
+  sendAdminUpdatePinEmail,
+} from 'utils/emailUtils';
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -83,5 +87,105 @@ export const getAllAdmins = async (req: Request, res: Response) => {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Server error', error });
+  }
+};
+
+// User Profile Update Handler
+export const updateUserProfile = async (req: Request, res: Response) => {
+  const updates = req.body;
+
+  // Prevent email updates
+  if (updates.email) {
+    return res
+      .status(400)
+      .json({ message: 'Users cannot update their email.' });
+  }
+
+  // Prevent admins from updating their profile
+  if (req.user?.isAdmin) {
+    return res
+      .status(403)
+      .json({
+        message: 'Admins cannot update their profile through this route.',
+      });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+    });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    // Sanitize user data before returning
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password', 'email']
+    );
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred.';
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: errorMessage });
+  }
+};
+
+// Admin Profile Update Handler
+const adminPins: Record<string, string> = {}; // Temporary storage for PINs
+
+// Request PIN for Admin Profile Update
+export const requestAdminUpdatePin = async (req: Request, res: Response) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: 'Access denied. Admin only.' });
+  }
+
+  const pin = generateVerificationCode(6); // Generate a 6-digit PIN
+  adminPins[req.user._id] = pin;
+
+  // Send the PIN to the admin's email
+  await sendAdminUpdatePinEmail(req.user.email, pin);
+
+  return res.json({ message: 'PIN sent to your email.' });
+};
+
+// Confirm Admin Profile Update
+export const confirmAdminUpdate = async (req: Request, res: Response) => {
+  const { pin, updates } = req.body;
+
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: 'Access denied. Admin only.' });
+  }
+
+  if (adminPins[req.user._id] !== pin) {
+    return res.status(400).json({ message: 'Invalid or expired PIN.' });
+  }
+
+  delete adminPins[req.user._id]; // Remove used PIN
+
+  if (updates.email) {
+    return res
+      .status(400)
+      .json({ message: 'Admins cannot update their email.' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+    });
+    if (!user) return res.status(404).json({ message: 'Admin not found.' });
+
+    // Sanitize user data before returning
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password', 'email']
+    );
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred.';
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: errorMessage });
   }
 };

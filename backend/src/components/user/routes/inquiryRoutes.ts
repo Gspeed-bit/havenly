@@ -208,7 +208,7 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *           type: string
  *         description: Inquiry ID.
  *     requestBody:
- *       description: Status and optional custom message to update the inquiry.
+ *       description: Status, optional custom message, and property sold flag to update the inquiry.
  *       required: true
  *       content:
  *         application/json:
@@ -223,6 +223,11 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *                 type: string
  *                 description: Optional custom message for the inquiry update.
  *                 example: "Our team is now reviewing your inquiry. We will get back to you shortly."
+ *               propertySold:
+ *                 type: boolean
+ *                 description: Indicates if the property related to the inquiry has been sold.
+ *                 example: false
+ *                 default: false
  *     responses:
  *       200:
  *         description: Inquiry status updated.
@@ -233,7 +238,7 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Inquiry status updated successfully.
+ *                   example: Inquiry status updated successfully, and notification sent.
  *                 inquiry:
  *                   type: object
  *                   properties:
@@ -247,12 +252,16 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *                     customMessage:
  *                       type: string
  *                       description: Custom message included in the notification.
+ *                     propertySold:
+ *                       type: boolean
+ *                       description: Indicates if the property related to the inquiry has been sold.
+ *                       default: false
  *                     updatedAt:
  *                       type: string
  *                       format: date-time
  *                       description: Timestamp of the last update.
  *       400:
- *         description: Invalid status.
+ *         description: Invalid status or input.
  *       403:
  *         description: Access denied (Admin only).
  *       404:
@@ -260,6 +269,8 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *       500:
  *         description: Server error.
  */
+
+
 
 router.put('/inquiries/:id', authMiddleware, updateInquiryStatus);
 

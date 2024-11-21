@@ -6,6 +6,7 @@ import { sendInquiryEmail } from 'utils/emailUtils';
 import { IUser } from '../types/userTypes';
 import { createNotification } from './notificationController';
 import mongoose from 'mongoose';
+import { sanitizeUser } from 'utils/sanitizeUser';
 
 export const sendInquiry = async (req: Request, res: Response) => {
   try {
@@ -110,17 +111,34 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
       await markPropertyAsSold(updatedInquiry.propertyId.toString());
     }
 
+    // Sanitize the user data
+    const sanitizedUser = sanitizeUser(
+      updatedInquiry.userId.toJSON() as unknown as Record<string, unknown>,
+      [
+        'password',
+        'resetPasswordCode',
+        'resetPasswordExpiration',
+        'verificationCode',
+        'verificationCodeExpiration',
+        'isAdmin',
+      ]
+    );
+
+    // Construct sanitized response
+    const sanitizedResponse = {
+      ...updatedInquiry.toObject(),
+      userId: sanitizedUser,
+    };
+
     res.json({
       message: 'Inquiry status updated successfully, and notification sent.',
-      inquiry: updatedInquiry,
+      inquiry: sanitizedResponse,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
-
-
 
 export const getInquiries = async (req: Request, res: Response) => {
   try {

@@ -1,8 +1,11 @@
 import express from 'express';
 import {
+  confirmAdminUpdate,
   getAllAdmins,
   getAllUsers,
   getUser,
+  requestAdminUpdatePin,
+  updateUserProfile,
 } from '@controllers/controllers/userController';
 import { authMiddleware } from '@middleware/authMiddleware';
 import {
@@ -11,6 +14,7 @@ import {
   StatusCodes,
   successResponse,
 } from 'utils/apiResponse';
+import { userMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
 
@@ -158,5 +162,133 @@ router.get(
     return successResponse(res, admins, 'Admins retrieved successfully');
   })
 );
+
+/**
+ * @swagger
+ * /user/update:
+ *   put:
+ *     summary: Update the authenticated user's profile
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     phoneNumber:
+ *                       type: string
+ *       400:
+ *         description: Invalid email update attempt
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/update', userMiddleware, updateUserProfile);
+
+/**
+ * @swagger
+ * /user/request-pin:
+ *   post:
+ *     summary: Request a PIN for admin profile update (Admin-only)
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: PIN sent to the admin's email
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
+router.post('/request-pin', authMiddleware, requestAdminUpdatePin);
+
+/**
+ * @swagger
+ * /user/confirm-update:
+ *   post:
+ *     summary: Confirm admin profile update using PIN (Admin-only)
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pin:
+ *                 type: string
+ *               updates:
+ *                 type: object
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   phoneNumber:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     phoneNumber:
+ *                       type: string
+ *       400:
+ *         description: Invalid or expired PIN
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
+router.post('/confirm-update', authMiddleware, confirmAdminUpdate);
 
 export default router;
