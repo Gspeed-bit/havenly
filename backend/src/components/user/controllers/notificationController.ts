@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Notification from '@models/notificationModel';
+import Notification from '../models/notificationModel';
 import mongoose from 'mongoose';
 import { Server } from 'socket.io';
 import http from 'http';

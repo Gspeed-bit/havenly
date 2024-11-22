@@ -10,13 +10,13 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import userRoutes from './components/user/routes/userRoutes';
 import cron from 'node-cron'; // Import node-cron
-import User from '@models/userModel'; // Import User model
 import basicAuth from 'express-basic-auth'; // Import basic-auth
 import { KEYS } from './config/config';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
 import notificationRoutes from '@routes/notificationRoutes';
 import inquiryRoutes from '@routes/inquiryRoutes';
+import User from './components/user/models/userModel'; // Import the User model
 
 
 

@@ -1,10 +1,11 @@
-import { IUser } from 'src/components/user/types/userTypes';
+import  IUser  from '@models/userModel';
 import { Server as IOServer } from 'socket.io';
+
 declare global {
   namespace Express {
     export interface Request {
-      user?: IUser;
-      io?: IOServer;
+      user?: IUser; // Authenticated user object
+      io?: IOServer; // Socket.io instance
     }
   }
 }

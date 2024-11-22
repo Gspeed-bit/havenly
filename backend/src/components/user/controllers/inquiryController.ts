@@ -102,7 +102,7 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
     );
 
     // Emit a Socket.IO event to the user
-       req.io?.to(userId).emit('inquiry-update', { notification });
+    req.io?.to(userId).emit('inquiry-update', { notification });
 
     res.json({
       message: 'Inquiry status updated successfully, and notification sent.',

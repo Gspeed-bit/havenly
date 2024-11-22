@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import User from '@models/userModel';
+import User from '../models/userModel';
 import { StatusCodes } from 'utils/apiResponse';
 import { sanitizeUser } from 'utils/sanitizeUser';
 import {
