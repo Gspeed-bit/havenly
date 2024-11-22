@@ -76,7 +76,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://${KEYS.serverHost}`,
+        url: `${KEYS.serverHost}`,
         description: `${KEYS.appEnv} Server`,
       },
     ],
