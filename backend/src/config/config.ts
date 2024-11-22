@@ -11,6 +11,7 @@ export interface KeysInterface {
   codeExpirationMinutes: string;
   serverUsername: string;
   serverPassword: string;
+  serverHost: string;
   webAppLink: string;
 }
 
@@ -22,6 +23,7 @@ export const getKeys = (): KeysInterface => {
   const keys = {
     port: env.PORT || '5000',
     host: env.HOST || 'localhost',
+    serverHost: env.SERVER_HOST || '',
     appEnv: env.APP_ENV || 'development',
     mongoUri: env.MONGODB_URI || '',
     webAppLink: env.WEB_APP_LINK || '',
