@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import { Request, Response } from 'express';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import authRoutes from './components/user/routes/authRoutes'; // Your routes
@@ -24,9 +25,9 @@ dotenv.config({ path: '.env' });
 
 const app = express();
 // Routes
-app.get('/', (req, res) => {
-  res.send('Welcome to the Havenly backend!');});
-
+app.get('/', (req: Request, res: Response) => {
+  res.send('Welcome to the Havenly backend!');
+});
 const server = http.createServer(app);
 
 // Initialize Socket.IO with CORS support
