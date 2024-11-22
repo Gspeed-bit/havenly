@@ -1,6 +1,24 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { IUser } from '../types/userTypes';
 
+// Define the IUser TypeScript interface
+export interface IUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  isVerified: boolean;
+  verificationCode: string | null;
+  verificationCodeExpiration: Date | null;
+  resetPasswordCode?: string | null;
+  resetPasswordExpiration?: Date | null;
+  adminCode?: string;
+  isAdmin: boolean;
+}
+
+// Define the user schema
 const userSchema: Schema = new Schema(
   {
     firstName: { type: String, required: true, trim: true },
@@ -52,18 +70,17 @@ const userSchema: Schema = new Schema(
     timestamps: true,
     toJSON: {
       transform: (_doc, ret) => {
-        delete ret.adminCode;
+        delete ret.adminCode; // Exclude adminCode from JSON output
         return ret;
       },
     },
   }
 );
 
-
-
-
+// Add a virtual property for the full name
 userSchema.virtual('name').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
+// Export the User model
 export default mongoose.model<IUser & Document>('User', userSchema);
