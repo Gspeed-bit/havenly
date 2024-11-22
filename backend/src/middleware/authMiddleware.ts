@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '@models/userModel';
-import { IUser } from '../components/user/types/userTypes';
+import User from '@components/user/models/userModel';
+import { IUser } from '@components/user/models/userModel';
 
 interface UserPayload {
   isAdmin: boolean;

@@ -1,4 +1,4 @@
-import  IUser  from '@components/user/types/userTypes';
+import  IUser  from '@components/user/models/userModel';
 import { Server as IOServer } from 'socket.io';
 
 declare global {
