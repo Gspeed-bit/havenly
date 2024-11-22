@@ -253,7 +253,11 @@ export const sendInquiryEmail = async (
 
 
 
-export const sendAdminUpdatePinEmail = async (email: string, pin: string) => {
+export const sendAdminUpdatePinEmail = async (
+  email: string,
+  pin: string,
+  name: string
+) => {
   // Create reusable transporter object using SMTP transport
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -263,13 +267,13 @@ export const sendAdminUpdatePinEmail = async (email: string, pin: string) => {
     },
   });
 
-  // Define styled HTML content
+  // Define styled HTML content with personalized greeting
   const htmlText = `
   <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
-    <h1 style="color: #3A0CA3; text-align: center; font-size: 28px; margin-bottom: 20px;">Admin Profile Update PIN</h1>
-    <p style="font-size: 16px; line-height: 1.5;">Hi Admin,</p>
+    <h1 style="color: #3A0CA3; text-align: center; font-size: 28px; margin-bottom: 20px;">Profile Update PIN</h1>
+    <p style="font-size: 16px; line-height: 1.5;">Hi ${name},</p>
     <p style="font-size: 16px; line-height: 1.5;">
-      A request to update your admin profile has been initiated. Use the PIN code below to confirm the update.
+      A request to update your profile has been initiated. Use the PIN code below to confirm the update.
     </p>
     <div style="text-align: center; margin: 30px 0;">
       <p style="background-color: #3A0CA3; color: white; padding: 12px 25px; font-size: 20px; font-weight: bold; display: inline-block; border-radius: 5px;">
@@ -294,7 +298,7 @@ export const sendAdminUpdatePinEmail = async (email: string, pin: string) => {
   const mailOptions = {
     from: KEYS.email, // Sender's email address
     to: email, // Recipient's email address
-    subject: 'Admin Profile Update PIN',
+    subject: 'Profile Update PIN',
     text: `Your PIN for confirming profile update is: ${pin}`,
     html: htmlText, // Use the inline styled HTML content
   };

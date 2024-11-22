@@ -144,7 +144,7 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
   adminPins[req.user._id] = pin;
 
   // Send the PIN to the admin's email
-  await sendAdminUpdatePinEmail(req.user.email, pin);
+  await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
 
   return res.json({ message: 'PIN sent to your email.' });
 };
