@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn ./src/server.ts",
-    "start": "ts-node server.ts",
+    "start": "ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc && node dist/server.js",
     "lint": "eslint '**/*.{ts,tsx}'"
   },

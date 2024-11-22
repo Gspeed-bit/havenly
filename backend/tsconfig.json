@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "baseUrl": "./src", // baseUrl is ./src because we start resolving paths from the src folder
     "paths": {
-      "@models/*": ["components/user/models/*"], // Adjust paths to match the structure inside /src
+      "@models/*": ["components/user/models/*"],
       "@controllers/*": ["components/user/controllers/*"],
       "@routes/*": ["components/user/routes/*"],
       "@middleware/*": ["middleware/*"],
