@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import Notification from '@models/notificationModel';
 import mongoose from 'mongoose';
+import { Server } from 'socket.io';
+import http from 'http';
+
+const server = http.createServer();
+const io = new Server(server);
 
 // Get notifications for a user
 export const getNotifications = async (req: Request, res: Response) => {
@@ -26,7 +31,6 @@ export const getNotifications = async (req: Request, res: Response) => {
   }
 };
 
-// Mark a notification as read
 export const markAsRead = async (req: Request, res: Response) => {
   try {
     const { notificationId } = req.params;
@@ -46,6 +50,8 @@ export const markAsRead = async (req: Request, res: Response) => {
   }
 };
 
+
+
 // Create a notification (utility function for internal use)
 export const createNotification = async (
   userId: string,
@@ -60,6 +66,8 @@ export const createNotification = async (
       message,
       propertySold,
     });
+
+    io.to(userId).emit('newNotification', notification); // Emit to the specific user
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);

@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import authRoutes from './components/user/routes/authRoutes'; // Your routes
 import dotenv from 'dotenv';
@@ -18,7 +20,33 @@ import notificationRoutes from '@controllers/routes/notificationRoutes';
 dotenv.config({ path: '.env' });
 
 const app = express();
+const server = http.createServer(app);
 
+// Initialize Socket.IO with CORS support
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  },
+});
+
+// Middleware to attach Socket.IO to requests
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Handle Socket.IO connections
+io.on('connection', (socket) => {
+  console.log(`A user connected: ${socket.id}`);
+  socket.on('joinRoom', (roomId) => {
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+  socket.on('disconnect', () => {
+    console.log(`A user disconnected: ${socket.id}`);
+  });
+});
 // Middleware to handle CORS
 app.use(cors());
 
@@ -86,8 +114,7 @@ app.use(
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Hello from the backend!');
-});
+  res.send('Welcome to the Havenly backend!');});
 
 app.use(
   '/',
@@ -97,11 +124,6 @@ app.use(
   notificationRoutes ,
   inquiryRoutes
 );
-
-// app.use('/', authRoutes); // All routes under /api/auth
-// app.use('/', companyRoutes); // All routes under /api/auth
-// app.use('/', propertyRoutes); // All routes under /api/auth
-// app.use('/', inquiryRoutes); // All routes under /api/auth
 
 app.use('/user', userRoutes); // All routes under /user/me
 

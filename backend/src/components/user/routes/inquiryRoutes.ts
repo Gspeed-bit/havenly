@@ -1,14 +1,13 @@
 import express from 'express';
 import { authMiddleware } from '@middleware/authMiddleware';
+import { userMiddleware } from '@middleware/userMiddleware';
 import {
   sendInquiry,
   getInquiries,
   updateInquiryStatus,
 } from '../controllers/inquiryController';
-import { userMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
-
 
 /**
  * @openapi
@@ -68,10 +67,8 @@ const router = express.Router();
  *                       example: pending
  *                     createdAt:
  *                       type: string
- *                       format: date-time
  *                     updatedAt:
  *                       type: string
- *                       format: date-time
  *       401:
  *         description: Unauthorized.
  *       404:
@@ -79,9 +76,7 @@ const router = express.Router();
  *       500:
  *         description: Server error.
  */
-
 router.post('/inquiries/send', userMiddleware, sendInquiry);
-
 
 /**
  * @openapi
@@ -187,7 +182,6 @@ router.post('/inquiries/send', userMiddleware, sendInquiry);
  *       500:
  *         description: Server error.
  */
-
 router.get('/inquiries', userMiddleware, getInquiries);
 
 /**
@@ -208,7 +202,7 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *           type: string
  *         description: Inquiry ID.
  *     requestBody:
- *       description: Status, optional custom message, and property sold flag to update the inquiry.
+ *       description: Status and optional custom message to update the inquiry.
  *       required: true
  *       content:
  *         application/json:
@@ -223,11 +217,6 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *                 type: string
  *                 description: Optional custom message for the inquiry update.
  *                 example: "Our team is now reviewing your inquiry. We will get back to you shortly."
- *               propertySold:
- *                 type: boolean
- *                 description: Indicates if the property related to the inquiry has been sold.
- *                 example: false
- *                 default: false
  *     responses:
  *       200:
  *         description: Inquiry status updated.
@@ -238,7 +227,7 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Inquiry status updated successfully, and notification sent.
+ *                   example: Inquiry status updated successfully.
  *                 inquiry:
  *                   type: object
  *                   properties:
@@ -252,16 +241,12 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *                     customMessage:
  *                       type: string
  *                       description: Custom message included in the notification.
- *                     propertySold:
- *                       type: boolean
- *                       description: Indicates if the property related to the inquiry has been sold.
- *                       default: false
  *                     updatedAt:
  *                       type: string
  *                       format: date-time
  *                       description: Timestamp of the last update.
  *       400:
- *         description: Invalid status or input.
+ *         description: Invalid status.
  *       403:
  *         description: Access denied (Admin only).
  *       404:
@@ -269,11 +254,6 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *       500:
  *         description: Server error.
  */
-
-
-
 router.put('/inquiries/:id', authMiddleware, updateInquiryStatus);
-
-
 
 export default router;

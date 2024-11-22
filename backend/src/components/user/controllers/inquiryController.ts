@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import Inquiry, { IInquiry } from '@models/inquiryModel';
+import Inquiry from '@models/inquiryModel';
 import Notification from '@models/notificationModel';
 import Property from 'components/property/models/propertyModel';
 import { sendInquiryEmail } from 'utils/emailUtils';
-import { IUser } from '../types/userTypes';
+
 import { createNotification } from './notificationController';
-import mongoose from 'mongoose';
-import { sanitizeUser } from 'utils/sanitizeUser';
 
 export const sendInquiry = async (req: Request, res: Response) => {
   try {
@@ -73,20 +71,17 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid status.' });
     }
 
-    const updatedInquiry = (await Inquiry.findByIdAndUpdate(
+    const updatedInquiry = await Inquiry.findByIdAndUpdate(
       id,
       { status, customMessage },
       { new: true, runValidators: true }
-    ).populate<{ userId: IUser }>('userId')) as unknown as IInquiry & {
-      userId: IUser;
-      _id: mongoose.Types.ObjectId;
-    };
+    ).populate('userId');
 
     if (!updatedInquiry) {
       return res.status(404).json({ message: 'Inquiry not found.' });
     }
 
-    const inquiryId = updatedInquiry._id.toString();
+    const inquiryId = (updatedInquiry._id as string).toString();
     const userId = updatedInquiry.userId?._id.toString();
 
     if (!userId) {
@@ -95,44 +90,23 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
         .json({ message: 'User not found for this inquiry.' });
     }
 
-    // Create a notification for the user
+    // Create a notification
     const notificationMessage = `Your inquiry status has been updated to "${status}". ${
       customMessage || ''
     }`;
-    await createNotification(
+    const notification = await createNotification(
       userId,
       inquiryId,
       notificationMessage,
       propertySold || false
     );
 
-    // Mark property as sold if applicable
-    if (propertySold) {
-      await markPropertyAsSold(updatedInquiry.propertyId.toString());
-    }
-
-    // Sanitize the user data
-    const sanitizedUser = sanitizeUser(
-      updatedInquiry.userId.toJSON() as unknown as Record<string, unknown>,
-      [
-        'password',
-        'resetPasswordCode',
-        'resetPasswordExpiration',
-        'verificationCode',
-        'verificationCodeExpiration',
-        'isAdmin',
-      ]
-    );
-
-    // Construct sanitized response
-    const sanitizedResponse = {
-      ...updatedInquiry.toObject(),
-      userId: sanitizedUser,
-    };
+    // Emit a Socket.IO event to the user
+       req.io?.to(userId).emit('inquiry-update', { notification });
 
     res.json({
       message: 'Inquiry status updated successfully, and notification sent.',
-      inquiry: sanitizedResponse,
+      inquiry: updatedInquiry,
     });
   } catch (error) {
     console.error(error);
@@ -142,9 +116,7 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
 
 export const getInquiries = async (req: Request, res: Response) => {
   try {
-    const { status, propertyId, userId } = req.query;
-
-    // Admins can retrieve all inquiries, users only their own
+    const { status, propertyId, userId, page = 1, limit = 10 } = req.query;
     const filters: Record<string, unknown> = req.user?.isAdmin
       ? {}
       : { userId: req.user?._id };
@@ -154,16 +126,16 @@ export const getInquiries = async (req: Request, res: Response) => {
     if (req.user?.isAdmin && userId) filters.userId = userId;
 
     const inquiries = await Inquiry.find(filters)
+      .skip((+page - 1) * +limit)
+      .limit(+limit)
       .populate('propertyId', 'title location price')
       .populate('userId', 'name email');
 
-    if (inquiries.length === 0) {
-      return res
-        .status(200)
-        .json({ message: 'No inquiries found.', inquiries: [] });
-    }
-
-    res.json({ message: 'Inquiries retrieved successfully.', inquiries });
+    res.json({
+      message: 'Inquiries retrieved successfully.',
+      inquiries,
+      pagination: { page: +page, limit: +limit, total: inquiries.length },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to retrieve inquiries.', error });
