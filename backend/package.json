@@ -5,8 +5,8 @@
   "main": "server.ts",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn ./src/server.ts",
-    "build": "tsc && ls -al dist && node server.js",
-    "start": "node server.js",
+    "build": "tsc && ls -al dist && node src/server.js",
+    "start": "node src/server.js",
     "lint": "eslint '**/*.{ts,tsx}'"
   },
   "dependencies": {
