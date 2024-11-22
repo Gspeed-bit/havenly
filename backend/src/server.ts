@@ -14,8 +14,8 @@ import basicAuth from 'express-basic-auth'; // Import basic-auth
 import { KEYS } from './config/config';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
-import notificationRoutes from '@routes/notificationRoutes';
-import inquiryRoutes from '@routes/inquiryRoutes';
+import notificationRoutes from '@components/user/routes/notificationRoutes';
+import inquiryRoutes from '@components/user/routes/inquiryRoutes';
 import User from '@components/user/models//userModel'; // Import the User model
 
 

@@ -15,7 +15,7 @@ import {
   getUser,
   requestAdminUpdatePin,
   updateUserProfile,
-} from '@controllers/userController';
+} from '@components/user/controllers/userController';
 
 const router = express.Router();
 

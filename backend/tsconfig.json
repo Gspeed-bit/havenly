@@ -12,8 +12,6 @@
     "baseUrl": "./src", 
     "paths": {
       "@components/*": ["components/*"],
-      "@controllers/*": ["components/user/controllers/*"],
-      "@routes/*": ["components/user/routes/*"],
       "@middleware/*": ["middleware/*"],
       "config/*": ["config/*"]
     },
