@@ -1,12 +1,5 @@
 import express from 'express';
-import {
-  confirmAdminUpdate,
-  getAllAdmins,
-  getAllUsers,
-  getUser,
-  requestAdminUpdatePin,
-  updateUserProfile,
-} from '@controllers/controllers/userController';
+
 import { authMiddleware } from '@middleware/authMiddleware';
 import {
   ApiError,
@@ -15,6 +8,14 @@ import {
   successResponse,
 } from 'utils/apiResponse';
 import { userMiddleware } from '@middleware/userMiddleware';
+import {
+  confirmAdminUpdate,
+  getAllAdmins,
+  getAllUsers,
+  getUser,
+  requestAdminUpdatePin,
+  updateUserProfile,
+} from '@controllers/userController';
 
 const router = express.Router();
 

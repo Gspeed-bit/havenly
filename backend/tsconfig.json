@@ -9,19 +9,19 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "baseUrl": "./src", // This makes 'src' the root of your path resolution
+    "baseUrl": "./src", // baseUrl is ./src because we start resolving paths from the src folder
     "paths": {
-      "@types/*": ["components/user/types/*"], // Adjust paths to match your structure
-      "@models/*": ["components/user/models/*"],
-      "@controllers/*": ["components/user/*"],
+      "@models/*": ["components/user/models/*"], // Adjust paths to match the structure inside /src
+      "@controllers/*": ["components/user/controllers/*"],
+      "@routes/*": ["components/user/routes/*"],
       "@middleware/*": ["middleware/*"],
       "config/*": ["config/*"]
     },
     "typeRoots": [
-      "src/components/user/types", // Include this path for type definitions
+      "src/components/user/types", // Include the correct path for type definitions
       "./node_modules/@types"
     ]
   },
-  "include": ["src/**/*.ts", "src/components/user/types/**/*.d.ts"], // Include the appropriate files
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "src/components/user/types/**/*.d.ts"], // Include the files to be compiled
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist directories
 }

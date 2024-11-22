@@ -14,8 +14,9 @@ import basicAuth from 'express-basic-auth'; // Import basic-auth
 import { KEYS } from './config/config';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
-import inquiryRoutes from '@controllers/routes/inquiryRoutes';
-import notificationRoutes from '@controllers/routes/notificationRoutes';
+import notificationRoutes from '@routes/notificationRoutes';
+import inquiryRoutes from '@routes/inquiryRoutes';
+
 
 dotenv.config({ path: '.env' });
 
