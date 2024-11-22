@@ -7,9 +7,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
+    "outDir": "./dist", // Output the compiled JS files to the dist directory
     "resolveJsonModule": true,
-    "baseUrl": "./src", 
+    "baseUrl": "./src", // Base directory for relative paths
     "paths": {
       "@components/*": ["components/*"],
       "@middleware/*": ["middleware/*"],
@@ -20,6 +20,10 @@
       "./node_modules/@types"
     ]
   },
-  "include": ["src/**/*.ts", "src/components/user/types/**/*.d.ts", "src/types/**/*.d.ts"], // Include the files to be compiled
+  "include": [
+    "src/**/*.ts", // Compile all TypeScript files
+    "src/components/user/types/**/*.d.ts", // Include type definitions
+    "src/types/**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"] // Exclude node_modules and dist directories
 }
