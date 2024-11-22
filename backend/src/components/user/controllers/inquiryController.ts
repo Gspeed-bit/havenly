@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import Inquiry from '@models/inquiryModel';
-import Notification from '@models/notificationModel';
+import Inquiry from '@components/user/models/inquiryModel';
+import Notification from '@components/user/models/notificationModel';
 import Property from 'components/property/models/propertyModel';
 import { sendInquiryEmail } from 'utils/emailUtils';
 

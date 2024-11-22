@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
-import User from '@models/userModel'; // Adjust the path as necessary
+import User from '@components/user/models/userModel'; // Adjust the path as necessary
 import { KEYS } from 'config/config';
 import { StatusCodes } from 'utils/apiResponse';
 import sendResetPasswordEmail, { generateVerificationCode, sendVerificationEmail } from 'utils/emailUtils';
