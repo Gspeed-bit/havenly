@@ -18,6 +18,8 @@ import notificationRoutes from '@routes/notificationRoutes';
 import inquiryRoutes from '@routes/inquiryRoutes';
 
 
+
+
 dotenv.config({ path: '.env' });
 
 const app = express();

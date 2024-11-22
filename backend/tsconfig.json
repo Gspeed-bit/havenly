@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
+    "rootDir": "./src",
     "baseUrl": "./src", // baseUrl is ./src because we start resolving paths from the src folder
     "paths": {
       "@models/*": ["components/user/models/*"],
