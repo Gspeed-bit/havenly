@@ -16,7 +16,7 @@ import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
 import notificationRoutes from '@routes/notificationRoutes';
 import inquiryRoutes from '@routes/inquiryRoutes';
-import User from './components/user/models/userModel'; // Import the User model
+import User from '@models/userModel'; // Import the User model
 
 
 
