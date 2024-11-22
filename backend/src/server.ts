@@ -23,6 +23,10 @@ import inquiryRoutes from '@routes/inquiryRoutes';
 dotenv.config({ path: '.env' });
 
 const app = express();
+// Routes
+app.get('/', (req, res) => {
+  res.send('Welcome to the Havenly backend!');});
+
 const server = http.createServer(app);
 
 // Initialize Socket.IO with CORS support
@@ -115,9 +119,6 @@ app.use(
   swaggerUi.setup(swaggerDocs)
 );
 
-// Routes
-app.get('/', (req, res) => {
-  res.send('Welcome to the Havenly backend!');});
 
 app.use(
   '/',
