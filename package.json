@@ -11,6 +11,7 @@
     "lint": "npm run lint:backend && npm run lint:frontend"
   },
   "devDependencies": {
+    "@types/node": "^22.9.3",
     "concurrently": "^9.1.0"
   }
 }

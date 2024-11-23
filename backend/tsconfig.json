@@ -10,10 +10,12 @@
     "outDir": "./dist", // Output the compiled JS files to the dist directory
     "resolveJsonModule": true,
     "baseUrl": "./src", // Base directory for relative paths
+    "types": ["node"],
     "paths": {
       "@components/*": ["components/*"],
       "@middleware/*": ["middleware/*"],
       "config/*": ["config/*"]
+
     },
     "typeRoots": [
       "src/components/user/types", // Include the correct path for type definitions

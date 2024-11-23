@@ -2,37 +2,31 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": [
-      "es2020"
-    ],
+    "lib": ["es2020", "dom"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
     "resolveJsonModule": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./frontend/types"
-    ],
+    "jsx": "preserve",
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
     "moduleResolution": "node",
     "isolatedModules": true,
-    "jsx": "preserve"
+    "baseUrl": ".", // Ensure this is present
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./components/*"],
+
+    },
+    "types": ["node"], // Ensure Node types are included
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": [
-    "frontend/**/*.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["frontend/**/*.ts", "frontend/**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
