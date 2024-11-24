@@ -13,7 +13,7 @@ export const logoutUser = () => {
 // Login function
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch('/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
       headers: { 'Content-Type': 'application/json' },
