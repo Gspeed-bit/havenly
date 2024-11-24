@@ -1,35 +1,38 @@
-import { authStoreActions } from '../store/auth';
-import { clearAuthToken, isBrowser, setAuthToken } from '../config/helpers';
-import { apiHandler } from '../config/server';
-import { LoginCredentials, LoginResponse, User } from './types/user.types';
+import {  useAuthStore } from '../store/auth';
 
 // Log the user out: clear token and reset auth state, only if in the browser
-export const logOutUser = () => {
-  if (isBrowser()) {
-    clearAuthToken();
-  }
-  authStoreActions.clearAuth();
+export const logoutUser = () => {
+  // Remove the JWT token from localStorage
+  localStorage.removeItem('authToken');
+
+  // Reset the Zustand store state (clear user data and authentication state)
+  useAuthStore.getState().clearUserData();
+
 };
 
 // Login function
-export const login = async (credentials: LoginCredentials) => {
-  const response = await apiHandler<LoginResponse>(
-    '/login',
-    'POST',
-    credentials
-  );
+export const loginUser = async (email: string, password: string) => {
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-  if (response.status === 'success') {
-    const { token, user } = response.data;
+    if (response.ok) {
+      const data = await response.json();
+      const { token } = data;
 
-    // Only store the token if we are in the browser
-    if (isBrowser()) {
-      setAuthToken(token); // Save the token in localStorage
+      // Store the JWT token in localStorage
+      localStorage.setItem('authToken', token);
+
+      // Update the Zustand store state
+      useAuthStore.getState().fetchUserData();
+    } else {
+      console.log('Login failed');
     }
-    authStoreActions.setAuth(user as User); // Store user data in Zustand store
-    return { status: 'success', message: 'Login successful' };
-  } else {
-    return { status: 'error', message: response.message || 'Login failed' };
+  } catch (error) {
+    console.error('Error logging in:', error);
   }
 };
 

@@ -1,29 +1,34 @@
 import { create } from 'zustand';
 import { User } from '../services/types/user.types';
 
-// Define types for the authentication store
-type AuthStore =
-  | {
-      isAuthenticated: true;
-      user: User;
-    }
-  | {
-      isAuthenticated: false | null;
-      user: null;
-    };
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  fetchUserData: () => void;
+  clearUserData: () => void; // New method to clear user data
+}
 
-// Create Zustand store for managing authentication state
-export const useAuthStore = create<AuthStore>(() => ({
-  isAuthenticated: null,
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-}));
+  isAuthenticated: false,
+  fetchUserData: async () => {
+    try {
+      const response = await fetch('/api/user/me', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
 
-// Actions to manage authentication state
-export const authStoreActions = {
-  setAuth: (user: User) => {
-    useAuthStore.setState({ isAuthenticated: true, user });
+      if (response.ok) {
+        const data = await response.json();
+        set({ user: data, isAuthenticated: true });
+      } else {
+        set({ user: null, isAuthenticated: false });
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      set({ user: null, isAuthenticated: false });
+    }
   },
-  clearAuth: () => {
-    useAuthStore.setState({ isAuthenticated: false, user: null });
-  },
-};
+  clearUserData: () => set({ user: null, isAuthenticated: false }),
+}));

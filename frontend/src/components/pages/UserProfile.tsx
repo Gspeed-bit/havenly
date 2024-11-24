@@ -1,23 +1,25 @@
+import React, { useEffect } from 'react';
 import { useAuthStore } from '../../store/auth';
-import React from 'react';
+
 const UserProfile = () => {
-  // Accessing the user from the Zustand store
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, user, fetchUserData } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      fetchUserData(); // Fetch user data if the user is authenticated
+    }
+  }, [isAuthenticated, user, fetchUserData]);
+
+  if (!isAuthenticated) {
+    return <div>Please log in.</div>;
+  }
 
   return (
     <div>
-      {isAuthenticated && user ? (
-        <div>
-          <h1>
-            {user.firstName} {user.lastName}
-          </h1>
-          <p>Email: {user.email}</p>
-          <p>Phone: {user.phoneNumber}</p>
-        </div>
-      ) : (
-        <p>User is not logged in</p>
-      )}
+      <h1>Welcome, {user?.firstName}!</h1>
+      <p>Email: {user?.email}</p>
+      <p>Username: {user?.phoneNumber}</p>
+      {/* You can render more user data here */}
     </div>
   );
 };

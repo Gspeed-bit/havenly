@@ -1,59 +1,63 @@
 import React, { useState } from 'react';
-import { login, logOutUser } from '../../../services/auth';
+import { loginUser, logoutUser } from '../../../services/auth';
 import { useAuthStore } from '../../../store/auth';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const { isAuthenticated } = useAuthStore((state) => state);
+  const [error, setError] = useState('');
+  const { user, isAuthenticated } = useAuthStore();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const credentials = { email, password };
+    setError(''); // Reset error on new login attempt
 
-    const result = await login(credentials);
+    if (!email || !password) {
+      console.log(error);
+      setError('Please enter both email and password.');
+      return;
+    }
 
-    if (result.status === 'success') {
-      console.log('Login successful');
-    } else {
-      setErrorMessage(result.message);
+    try {
+      await loginUser(email, password);
+      // Handle success (e.g., navigate to another page)
+    } catch (error) {
+      console.log(error);
+      setError('Login failed. Please try again.');
     }
   };
 
-  if (isAuthenticated) {
-    return (
-      <div>
-        <h2>Welcome, You are logged in!</h2>
-        <button onClick={logOutUser}>Log Out</button>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
+    <div className='login-container'>
+      {!isAuthenticated ? (
         <div>
-          <label>Email</label>
+          <h2>Login</h2>
           <input
             type='email'
+            placeholder='Email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
+            className='input-field'
           />
-        </div>
-        <div>
-          <label>Password</label>
           <input
             type='password'
+            placeholder='Password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            className='input-field'
           />
+          <button onClick={handleLogin} className='login-button'>
+            Login
+          </button>
         </div>
-        {errorMessage && <div className='error'>{errorMessage}</div>}
-        <button type='submit'>Login</button>
-      </form>
+      ) : (
+        <div>
+          <h2>Welcome, {user?.firstName}</h2>
+          <button onClick={logoutUser} className='logout-button'>
+            Logout
+          </button>
+        </div>
+      )}
     </div>
   );
 };
