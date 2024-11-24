@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { login, logOutUser } from '../../../services/auth';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore } from '../../../store/auth';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');

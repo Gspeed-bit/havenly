@@ -1,5 +1,5 @@
 import { useAuthStore } from '../../store/auth';
-
+import React from 'react';
 const UserProfile = () => {
   // Accessing the user from the Zustand store
   const user = useAuthStore((state) => state.user);
