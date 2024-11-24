@@ -29,11 +29,10 @@ export default function Page() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
       <MainContent />
-<div className='flex flex-col justify-center items-center '>
-  
+      <div className='flex flex-col justify-center items-center '>
         <LoginForm />
         <UserProfile />
-</div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { login, logOutUser } from '../../../services/auth';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../store/auth';
 
 const LoginForm = () => {
@@ -8,7 +7,6 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const { isAuthenticated } = useAuthStore((state) => state);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +15,7 @@ const LoginForm = () => {
     const result = await login(credentials);
 
     if (result.status === 'success') {
-      router.push('/'); // Redirect to the dashboard page
+      console.log('Login successful');
     } else {
       setErrorMessage(result.message);
     }

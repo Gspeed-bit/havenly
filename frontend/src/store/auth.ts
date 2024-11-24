@@ -2,19 +2,12 @@ import { create } from 'zustand';
 import { User } from '../services/types/user.types';
 
 // Define types for the authentication store
-type AuthStore =
-  | {
-      isAuthenticated: true;
-      user: User;
-    setAuth: (user: User) => void;
-    clearAuth: () => void;
-  }
-  | {
-      isAuthenticated: false | null;
-      user: null;
-      setAuth: (user: User) => void;
-      clearAuth: () => void;
-    };
+type AuthStore = {
+  isAuthenticated: boolean; // boolean, indicating whether the user is authenticated or not
+  user: User | null; // The user object or null if not authenticated
+  setAuth: (user: User) => void; // Function to set authenticated user
+  clearAuth: () => void; // Function to clear authentication state
+};
 
 // Create Zustand store for managing authentication state
 export const useAuthStore = create<AuthStore>((set) => {
@@ -35,8 +28,3 @@ export const useAuthStore = create<AuthStore>((set) => {
     },
   };
 });
-
-export const authStoreActions = {
-  setAuth: (user: User) => useAuthStore.getState().setAuth(user),
-  clearAuth: () => useAuthStore.getState().clearAuth(),
-};
