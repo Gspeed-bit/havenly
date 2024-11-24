@@ -38,7 +38,7 @@ export const authMiddleware = async (
       decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Token is not valid' });
+    res.status(401).json({ message: 'Token is not valid or has expired' });
   }
 };
 

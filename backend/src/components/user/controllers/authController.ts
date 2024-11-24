@@ -5,10 +5,11 @@ import { Request, Response } from 'express';
 import User from '@components/user/models/userModel'; // Adjust the path as necessary
 import { KEYS } from 'config/config';
 import { StatusCodes } from 'utils/apiResponse';
-import sendResetPasswordEmail, { generateVerificationCode, sendVerificationEmail } from 'utils/emailUtils';
+import sendResetPasswordEmail, {
+  generateVerificationCode,
+  sendVerificationEmail,
+} from 'utils/emailUtils';
 import { sanitizeUser } from 'utils/sanitizeUser';
-
-
 
 // Usage in the registration logic
 export const register = async (req: Request, res: Response) => {
@@ -116,15 +117,17 @@ export const login = async (req: Request, res: Response) => {
       { id: user._id, isAdmin },
       process.env.JWT_SECRET as string,
       {
-        expiresIn: '1h',
+        expiresIn: '15m',
       }
     );
 
-
     // Sanitize the user data before sending it in the response
-    const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password', 'adminCode', 'verificationCode']);
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password', 'adminCode', 'verificationCode']
+    );
 
-    res.json({
+    res.status(StatusCodes.SUCCESS).json({
       message: 'Login successful',
       token,
       user: { ...sanitizedUser, isAdmin },

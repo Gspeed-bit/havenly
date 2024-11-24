@@ -1,34 +1,40 @@
 import { create } from 'zustand';
 import { User } from '../services/types/user.types';
 
-interface AuthState {
-  user: User | null;
+type AuthStore = {
   isAuthenticated: boolean;
-  fetchUserData: () => void;
-  clearUserData: () => void; // New method to clear user data
-}
+  user: User | null;
+  setAuth: (user: User) => void;
+  clearAuth: () => void;
+};
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  fetchUserData: async () => {
-    try {
-      const response = await fetch('/api/user/me', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
+export const useAuthStore = create<AuthStore>((set) => {
+  const isClient = typeof window !== 'undefined'; // Ensure it's client-side
+  const storedUser = isClient ? localStorage.getItem('user') : null;
 
-      if (response.ok) {
-        const data = await response.json();
-        set({ user: data, isAuthenticated: true });
-      } else {
-        set({ user: null, isAuthenticated: false });
+  const initialState = storedUser
+    ? { isAuthenticated: true, user: JSON.parse(storedUser) }
+    : { isAuthenticated: false, user: null };
+
+  return {
+    ...initialState,
+    setAuth: (user: User) => {
+      if (isClient) {
+        localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
       }
-    } catch (error) {
-      console.error('Failed to fetch user data:', error);
-      set({ user: null, isAuthenticated: false });
-    }
-  },
-  clearUserData: () => set({ user: null, isAuthenticated: false }),
-}));
+      set({ isAuthenticated: true, user });
+    },
+    clearAuth: () => {
+      if (isClient) {
+        localStorage.removeItem('user'); // Remove user from localStorage
+      }
+      set({ isAuthenticated: false, user: null });
+    },
+  };
+});
+
+// Export store actions for external usage
+export const authStoreActions = {
+  setAuth: (user: User) => useAuthStore.getState().setAuth(user),
+  clearAuth: () => useAuthStore.getState().clearAuth(),
+};

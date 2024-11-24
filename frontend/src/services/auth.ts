@@ -1,39 +1,33 @@
-import {  useAuthStore } from '../store/auth';
+import { authStoreActions } from '../store/auth';
+import { clearAuthToken, setAuthToken, isBrowser } from '../config/helpers';
+import { apiHandler } from '../config/server';
+import { LoginCredentials, LoginResponse, User } from './types/user.types';
 
-// Log the user out: clear token and reset auth state, only if in the browser
-export const logoutUser = () => {
-  // Remove the JWT token from localStorage
-  localStorage.removeItem('authToken');
-
-  // Reset the Zustand store state (clear user data and authentication state)
-  useAuthStore.getState().clearUserData();
-
+// Log the user out: clear token and reset auth state
+export const logOutUser = () => {
+  if (isBrowser()) {
+    clearAuthToken();
+  }
+  authStoreActions.clearAuth();
 };
 
 // Login function
-export const loginUser = async (email: string, password: string) => {
-  try {
-    const response = await fetch('/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+export const login = async (credentials: LoginCredentials) => {
+  const response = await apiHandler<LoginResponse>(
+    '/login',
+    'POST',
+    credentials
+  );
 
-    if (response.ok) {
-      const data = await response.json();
-      const { token } = data;
+  if (response.status === 'success') {
+    const { token, user } = response.data;
 
-      // Store the JWT token in localStorage
-      localStorage.setItem('authToken', token);
-
-      // Update the Zustand store state
-      useAuthStore.getState().fetchUserData();
-    } else {
-      console.log('Login failed');
+    if (isBrowser()) {
+      setAuthToken(token); // Save the token in localStorage
     }
-  } catch (error) {
-    console.error('Error logging in:', error);
+    authStoreActions.setAuth(user as User); // Update Zustand store
+    return { status: 'success', message: 'Login successful' };
+  } else {
+    return { status: 'error', message: response.message || 'Login failed' };
   }
 };
-
-

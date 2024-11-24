@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import keys from './keys';
-import { logoutUser } from '../services/auth';
+import { logOutUser } from '../services/auth';
+
 export interface SuccessResponse<T> {
   status: 'success';
   data: T;
@@ -47,7 +48,7 @@ export const apiHandler = async <T>(
       const axiosError = error as AxiosError<ErrorResponse>;
 
       if (axiosError.response?.status === 401) {
-        logoutUser();
+        logOutUser();
       }
 
       return {

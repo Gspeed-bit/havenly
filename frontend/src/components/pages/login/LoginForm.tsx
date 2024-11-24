@@ -1,63 +1,72 @@
-import React, { useState } from 'react';
-import { loginUser, logoutUser } from '../../../services/auth';
+import React, { useState, useEffect } from 'react';
+import { login, logOutUser } from '../../../services/auth';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../store/auth';
+import TokenExpirationChecker from '../../../components/pages/login/TokenExpirationChecker'; // Import the TokenExpirationChecker
 
 const LoginForm = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { user, isAuthenticated } = useAuthStore();
+  const [errorMessage, setErrorMessage] = useState('');
+  const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Reset error on new login attempt
+    const credentials = { email, password };
 
-    if (!email || !password) {
-      console.log(error);
-      setError('Please enter both email and password.');
-      return;
-    }
+    const result = await login(credentials);
 
-    try {
-      await loginUser(email, password);
-      // Handle success (e.g., navigate to another page)
-    } catch (error) {
-      console.log(error);
-      setError('Login failed. Please try again.');
+    if (result.status === 'success') {
+      router.push('/'); // Redirect to the dashboard page
+    } else {
+      setErrorMessage(result.message);
     }
   };
 
+  if (!hydrated) return null; // Avoid rendering before hydration
+
+  if (isAuthenticated) {
+    return (
+      <div>
+        <h2>Welcome, You are logged in!</h2>
+        <button onClick={logOutUser}>Log Out</button>
+        <TokenExpirationChecker />{' '}
+        {/* Add the TokenExpirationChecker component */}
+      </div>
+    );
+  }
+
   return (
-    <div className='login-container'>
-      {!isAuthenticated ? (
+    <div>
+      <form onSubmit={handleSubmit}>
         <div>
-          <h2>Login</h2>
+          <label>Email</label>
           <input
             type='email'
-            placeholder='Email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className='input-field'
+            required
           />
+        </div>
+        <div>
+          <label>Password</label>
           <input
             type='password'
-            placeholder='Password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className='input-field'
+            required
           />
-          <button onClick={handleLogin} className='login-button'>
-            Login
-          </button>
         </div>
-      ) : (
-        <div>
-          <h2>Welcome, {user?.firstName}</h2>
-          <button onClick={logoutUser} className='logout-button'>
-            Logout
-          </button>
-        </div>
-      )}
+        {errorMessage && <div className='error'>{errorMessage}</div>}
+        <button type='submit'>Login</button>
+      </form>
     </div>
   );
 };
