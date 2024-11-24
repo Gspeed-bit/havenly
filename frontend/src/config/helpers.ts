@@ -1,4 +1,3 @@
-declare const window: any;
 export const isBrowser = () => typeof window !== 'undefined';
 
 const authTokenKey = 'token';
