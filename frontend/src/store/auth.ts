@@ -6,24 +6,37 @@ type AuthStore =
   | {
       isAuthenticated: true;
       user: User;
-    }
+    setAuth: (user: User) => void;
+    clearAuth: () => void;
+  }
   | {
       isAuthenticated: false | null;
       user: null;
+      setAuth: (user: User) => void;
+      clearAuth: () => void;
     };
 
 // Create Zustand store for managing authentication state
-export const useAuthStore = create<AuthStore>(() => ({
-  isAuthenticated: null,
-  user: null,
-}));
+export const useAuthStore = create<AuthStore>((set) => {
+  const storedUser = localStorage.getItem('user');
+  const initialState = storedUser
+    ? { isAuthenticated: true, user: JSON.parse(storedUser) }
+    : { isAuthenticated: false, user: null };
 
-// Actions to manage authentication state
+  return {
+    ...initialState,
+    setAuth: (user: User) => {
+      localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
+      set({ isAuthenticated: true, user });
+    },
+    clearAuth: () => {
+      localStorage.removeItem('user'); // Remove user from localStorage
+      set({ isAuthenticated: false, user: null });
+    },
+  };
+});
+
 export const authStoreActions = {
-  setAuth: (user: User) => {
-    useAuthStore.setState({ isAuthenticated: true, user });
-  },
-  clearAuth: () => {
-    useAuthStore.setState({ isAuthenticated: false, user: null });
-  },
+  setAuth: (user: User) => useAuthStore.getState().setAuth(user),
+  clearAuth: () => useAuthStore.getState().clearAuth(),
 };

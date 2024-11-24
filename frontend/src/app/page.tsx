@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Header from '../components/pages/Header';
 import Navigation from '../components/pages/Navigation';
 import MainContent from '../components/pages/MainContent';
+import LoginForm from '../components/pages/login/LoginForm';
+import UserProfile from '../components/pages/UserProfile';
 
 export default function Page() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,6 +29,11 @@ export default function Page() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
       <MainContent />
+<div className='flex flex-col justify-center items-center '>
+  
+        <LoginForm />
+        <UserProfile />
+</div>
     </div>
   );
 }

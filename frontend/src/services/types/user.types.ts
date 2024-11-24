@@ -16,3 +16,20 @@ export interface User {
   adminCode?: string;
   isAdmin: boolean;
 }
+
+// types/user.types.ts
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    isVerified: boolean;
+  };
+}
