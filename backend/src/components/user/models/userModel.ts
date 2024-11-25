@@ -8,6 +8,7 @@ export interface IUser {
   phoneNumber: string;
   email: string;
   password: string;
+  imgUrl?: string;
   confirmPassword: string;
   isVerified: boolean;
   verificationCode: string | null;
@@ -35,6 +36,15 @@ const userSchema: Schema = new Schema(
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
+    },
+    imgUrl: {
+      type: String,
+      validate: {
+        validator: function (value: string) {
+          return /^https?:\/\/[^\s]+$/.test(value); // Basic URL validation
+        },
+        message: 'Please provide a valid URL.',
+      },
     },
     password: { type: String, required: true },
     confirmPassword: { type: String },

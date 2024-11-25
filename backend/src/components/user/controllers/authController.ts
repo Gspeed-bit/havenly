@@ -117,7 +117,7 @@ export const login = async (req: Request, res: Response) => {
       { id: user._id, isAdmin },
       process.env.JWT_SECRET as string,
       {
-        expiresIn: '15m',
+        expiresIn: '1h',
       }
     );
 

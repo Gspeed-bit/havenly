@@ -5,7 +5,8 @@ type AuthStore = {
   isAuthenticated: boolean;
   user: User | null;
   setAuth: (user: User) => void;
-  clearAuth: () => void;
+  clearAuth: () => void
+  logout: () => void;
 };
 
 export const useAuthStore = create<AuthStore>((set) => {
@@ -30,8 +31,15 @@ export const useAuthStore = create<AuthStore>((set) => {
       }
       set({ isAuthenticated: false, user: null });
     },
+    logout: () => {
+      if (isClient) {
+        localStorage.removeItem('user'); // Clear user from localStorage
+      }
+      set({ isAuthenticated: false, user: null });
+    },
   };
 });
+
 
 // Export store actions for external usage
 export const authStoreActions = {

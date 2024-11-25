@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import Icon from '../icons/Icon';
+import { PropertyCard } from './property/PropertyCard';
 
 const MainContent = () => {
   return (
@@ -155,8 +156,46 @@ const MainContent = () => {
               </div>
             </CardContent>
           </Card>
-          <div className='absolute -right-8 -bottom-8 w-24 h-24 bg-[#4A8CFF] rounded-full opacity-20' />
+          <div className='hidden lg:flex absolute -right-8 -bottom-8 w-24 h-24 bg-[#4A8CFF] rounded-full opacity-20' />
         </div>
+      </div>
+      <div className='grid mt-10 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <PropertyCard
+          image='/room.png'
+          title='Tranquil Haven in the Woods'
+          price={5970}
+          location='123 Wright Courtberlin, WA 98168'
+          beds={4}
+          baths={3}
+          tag={{ label: 'Popular', variant: 'destructive' }}
+        />
+        <PropertyCard
+          image='/room.png'
+          title='Serene Retreat by the Lake'
+          price={1970}
+          location='1654 Jehovah Drive, VA 22408'
+          beds={3}
+          baths={2}
+          tag={{ label: 'New Listing', variant: 'default' }}
+        />
+        <PropertyCard
+          image='/room.png'
+          title='Charming Cottage in the Meadow'
+          price={3450}
+          location='1608 Centenial Farm RoadPoston, 51537'
+          beds={4}
+          baths={4}
+          tag={{ label: 'Discounted Price', variant: 'secondary' }}
+        />
+        <PropertyCard
+          image='/room.png'
+          title='Grand Estate'
+          price={2389}
+          location='123 Wright Court'
+          beds={4}
+          baths={3}
+          tag={{ label: 'Popular', variant: 'destructive' }}
+        />
       </div>
     </main>
   );

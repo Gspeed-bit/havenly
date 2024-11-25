@@ -85,7 +85,7 @@ body {
 /* ========================================== TAILWIND STYLES */
 @layer utilities {
   .big-wrapper {
-    @apply w-full max-w-[80rem] p-8 md:px-20 lg:mx-auto xl:px-0;
+    @apply w-full max-w-[90rem]  md:px-14 lg:mx-auto xl:px-0;
   }
   .wrapper {
     @apply w-full max-w-[80rem] p-5 md:px-10 lg:mx-auto xl:px-0;
