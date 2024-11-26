@@ -14,6 +14,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import Icon from '../icons/Icon';
 import { PropertyCard } from './property/PropertyCard';
+import { TrustBanner } from './TrustBanner';
 
 const MainContent = () => {
   return (
@@ -69,15 +70,6 @@ const MainContent = () => {
                 <div className='w-8 h-1 bg-veryLightGray rounded-full' />
                 <div className='w-8 h-1 bg-veryLightGray rounded-full' />
               </div>
-            </div>
-            <div className='absolute -top-7 -right-3 md:-top-10 md:right-32'>
-              <picture>
-                <img
-                  src='/Ellipse.png'
-                  alt='Rezilla Logo'
-                  className='text-white  md:w-15 md:h-15'
-                />
-              </picture>
             </div>
           </div>
         </div>
@@ -156,9 +148,11 @@ const MainContent = () => {
               </div>
             </CardContent>
           </Card>
-          <div className='hidden lg:flex absolute -right-8 -bottom-8 w-24 h-24 bg-[#4A8CFF] rounded-full opacity-20' />
+          <div className='hidden lg:flex absolute -right-3 -bottom-8 w-24 h-24 bg-[#4A8CFF] rounded-full opacity-20' />
         </div>
       </div>
+      <TrustBanner />
+      {/* Property Cards */}
       <div className='grid mt-10 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
         <PropertyCard
           image='/room.png'

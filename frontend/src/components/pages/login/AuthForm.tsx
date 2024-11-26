@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { login } from '../../../services/auth';
+import { login, signUp } from '../../../services/auth';
 import {
   Tabs,
   TabsContent,
@@ -26,6 +26,8 @@ import { Button } from '@components/ui/button';
 import { Label } from '@components/ui/label';
 import { Checkbox } from '@components/ui/checkbox';
 import { Toaster, toast } from 'sonner'; // Import Sonner components
+import { ThreeDots } from 'react-loader-spinner'; // Add loader
+import useLoading from '../../hooks/useLoading'; // Import the custom hook
 
 export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +42,13 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const router = useRouter();
   const pathname = usePathname();
+  const {
+    loading: loginLoading,
+    startLoading: startLoginLoading,
+    stopLoading: stopLoginLoading,
+  } = useLoading();
+  const { startLoading: startSignUpLoading, stopLoading: stopSignUpLoading } =
+    useLoading();
 
   useEffect(() => {
     if (pathname === '/auth/register') {
@@ -54,65 +63,77 @@ export default function AuthPage() {
     }
   }, [pathname]);
 
-  // Updated handleLoginSubmit method
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+const handleLoginSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const loginData = { email, password };
+
+  startLoginLoading(); // Start loading
+  try {
+    const result = await login(loginData);
+    if (result.status === 'success') {
+      toast.success('Login successful! Redirecting...');
+
+      if (rememberMe) {
+        localStorage.setItem('email', email);
+      } else {
+        localStorage.removeItem('email');
+      }
+
+      setTimeout(() => {
+        router.push('/'); // Redirect to dashboard
+      }, 1500);
+    } else if (result.message === 'Account not verified') {
+      toast.error(
+        'Your account is not verified. Redirecting to verification...'
+      );
+      setTimeout(() => {
+        router.push('/auth/verify'); // Redirect to verification page
+      }, 1500);
+    } else {
+      toast.error(result.message || 'Login failed! Please try again.');
+    }
+  } catch {
+    toast.error('An unexpected error occurred.');
+  } finally {
+    stopLoginLoading(); // Stop loading
+  }
+};
+
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const credentials = { email, password };
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
 
+    const user = {
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password,
+      confirmPassword,
+      adminCode,
+    };
+
+    startSignUpLoading(); // Start loading
     try {
-      const result = await login(credentials);
+      const result = await signUp(user);
       if (result.status === 'success') {
-        toast.success('Login successful! Redirecting...');
-
-        // Save email to localStorage if "Remember Me" is checked
-        if (rememberMe) {
-          localStorage.setItem('email', email);
-        } else {
-          localStorage.removeItem('email'); // Clear email if "Remember Me" is unchecked
-        }
-
+        toast.success('Sign Up successful! Redirecting...');
         setTimeout(() => {
-          router.push('/'); // Redirect to dashboard
+          router.push('/verify'); // Redirect after successful sign-up
         }, 1500);
       } else {
-        toast.error(result.message || 'Login failed! Please try again.');
+        toast.error(result.message || 'Sign Up failed! Please try again.');
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
       toast.error('An unexpected error occurred.');
+    } finally {
+      stopSignUpLoading(); // Stop loading
     }
   };
-
-  // const handleSignUpSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (password !== confirmPassword) {
-  //     toast.error("Passwords don't match");
-  //     return;
-  //   }
-
-  //   const user = {
-  //     firstName,
-  //     lastName,
-  //     phoneNumber,
-  //     email,
-  //     password,
-  //     confirmPassword,
-  //     adminCode,
-  //   };
-
-  //   try {
-  //     const result = await signUp(user); // Call the signUp function
-  //     if (result.status === 'success') {
-  //       toast.success('Sign Up successful! Redirecting...');
-  //       setTimeout(() => {
-  //         router.push('/'); // Redirect after successful sign-up
-  //       }, 1500);
-  //     } else {
-  //       toast.error(result.message || 'Sign Up failed! Please try again.');
-  //     }
-  //   } catch {
-  //     toast.error('An unexpected error occurred.');
-  //   }
-  // };
 
   const handleTabSwitch = (tab: 'login' | 'signup') => {
     setActiveTab(tab); // Update the active tab state
@@ -209,15 +230,27 @@ export default function AuthPage() {
                     </div>
                   </div>
                   <Button
-                    className='w-full mt-6 bg-primary_main hover:bg-purple'
                     type='submit'
+                    className={`w-full mt-5 py-3 font-bold text-white bg-primary_main hover:bg-purple rounded-lg shadow-lg hover:bg-lightPrimaryfocus:outline-none ${
+                      loginLoading ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
+                    disabled={loginLoading}
                   >
-                    Login
+                    {loginLoading ? (
+                      <ThreeDots
+                        visible
+                        height='20'
+                        width='50'
+                        color='#ffffff'
+                      />
+                    ) : (
+                      'Login'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
               <TabsContent value='signup'>
-                <form>
+                <form onSubmit={handleSignUpSubmit}>
                   <div className='space-y-4'>
                     <div className='w-full flex items-center gap-3'>
                       <div className='space-y-2 w-1/2'>
@@ -334,10 +367,22 @@ export default function AuthPage() {
                     </div>
                   </div>
                   <Button
-                    className='w-full mt-6 bg-primary_main hover:bg-purple'
                     type='submit'
+                    className={`w-full mt-5 py-3 font-bold text-white bg-primary_main hover:bg-purple rounded-lg shadow-lg hover:bg-lightPrimaryfocus:outline-none ${
+                      loginLoading ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
+                    disabled={loginLoading}
                   >
-                    Sign Up
+                    {loginLoading ? (
+                      <ThreeDots
+                        visible
+                        height='20'
+                        width='50'
+                        color='#ffffff'
+                      />
+                    ) : (
+                      'Sign Up'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -365,7 +410,7 @@ export default function AuthPage() {
             <Link
               aria-label='Forgot password'
               href='/forgot-password'
-              className='text-primary  hover:underline'
+              className='text-primary text-sm hover:underline'
             >
               {activeTab === 'login' ? ' Forgot password?' : ''}
             </Link>
