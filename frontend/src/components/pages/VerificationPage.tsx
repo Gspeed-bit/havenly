@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { verifyAccount, requestNewVerificationCode } from '@/services/auth';
+import { useAuthStore } from '@/store/auth';
 
 export default function VerificationPage() {
   const [email, setEmail] = useState('');
@@ -25,6 +26,32 @@ export default function VerificationPage() {
   const [success, setSuccess] = useState('');
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const user = useAuthStore((state) => state.user); // Zustand auth store
+
+  useEffect(() => {
+    const from = searchParams.get('from');
+
+    // 2. If user is logged in but not verified
+    if (user && !user.isVerified) {
+      // Redirect to /auth/verify unless already there
+      if (!pathname.includes('/auth/verify')) {
+        router.replace(`/auth/verify?from=${pathname}`);
+      }
+      return;
+    }
+
+    // 3. If user is verified
+    if (user?.isVerified) {
+      // Prevent access to verification-related pages
+      if (
+        pathname.includes('/auth/verify') ||
+        pathname.includes('/verification-code')
+      ) {
+        router.replace(from || '/'); // Redirect to "from" URL or homepage if none
+      }
+    }
+  }, [pathname, searchParams, router, user]);
 
   // Determine active tab based on pathname
   const getTabValueFromPathname = () => {
@@ -69,7 +96,7 @@ export default function VerificationPage() {
         }
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError('An unexpected error occurred.');
     } finally {
       setIsLoading(false);
@@ -94,7 +121,7 @@ export default function VerificationPage() {
         setError(response.message);
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError('An unexpected error occurred.');
     } finally {
       setIsLoading(false);
@@ -182,7 +209,10 @@ export default function VerificationPage() {
                 {error}
                 {/* Show button for invalid/expired code */}
                 {(error.includes('Invalid verification code') ||
-                  error.includes('expired')) && (
+                  error.includes('expired') ||
+                  error.includes(
+                    'No verification code found for this user'
+                  )) && (
                   <Button
                     variant='link'
                     className='ml-2 text-blue-500'

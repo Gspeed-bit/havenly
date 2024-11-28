@@ -1,15 +1,19 @@
 import { authStoreActions, useAuthStore } from '../store/auth';
 import { setAuthToken, isBrowser } from '../config/helpers';
 import { apiHandler, ApiResponse } from '../config/server';
-import { LoginCredentials, LoginResponse, User, VerificationCodeResponse, VerifyAccountResponse } from './types/user.types';
+import {
+  LoginCredentials,
+  LoginResponse,
+  User,
+  VerificationCodeResponse,
+  VerifyAccountResponse,
+} from './types/user.types';
 import { SignUpRequest, SignUpResponse } from './types/user.types';
-
 
 // Log the user out: clear token and reset auth state
 export const logOutUser = () => {
   useAuthStore.getState().logout(); // Call the logout method
 };
-
 
 // Login function
 export const login = async (loginData: LoginCredentials) => {
@@ -28,10 +32,6 @@ export const login = async (loginData: LoginCredentials) => {
   }
 };
 
-
-
-
-
 // Signup function
 export const signUp = async (
   userData: SignUpRequest
@@ -48,11 +48,10 @@ export const signUp = async (
       return { status: 'error', message: response.message || 'Signup failed' };
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return { status: 'error', message: 'An unexpected error occurred.' };
   }
 };
-
 
 export const verifyAccount = async (data: {
   email: string;
@@ -71,5 +70,3 @@ export const requestNewVerificationCode = async (
     { email }
   );
 };
-
-

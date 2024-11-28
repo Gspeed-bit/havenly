@@ -157,20 +157,24 @@ export const verify = async (req: Request, res: Response) => {
         .json({ message: 'User not found' });
     }
 
-    // Check if the user has a verification code stored
+    if (user.isVerified) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'User is already verified' });
+    }
+
     if (!user.verificationCode) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'No verification code found for this user' });
     }
-    // Directly compare the stored verification code with the user input
+
     if (user.verificationCode !== verificationCode) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'Invalid verification code' });
     }
 
-    // Check if the verification code has expired
     if (
       !user.verificationCodeExpiration ||
       new Date() > user.verificationCodeExpiration
@@ -180,10 +184,9 @@ export const verify = async (req: Request, res: Response) => {
         .json({ message: 'Verification code expired' });
     }
 
-    // Proceed with verifying the user's account
     user.isVerified = true;
-    user.verificationCode = null; // Remove the verification code after successful verification
-    user.verificationCodeExpiration = null; // Clear expiration time as well
+    user.verificationCode = null;
+    user.verificationCodeExpiration = null;
     await user.save();
 
     res.json({ message: 'Account verified successfully' });
@@ -198,40 +201,64 @@ export const requestNewCode = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
-    // Find the user by email
+    // Log incoming request
+    console.log(`Request received for email: ${email}`);
+
+    // Find user by email
     const user = await User.findOne({ email });
+
+    // Check if user exists
     if (!user) {
+      console.log(`No user found with email: ${email}`);
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'User not found.' });
     }
 
-    // Generate a new verification code using crypto
-    const newVerificationCode = generateVerificationCode(6); // Generates a 6-character code
+    // Log user data from the database
+    console.log(`User found: ${JSON.stringify(user, null, 2)}`);
 
-    // Update the user's verification code and expiration time
-    user.verificationCode = newVerificationCode;
+    // Check if the user's email is verified
+    if (user.isVerified) {
+      console.log(`User ${email} is already verified.`);
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({
+          message: 'User email is already verified. Request not allowed.',
+        });
+    }
+
+    // Generate a new verification code
+    const newVerificationCode = generateVerificationCode(6);
     const codeExpirationMinutes = parseInt(
       process.env.CODE_EXPIRATION_MINUTES || '2',
       10
     );
+
+    // Update user document with the new verification code and expiration
+    user.verificationCode = newVerificationCode;
     user.verificationCodeExpiration = new Date(
       Date.now() + codeExpirationMinutes * 60 * 1000
-    ); // Set expiration time
+    );
 
     await user.save();
 
-    // Send the new verification code email
+    // Send the new code to the user's email
+    console.log(`Sending new verification code to ${email}`);
     await sendVerificationEmail(email, newVerificationCode);
 
-    res.json({ message: 'New verification code sent to your email.' });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Error requesting new code.', error });
+    return res.status(StatusCodes.SUCCESS).json({
+      message: 'New verification code sent to your email.',
+    });
+  } catch (error) {
+    console.error('Error in requestNewCode:', error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error requesting new code.',
+      error,
+    });
   }
 };
+
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { token } = req.params;
