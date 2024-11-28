@@ -87,7 +87,7 @@ const handleLoginSubmit = async (e: React.FormEvent) => {
         'Your account is not verified. Redirecting to verification...'
       );
       setTimeout(() => {
-        router.push('/auth/verify'); // Redirect to verification page
+        router.push('/auth/verification-code'); // Redirect to verification page
       }, 1500);
     } else {
       toast.error(result.message || 'Login failed! Please try again.');

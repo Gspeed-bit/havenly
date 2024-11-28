@@ -64,9 +64,23 @@ export const verifyAccount = async (data: {
 export const requestNewVerificationCode = async (
   email: string
 ): Promise<ApiResponse<VerificationCodeResponse>> => {
-  return apiHandler<VerificationCodeResponse>(
-    '/verification-code/request',
-    'POST',
-    { email }
-  );
+  try {
+    return await apiHandler<VerificationCodeResponse>(
+      '/verification-code/request',
+      'POST',
+      { email }
+    );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.response && error.response.status === 429) {
+      // If rate limit exceeded, propagate the error with a custom message
+      throw new Error('Too many requests, please try again later.');
+    } else {
+      // For other errors, throw a generic message or log them
+      throw new Error(
+        error?.response?.data?.message || 'An unexpected error occurred.'
+      );
+    }
+  }
 };
+

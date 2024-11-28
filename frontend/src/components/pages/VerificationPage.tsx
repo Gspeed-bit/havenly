@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation'; // Remove useSearchParams
 import {
   Card,
   CardContent,
@@ -26,17 +26,21 @@ export default function VerificationPage() {
   const [success, setSuccess] = useState('');
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [from, setFrom] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user); // Zustand auth store
 
   useEffect(() => {
-    const from = searchParams.get('from');
+    // Use URLSearchParams to extract query parameters directly from the URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const fromParam = searchParams.get('from');
+    setFrom(fromParam);
 
     // 2. If user is logged in but not verified
     if (user && !user.isVerified) {
       // Redirect to /auth/verify unless already there
-      if (!pathname.includes('/auth/verify')) {
-        router.replace(`/auth/verify?from=${pathname}`);
+      if (!pathname.includes('/auth/verification-code')) {
+        router.replace(`/auth/verification-code?from=${pathname}`);
       }
       return;
     }
@@ -48,10 +52,10 @@ export default function VerificationPage() {
         pathname.includes('/auth/verify') ||
         pathname.includes('/verification-code')
       ) {
-        router.replace(from || '/'); // Redirect to "from" URL or homepage if none
+        router.replace(fromParam || '/'); // Redirect to "from" URL or homepage if none
       }
     }
-  }, [pathname, searchParams, router, user]);
+  }, [pathname, router, user]);
 
   // Determine active tab based on pathname
   const getTabValueFromPathname = () => {
@@ -120,9 +124,15 @@ export default function VerificationPage() {
       } else {
         setError(response.message);
       }
-    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       console.log(err);
-      setError('An unexpected error occurred.');
+      // If the error is related to too many requests
+      if (err.message === 'Too many requests, please try again later.') {
+        setError('Too many requests, please try again later.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }

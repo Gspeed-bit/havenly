@@ -47,6 +47,16 @@ export const apiHandler = async <T>(
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
 
+      // Handle 429 error (rate-limiting)
+      if (axiosError.response?.status === 429) {
+        return {
+          status: 'error',
+          message: 'Too many requests, please try again later.',
+          code: '429',
+        };
+      }
+
+      // Handle other errors like 401
       if (axiosError.response?.status === 401) {
         logOutUser();
       }
