@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // Define the IUser TypeScript interface
 export interface IUser {
+  save(): unknown;
   _id: string;
   firstName: string;
   lastName: string;

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ICompany } from './companyModel'; 
 
-interface IProperty extends Document {
+export interface IProperty extends Document {
   title: string;
   description: string;
   images: string[];

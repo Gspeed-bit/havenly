@@ -1,9 +1,4 @@
-import { apiHandler } from "@/config/server";
-
-interface UploadImageResponse {
-  url: string;
-  id: string;
-}
+import { apiHandler } from '@/config/server';
 
 // Interface for the data that will be passed to the image upload API
 export interface ImageUploadData {
@@ -12,6 +7,12 @@ export interface ImageUploadData {
   image: File; // The actual image file
 }
 
+interface UploadImageResponse {
+  url: string;
+  id: string;
+}
+
+// Function to upload image to the server
 export const uploadImageToServer = async ({
   image,
   type,
@@ -23,12 +24,14 @@ export const uploadImageToServer = async ({
   formData.append('entityId', entityId);
 
   try {
+    // Sending the image data to the backend using the apiHandler function
     const response = await apiHandler<UploadImageResponse>(
       '/image/upload',
       'POST',
       formData
     );
 
+    // Check if the response status is successful
     if (response.status === 'success') {
       return response.data;
     } else {
@@ -36,6 +39,7 @@ export const uploadImageToServer = async ({
     }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    // Handle error if the request fails
     throw new Error(error.message || 'Image upload failed.');
   }
 };

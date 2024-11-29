@@ -1,3 +1,4 @@
+'use client';
 import {
   ImageUploadData,
   uploadImageToServer,
@@ -6,7 +7,7 @@ import React, { useState } from 'react';
 
 interface ImageUploadProps {
   entityId: string; // This will be the userId or propertyId
-  type: 'user_profile' | 'property_image'; // Type of image (user profile or property)
+  type: 'user_image' | 'property_image'; // Type of image (user profile or property)
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ entityId, type }) => {
