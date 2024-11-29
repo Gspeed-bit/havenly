@@ -6,7 +6,7 @@ const sendResetPasswordEmail = async (
   email: string,
   resetPasswordToken: string
 ) => {
-  const resetUrl = `${process.env.WEB_APP_LINK}/reset-password/${resetPasswordToken}`;
+  const resetUrl = `${process.env.WEB_APP_LINK}/forgot-password/${resetPasswordToken}`;
 
   // Create reusable transporter object using SMTP transport
   const transporter = nodemailer.createTransport({

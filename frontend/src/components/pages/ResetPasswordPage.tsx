@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation'; // Use useParams for dynamic route params
 import { requestResetPassword, resetPassword } from '@/services/auth'; // API functions
 import {
   Card,
@@ -18,11 +18,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // Import useRouter from next/router
 
 const ResetPasswordPage = () => {
-  const [activeTab, setActiveTab] = useState<'request' | 'reset'>('request');
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const { token } = useParams(); // Access the token from the URL
+  const [activeTab, setActiveTab] = useState<'request' | 'reset'>('request'); // Default to 'request' tab
 
   // Request Reset Password State
   const [email, setEmail] = useState('');
@@ -55,6 +55,7 @@ const ResetPasswordPage = () => {
   };
 
   // Handle Reset Password
+  const router = useRouter(); // Initialize the router
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -71,10 +72,18 @@ const ResetPasswordPage = () => {
 
     if (response.status === 'success') {
       setResetMessage('Password has been reset!');
+      router.push('/auth/login'); // Redirect to login page
     } else {
       setResetError(response.message);
     }
   };
+
+  // Automatically switch to reset tab if token is present
+  useEffect(() => {
+    if (token) {
+      setActiveTab('reset'); // Switch to 'reset' tab if a token is present
+    }
+  }, [token]);
 
   return (
     <div className='flex min-h-screen'>
@@ -98,18 +107,23 @@ const ResetPasswordPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue='request' className='w-full'>
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) =>
+                setActiveTab(value as 'request' | 'reset')
+              }
+              className='w-full'
+            >
               <TabsList className='grid w-full grid-cols-2'>
                 <TabsTrigger
                   value='request'
-                  onClick={() => setActiveTab('request')}
-                  className={activeTab === 'request' ? ' border-blue-500' : ''}
+                  className={activeTab === 'request' ? 'border-blue-500' : ''}
                 >
                   Request Reset
                 </TabsTrigger>
                 <TabsTrigger
                   value='reset'
-                  onClick={() => setActiveTab('reset')}
+                  disabled={!token} // Disable if no token
                   className={
                     activeTab === 'reset' ? 'border-b-2 border-blue-500' : ''
                   }
@@ -120,7 +134,7 @@ const ResetPasswordPage = () => {
 
               <TabsContent value='request'>
                 <CardHeader>
-                  <CardTitle>Reset Password</CardTitle>
+                  <CardTitle>Request Password Reset</CardTitle>
                   <CardDescription>
                     Enter your email to receive a password reset link
                   </CardDescription>
