@@ -39,7 +39,7 @@ export const imageUpload = async (req: Request, res: Response) => {
         return res.status(404).json({ message: 'Property not found' });
       }
     } else {
-      return res.status(400).json({ message: 'Invalid type' });
+      return res.status(400).json({ message: 'Invalid Type' });
     }
 
     // Define folder structure based on entity type and ID
@@ -66,7 +66,7 @@ export const imageUpload = async (req: Request, res: Response) => {
       entity.imgUrl = result.secure_url;
       await entity.save(); // Save the updated user object
     } else if (type === 'property_image' && entity && isProperty(entity)) {
-      // For property images, store the URL in the property's 'images' array
+     
       entity.images.push(result.secure_url);
       await entity.save(); // Save the updated property object
     }
