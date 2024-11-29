@@ -1,55 +1,54 @@
-'use client';
-import {
-  ImageUploadData,
-  uploadImageToServer,
-} from '@/services/upload/imageUploader';
 import React, { useState } from 'react';
+import {
+  uploadImageToServer,
+  ImageUploadData,
+} from '@/services/upload/imageUploader'; // Ensure you import the correct function
 
-interface ImageUploadProps {
-  entityId: string; // This will be the userId or propertyId
-  type: 'user_image' | 'property_image'; // Type of image (user profile or property)
-}
+const ImageUpload: React.FC<{
+  type: 'user_image' | 'property_image';
+  entityId: string;
+}> = ({ type, entityId }) => {
+  const [image, setImage] = useState<File | null>(null); // Image file state
+  const [isUploading, setIsUploading] = useState(false); // Uploading state
+  const [error, setError] = useState<string | null>(null); // Error state
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null); // URL of uploaded image
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ entityId, type }) => {
-  const [image, setImage] = useState<File | null>(null);
-  const [uploadedUrl, setUploadedUrl] = useState<string>('');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-
-  // Handle file change
+  // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files ? e.target.files[0] : null;
+    const file = e.target.files?.[0];
     if (file) {
-      setImage(file);
+      setImage(file); // Store the selected image
+      setError(null); // Clear previous error
     }
   };
 
-  // Upload image to the backend using the separated service
+  // Handle image upload
   const handleUpload = async () => {
     if (!image) {
-      alert('Please select an image.');
+      setError('Please select an image first');
       return;
     }
 
     setIsUploading(true);
-    setError('');
+    setError(null); // Clear previous error
+
     try {
-      // Create an object that conforms to the ImageUploadData interface
       const uploadData: ImageUploadData = {
-        image: image,
-        type: type,
-        entityId: entityId,
+        type,
+        entityId,
+        image, // The selected image file
       };
 
-      // Call the service to upload the image
-      const result = await uploadImageToServer(uploadData);
+      const response = await uploadImageToServer(uploadData);
 
-      setUploadedUrl(result.url);
-      alert('Image uploaded successfully!');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Image upload failed.');
-      console.error('Error uploading image:', err);
+      if (response.url) {
+        setUploadedUrl(response.url); // Store the uploaded image URL
+      } else {
+        setError('Image upload failed. Please try again.');
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setError('Image upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -58,17 +57,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ entityId, type }) => {
   return (
     <div>
       <h3>Upload Image</h3>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}{' '}
+      {/* Display error messages */}
+      {/* Show uploaded image preview */}
       {uploadedUrl && (
         <div>
           <p>Uploaded Image:</p>
           <picture>
-            {' '}
             <img src={uploadedUrl} alt='Uploaded' style={{ width: '200px' }} />
           </picture>
         </div>
       )}
+      {/* File input for selecting an image */}
       <input type='file' onChange={handleFileChange} />
+      {/* Upload button */}
       <button onClick={handleUpload} disabled={isUploading}>
         {isUploading ? 'Uploading...' : 'Upload Image'}
       </button>
