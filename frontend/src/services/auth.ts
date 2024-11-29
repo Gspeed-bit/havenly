@@ -70,7 +70,7 @@ export const requestNewVerificationCode = async (
       'POST',
       { email }
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response && error.response.status === 429) {
       // If rate limit exceeded, propagate the error with a custom message
@@ -84,3 +84,18 @@ export const requestNewVerificationCode = async (
   }
 };
 
+export const requestResetPassword = async (email: string) => {
+  return apiHandler<ApiResponse<{ message: string }>>(
+    '/request-reset-password',
+    'POST',
+    { email }
+  );
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  return apiHandler<ApiResponse<{ message: string }>>(
+    `reset-password/${token}`,
+    'POST',
+    { newPassword }
+  );
+};

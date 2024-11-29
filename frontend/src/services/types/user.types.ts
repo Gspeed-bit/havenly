@@ -1,7 +1,7 @@
 // frontend/types/user.types.ts
 
 export interface User {
-  _id: string;
+  _id?: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;

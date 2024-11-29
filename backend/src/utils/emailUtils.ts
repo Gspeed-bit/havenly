@@ -6,6 +6,8 @@ const sendResetPasswordEmail = async (
   email: string,
   resetPasswordToken: string
 ) => {
+  const resetUrl = `${process.env.WEB_APP_LINK}/reset-password/${resetPasswordToken}`;
+
   // Create reusable transporter object using SMTP transport
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -14,6 +16,7 @@ const sendResetPasswordEmail = async (
       pass: KEYS.emailPassword,
     },
   });
+
   const htmlText = `
   <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
     <h1 style="color: #3A0CA3; text-align: center; font-size: 28px; margin-bottom: 20px;">Reset Your Password</h1>
@@ -22,7 +25,7 @@ const sendResetPasswordEmail = async (
       You have requested to reset your password for your Havenly account. Please use the link below to reset your password.
     </p>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="http://localhost:5000/reset-password/${resetPasswordToken}" style="background-color: #3A0CA3; color: white; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">
+      <a href="${resetUrl}" style="background-color: #3A0CA3; color: white; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">
         Reset Password
       </a>
     </div>
@@ -45,7 +48,7 @@ const sendResetPasswordEmail = async (
     from: KEYS.email, // Sender's email address
     to: email, // Recipient's email address
     subject: 'Reset Your Password',
-    text: `Please click the following link to reset your password: http://localhost:5000/reset-password/${resetPasswordToken}`,
+    text: `Please click the following link to reset your password: ${resetUrl}`,
     html: htmlText, // Use the inline styled HTML content
   };
 
