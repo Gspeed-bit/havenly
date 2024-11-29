@@ -17,6 +17,7 @@ import companyRoutes from 'components/property/routes/companyRoutes';
 import notificationRoutes from '@components/user/routes/notificationRoutes';
 import inquiryRoutes from '@components/user/routes/inquiryRoutes';
 import User from '@components/user/models//userModel'; // Import the User model
+import imageRoutes from '@components/imageUpload/routes/imageRoutes';
 
 
 
@@ -60,6 +61,7 @@ app.use(cors());
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -129,6 +131,7 @@ app.use(
   notificationRoutes ,
   inquiryRoutes
 );
+app.use('/image/upload', imageRoutes  ); // All routes under /user/me
 
 app.use('/user', userRoutes); // All routes under /user/me
 

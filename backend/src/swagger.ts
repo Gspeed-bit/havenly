@@ -14,6 +14,8 @@ const options = {
     './src/components/user/controllers/**/*.ts', // Recursively search all .ts files in controllers
     './src/components/property/controllers/**/*.ts',
     './src/components/property/routes/**/*.ts', // Recursively search all .ts files
+    './src/components/imageUpload/controllers/**/*.ts',
+    './src/components/imageUpload/routes/**/*.ts', // Recursively search all .ts files
   ],
 };
 

@@ -26,17 +26,22 @@ const instance = axios.create({
 export const apiHandler = async <T>(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  data?: object,
+  data?: object | FormData, // Support FormData for file uploads
   params: object = {},
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> => {
   try {
+    const isFormData = data instanceof FormData;
     const response = await instance({
       url,
       method,
       data,
       params,
-      headers: { ...instance.defaults.headers.common, ...customHeaders },
+      headers: {
+        ...instance.defaults.headers.common,
+        ...customHeaders,
+        ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {}),
+      },
     });
 
     return {
@@ -47,7 +52,7 @@ export const apiHandler = async <T>(
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
 
-      // Handle 429 error (rate-limiting)
+      // Handle 429 (Rate-limiting)
       if (axiosError.response?.status === 429) {
         return {
           status: 'error',
@@ -56,7 +61,7 @@ export const apiHandler = async <T>(
         };
       }
 
-      // Handle other errors like 401
+      // Handle 401 (Unauthorized)
       if (axiosError.response?.status === 401) {
         logOutUser();
       }
@@ -75,3 +80,4 @@ export const apiHandler = async <T>(
     };
   }
 };
+

@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { User, Camera, Lock, Phone } from 'lucide-react';
 import Image from 'next/image';
 import { updateUserProfile } from '@/services/user/user';
+import { useAuthStore } from '@/store/auth';
 
 const ProfileUpdatePage = () => {
   const [firstName, setFirstName] = useState('');
@@ -31,6 +32,8 @@ const ProfileUpdatePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
+  const user = useAuthStore((state) => state.user);
+  console.log(user)
   useEffect(() => {
     setPreviewImage('/home.png');
   }, []); // Simulating fetching user data
@@ -148,7 +151,7 @@ const ProfileUpdatePage = () => {
                           <Input
                             id='firstName'
                             type='text'
-                            value={firstName}
+                            value={user?.firstName}
                             placeholder='Enter your first name'
                             onChange={(e) => setFirstName(e.target.value)}
                             className='pl-10 bg-gray-50 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 rounded-md'
@@ -165,7 +168,7 @@ const ProfileUpdatePage = () => {
                           <Input
                             id='lastName'
                             type='text'
-                            value={lastName}
+                            value={user?.lastName}
                             placeholder='Enter your last name'
                             onChange={(e) => setLastName(e.target.value)}
                             className='pl-10 bg-gray-50 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 rounded-md'
@@ -182,7 +185,7 @@ const ProfileUpdatePage = () => {
                           <Input
                             id='phoneNumber'
                             type='tel'
-                            value={phoneNumber}
+                            value={user?.phoneNumber}
                             placeholder='Enter your phone number'
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className='pl-10 bg-gray-50 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 rounded-md'

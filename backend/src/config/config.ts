@@ -13,15 +13,20 @@ export interface KeysInterface {
   serverPassword: string;
   serverHost: string;
   webAppLink: string;
+  cloudName: string;
+  apiKey: string;
+  apiSecret: string;
 }
 
 dotenv.config();
 const env = process.env;
 
 export const getKeys = (): KeysInterface => {
-
   const keys = {
     port: env.PORT || '5000',
+    cloudName: env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: env.CLOUDINARY_API_KEY || '',
+    apiSecret: env.CLOUDINARY_API_SECRET || '',
     host: env.HOST || 'localhost',
     serverHost: env.SERVER_HOST || '',
     appEnv: env.APP_ENV || 'development',
