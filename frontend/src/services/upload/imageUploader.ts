@@ -2,7 +2,7 @@ import { apiHandler } from '@/config/server';
 
 // Interface for the data that will be passed to the image upload API
 export interface ImageUploadData {
-  type: string; // Type of image, e.g. 'user_profile' or 'property_image'
+  type: string; // Type of image, e.g. 'user_image' or 'property_image'
   entityId: string; // The unique ID for the entity the image belongs to (e.g., user ID or property ID)
   image: File; // The actual image file
 }
@@ -24,22 +24,23 @@ export const uploadImageToServer = async ({
   formData.append('entityId', entityId);
 
   try {
-    // Sending the image data to the backend using the apiHandler function
+    // Send the image data to the backend using the apiHandler function
     const response = await apiHandler<UploadImageResponse>(
       '/image/upload',
       'POST',
       formData
     );
 
-    // Check if the response status is successful
+    // Check if the response is successful
     if (response.status === 'success') {
-      return response.data;
+      return response.data; // Return the data if the response was successful
     } else {
-      throw new Error(response.message);
+      // Handle the error response
+      throw new Error(response.message || 'Image upload failed');
     }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    // Handle error if the request fails
-    throw new Error(error.message || 'Image upload failed.');
+    // Handle other errors
+    throw new Error(error.message || 'An unexpected error occurred');
   }
 };

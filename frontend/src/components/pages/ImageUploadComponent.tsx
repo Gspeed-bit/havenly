@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   uploadImageToServer,
   ImageUploadData,
-} from '@/services/upload/imageUploader'; // Ensure you import the correct function
+} from '@/services/upload/imageUploader';
 
 const ImageUpload: React.FC<{
   type: 'user_image' | 'property_image';
@@ -14,43 +14,33 @@ const ImageUpload: React.FC<{
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null); // URL of uploaded image
 
   // Handle file input change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImage(file); // Store the selected image
-      setError(null); // Clear previous error
-    }
-  };
+      setImage(file); // Set the selected image to preview
+      setError(null); // Clear any previous errors
+      setIsUploading(true); // Start uploading
 
-  // Handle image upload
-  const handleUpload = async () => {
-    if (!image) {
-      setError('Please select an image first');
-      return;
-    }
+      try {
+        const uploadData: ImageUploadData = {
+          type,
+          entityId,
+          image: file, // The selected image file
+        };
 
-    setIsUploading(true);
-    setError(null); // Clear previous error
+        // Trigger the upload when an image is selected
+        const response = await uploadImageToServer(uploadData);
 
-    try {
-      const uploadData: ImageUploadData = {
-        type,
-        entityId,
-        image, // The selected image file
-      };
-
-      const response = await uploadImageToServer(uploadData);
-
-      if (response.url) {
-        setUploadedUrl(response.url); // Store the uploaded image URL
-      } else {
+        if (response.url) {
+          setUploadedUrl(response.url); // Store the uploaded image URL
+        } else {
+          setError('Image upload failed. Please try again.');
+        }
+      } catch {
         setError('Image upload failed. Please try again.');
+      } finally {
+        setIsUploading(false); // Stop uploading when done
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      setError('Image upload failed.');
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -59,6 +49,19 @@ const ImageUpload: React.FC<{
       <h3>Upload Image</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}{' '}
       {/* Display error messages */}
+      {/* Show image preview before uploading */}
+      {image && !isUploading && (
+        <div>
+          <p>Image Preview:</p>
+          <picture>
+            <img
+              src={URL.createObjectURL(image)}
+              alt='Image Preview'
+              style={{ width: '200px' }}
+            />
+          </picture>
+        </div>
+      )}
       {/* Show uploaded image preview */}
       {uploadedUrl && (
         <div>
@@ -69,11 +72,14 @@ const ImageUpload: React.FC<{
         </div>
       )}
       {/* File input for selecting an image */}
-      <input type='file' onChange={handleFileChange} />
-      {/* Upload button */}
-      <button onClick={handleUpload} disabled={isUploading}>
-        {isUploading ? 'Uploading...' : 'Upload Image'}
-      </button>
+      <input
+        type='file'
+        onChange={handleFileChange}
+        accept='image/*'
+        disabled={isUploading} // Disable input while uploading
+      />
+      {/* Displaying loading text during upload */}
+      {isUploading && <p>Uploading...</p>}
     </div>
   );
 };

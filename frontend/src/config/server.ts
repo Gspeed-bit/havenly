@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import keys from './keys';
 import { logOutUser } from '../services/auth/auth';
 
+
 export interface SuccessResponse<T> {
   status: 'success';
   data: T;
