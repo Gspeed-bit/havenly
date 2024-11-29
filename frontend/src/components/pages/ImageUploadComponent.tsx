@@ -48,7 +48,7 @@ const ImageUpload: React.FC<{
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      setError('Image upload failed. Please try again.');
+      setError('Image upload failed.');
     } finally {
       setIsUploading(false);
     }
