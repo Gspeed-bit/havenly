@@ -1,9 +1,8 @@
 import React from 'react';
-import {logOutUser} from '../../../services/auth';
+import { logOutUser } from '../../../services/auth/auth';
 import { Button } from '../../ui/button';
 
 const LogoutButton = () => {
-
   const handleLogout = () => {
     logOutUser();
   };

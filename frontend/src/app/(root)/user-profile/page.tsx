@@ -1,10 +1,10 @@
-import VerificationPage from '@/components/pages/login/auth/VerificationPage';
+import ProfileUpdatePage from '@/components/pages/userProfile/updateUserProfile';
 import React from 'react';
 
 const page = () => {
   return (
     <div>
-      <VerificationPage />
+      <ProfileUpdatePage />
     </div>
   );
 };

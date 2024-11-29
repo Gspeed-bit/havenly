@@ -1,14 +1,14 @@
-import { authStoreActions, useAuthStore } from '../store/auth';
-import { setAuthToken, isBrowser } from '../config/helpers';
-import { apiHandler, ApiResponse } from '../config/server';
+import { authStoreActions, useAuthStore } from '../../store/auth';
+import { setAuthToken, isBrowser } from '../../config/helpers';
+import { apiHandler, ApiResponse } from '../../config/server';
 import {
   LoginCredentials,
   LoginResponse,
   User,
   VerificationCodeResponse,
   VerifyAccountResponse,
-} from './types/user.types';
-import { SignUpRequest, SignUpResponse } from './types/user.types';
+} from '../types/user.types';
+import { SignUpRequest, SignUpResponse } from '../types/user.types';
 
 // Log the user out: clear token and reset auth state
 export const logOutUser = () => {

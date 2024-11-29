@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '../../../store/auth';
 import { clearAuthToken, getAuthToken } from '../../../config/helpers';
-import { logOutUser } from '../../../services/auth';
+import { logOutUser } from '../../../services/auth/auth';
 import { jwtDecode } from 'jwt-decode';
 
 // Define the type for the decoded token to ensure proper access to the `exp` field

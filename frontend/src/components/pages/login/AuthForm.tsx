@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { login, signUp } from '../../../services/auth';
+import { login, signUp } from '../../../services/auth/auth';
 import {
   Tabs,
   TabsContent,
@@ -63,41 +63,41 @@ export default function AuthPage() {
     }
   }, [pathname]);
 
-const handleLoginSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const loginData = { email, password };
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const loginData = { email, password };
 
-  startLoginLoading(); // Start loading
-  try {
-    const result = await login(loginData);
-    if (result.status === 'success') {
-      toast.success('Login successful! Redirecting...');
+    startLoginLoading(); // Start loading
+    try {
+      const result = await login(loginData);
+      if (result.status === 'success') {
+        toast.success('Login successful! Redirecting...');
 
-      if (rememberMe) {
-        localStorage.setItem('email', email);
+        if (rememberMe) {
+          localStorage.setItem('email', email);
+        } else {
+          localStorage.removeItem('email');
+        }
+
+        setTimeout(() => {
+          router.push('/'); // Redirect to dashboard
+        }, 1500);
+      } else if (result.message === 'Account not verified') {
+        toast.error(
+          'Your account is not verified. Redirecting to verification...'
+        );
+        setTimeout(() => {
+          router.push('/auth/verification-code'); // Redirect to verification page
+        }, 1500);
       } else {
-        localStorage.removeItem('email');
+        toast.error(result.message || 'Login failed! Please try again.');
       }
-
-      setTimeout(() => {
-        router.push('/'); // Redirect to dashboard
-      }, 1500);
-    } else if (result.message === 'Account not verified') {
-      toast.error(
-        'Your account is not verified. Redirecting to verification...'
-      );
-      setTimeout(() => {
-        router.push('/auth/verification-code'); // Redirect to verification page
-      }, 1500);
-    } else {
-      toast.error(result.message || 'Login failed! Please try again.');
+    } catch {
+      toast.error('An unexpected error occurred.');
+    } finally {
+      stopLoginLoading(); // Stop loading
     }
-  } catch {
-    toast.error('An unexpected error occurred.');
-  } finally {
-    stopLoginLoading(); // Stop loading
-  }
-};
+  };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

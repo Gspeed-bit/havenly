@@ -15,7 +15,10 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { verifyAccount, requestNewVerificationCode } from '@/services/auth';
+import {
+  verifyAccount,
+  requestNewVerificationCode,
+} from '@/services/auth/auth';
 import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
 

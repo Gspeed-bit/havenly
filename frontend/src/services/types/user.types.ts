@@ -59,15 +59,24 @@ export interface SignUpResponse {
   };
 }
 
-
 export interface VerificationCodeResponse {
   email: string;
   codeExpiration: string; // ISO date string
   message: string;
 }
 
-
-
 export interface VerifyAccountResponse {
   message: string;
+}
+
+export interface UserProfileUpdateResponse {
+  message: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    imgUrl?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }

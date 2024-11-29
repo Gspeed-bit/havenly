@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation'; // Use useParams for dynamic route params
-import { requestResetPassword, resetPassword } from '@/services/auth'; // API functions
+import { requestResetPassword, resetPassword } from '@/services/auth/auth'; // API functions
 import {
   Card,
   CardContent,
