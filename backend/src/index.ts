@@ -19,9 +19,6 @@ import inquiryRoutes from '@components/user/routes/inquiryRoutes';
 import User from '@components/user/models//userModel'; // Import the User model
 import imageRoutes from '@components/imageUpload/routes/imageRoutes';
 
-
-
-
 dotenv.config({ path: '.env' });
 
 const app = express();
@@ -122,16 +119,15 @@ app.use(
   swaggerUi.setup(swaggerDocs)
 );
 
-
 app.use(
   '/',
   authRoutes,
   propertyRoutes,
   companyRoutes,
-  notificationRoutes ,
+  notificationRoutes,
   inquiryRoutes
 );
-app.use('/image/upload', imageRoutes  ); // All routes under /user/me
+app.use('/image', imageRoutes); // All routes under /user/me
 
 app.use('/user', userRoutes); // All routes under /user/me
 
@@ -160,7 +156,8 @@ cron.schedule('0 0 * * *', async () => {
 });
 
 // Start the server
-const port = process.env.PORT;
+const port = process.env.PORT || 5000;
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
