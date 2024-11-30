@@ -1,4 +1,4 @@
-// authStore.ts
+// src/stores/authStore.ts
 import { create } from 'zustand';
 import { User } from '../services/types/user.types';
 
@@ -13,10 +13,12 @@ type AuthStore = {
 export const useAuthStore = create<AuthStore>((set) => {
   const isClient = typeof window !== 'undefined'; // Ensure it's client-side
   const storedUser = isClient ? localStorage.getItem('user') : null;
+  const storedToken = isClient ? localStorage.getItem('token') : null;
 
-  const initialState = storedUser
-    ? { isAuthenticated: true, user: JSON.parse(storedUser) }
-    : { isAuthenticated: false, user: null };
+  const initialState =
+    storedUser && storedToken
+      ? { isAuthenticated: true, user: JSON.parse(storedUser) }
+      : { isAuthenticated: false, user: null };
 
   return {
     ...initialState,
@@ -29,12 +31,14 @@ export const useAuthStore = create<AuthStore>((set) => {
     clearAuth: () => {
       if (isClient) {
         localStorage.removeItem('user'); // Remove user from localStorage
+        localStorage.removeItem('token'); // Remove token from localStorage
       }
       set({ isAuthenticated: false, user: null });
     },
     logout: () => {
       if (isClient) {
         localStorage.removeItem('user'); // Clear user from localStorage
+        localStorage.removeItem('token'); // Clear token from localStorage
       }
       set({ isAuthenticated: false, user: null });
     },

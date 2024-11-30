@@ -60,7 +60,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', protect, catchApiError(getUser));
+router.get('/me', protect, getUser);
 
 /**
  * @swagger

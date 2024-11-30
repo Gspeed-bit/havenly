@@ -9,33 +9,19 @@ import {
 
 export const getUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?._id); // Assuming `req.user` is populated by middleware
+    const user = req.user; // User object is already attached to req by the protect middleware
 
     if (!user) {
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    // Convert the document to a plain object and sanitize sensitive fields
-    const userResponse = sanitizeUser(
-      user.toObject() as unknown as Record<string, unknown>,
-      ['password', 'resetPasswordCode', 'verificationCode']
-    );
-
-    // Include the `imgUrl` field explicitly if it's not excluded in `sanitizeUser`
-    return res.status(StatusCodes.SUCCESS).json({
+    return res.status(200).json({
       status: 'success',
-      data: {
-        ...userResponse,
-        imgUrl: user.imgUrl, // Ensuring `imgUrl` is included in the response
-      },
+      data: user,
     });
   } catch (error) {
     console.error('Error fetching user:', error);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Error fetching user', error });
+    return res.status(500).json({ message: 'Error fetching user details' });
   }
 };
 

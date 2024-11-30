@@ -1,14 +1,13 @@
+// backend/middlewares/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '@components/user/models/userModel'; // Assuming User model is imported
-import { IUser } from '@components/user/models/userModel'; // TypeScript interface for the user
+import User from '@components/user/models/userModel'; // Import User model
 
 interface UserPayload {
   id: string;
   isAdmin?: boolean;
 }
 
-// Protect middleware
 export const protect = async (
   req: Request,
   res: Response,
@@ -39,11 +38,7 @@ export const protect = async (
     }
 
     // Attach the user to the request object
-    req.user = user as IUser;
-
-    // Check for admin privileges based on token or adminCode
-    req.user.isAdmin =
-      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
+    req.user = user; // Attach the authenticated user to the request
 
     next();
   } catch (err) {

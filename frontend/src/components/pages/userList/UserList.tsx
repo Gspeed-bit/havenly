@@ -1,12 +1,11 @@
-'use client';
 import React, { useState, useEffect } from 'react';
 import { getUserDetails } from '@/services/user/userApi';
-import { useUserStore } from '@/store/users';
+import { useAuthStore } from '@/store/auth';
 
 
 const UserList = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { user, setUser } = useUserStore(); // Using Zustand store
+  const { user, setAuth, logout } = useAuthStore(); // Zustand store to manage auth state
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -14,19 +13,21 @@ const UserList = () => {
       getUserDetails()
         .then((userDetails) => {
           if (userDetails) {
-            setUser(userDetails.data); // Store user in Zustand store
+            setAuth(userDetails); // Set user in Zustand store
           } else {
-            console.error('Failed to fetch user details');
+            logout(); // If no user found, logout
           }
         })
         .catch((error) => {
           console.error('Error fetching user details:', error);
+          logout(); // Log out if the API call fails
         })
         .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
+      logout(); // Log out if no token is found
     }
-  }, [setUser]);
+  }, [setAuth, logout]);
 
   if (isLoading) return <div>Loading...</div>;
 
