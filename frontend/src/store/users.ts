@@ -1,11 +1,7 @@
+import { User } from '@/services/types/user.types';
 import { create } from 'zustand';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  imgUrl: string | null; // Add imgUrl
-}
+
 
 interface UserStore {
   user: User | null;

@@ -1,5 +1,5 @@
-import { authStoreActions, useAuthStore } from '../../store/auth';
-import { setAuthToken, isBrowser } from '../../config/helpers';
+import { authStoreActions } from '../../store/auth';
+import { setAuthToken, isBrowser, getAuthToken, clearAuthToken } from '../../config/helpers';
 import { apiHandler, ApiResponse } from '../../config/server';
 import {
   LoginCredentials,
@@ -10,12 +10,14 @@ import {
 } from '../types/user.types';
 import { SignUpRequest, SignUpResponse } from '../types/user.types';
 
-// Log the user out: clear token and reset auth state
 export const logOutUser = () => {
-  useAuthStore.getState().logout(); // Call the logout method
+  console.log('Logging out user and clearing token.'); // Debugging log
+  clearAuthToken();
+  authStoreActions.clearAuth();
 };
 
-// Login function
+
+
 export const login = async (loginData: LoginCredentials) => {
   const response = await apiHandler<LoginResponse>('/login', 'POST', loginData);
 
@@ -24,13 +26,16 @@ export const login = async (loginData: LoginCredentials) => {
 
     if (isBrowser()) {
       setAuthToken(token);
+      console.log('Token stored in localStorage:', getAuthToken()); // Debugging log
     }
+
     authStoreActions.setAuth(user as User);
     return { status: 'success', message: 'Login successful' };
   } else {
     return { status: 'error', message: response.message || 'Login failed' };
   }
 };
+
 
 // Signup function
 export const signUp = async (

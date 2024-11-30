@@ -35,9 +35,11 @@ const ImageUpload: React.FC<{
         // Trigger the upload when an image is selected
         const response = await uploadImageToServer(uploadData);
 
-        if (response.url) {
+        if (response && response.url) {
           setUploadedUrl(response.url); // Store the uploaded image URL
-          setUserImage(response.url); // Update the zustand store with the new user image URL
+          if (response && response.url) {
+            setUserImage(response.url); // Update the zustand store with the new user image URL
+          }
         }
       } catch {
         setError('Image upload failed. Please try again.');

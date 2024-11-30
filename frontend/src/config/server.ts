@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import keys from './keys';
 import { logOutUser } from '../services/auth/auth';
+import { authTokenKey } from './helpers';
 
 export interface SuccessResponse<T> {
   status: 'success';
@@ -23,15 +24,20 @@ const instance = axios.create({
   },
 });
 
+// Function to get the token from localStorage (or other storage)
+const getToken = () => localStorage.getItem(authTokenKey);
+
 export const apiHandler = async <T>(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  data?: object | FormData, // Support FormData for file uploads
+  data?: object | FormData,
   params: object = {},
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> => {
   try {
+    const token = getToken(); // Retrieve token from localStorage
     const isFormData = data instanceof FormData;
+
     const response = await instance({
       url,
       method,
@@ -39,6 +45,7 @@ export const apiHandler = async <T>(
       params,
       headers: {
         ...instance.defaults.headers.common,
+        Authorization: token ? `Bearer ${token}` : '', // Attach token to the header
         ...customHeaders,
         ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {}),
       },
@@ -52,18 +59,8 @@ export const apiHandler = async <T>(
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
 
-      // Handle 429 (Rate-limiting)
-      if (axiosError.response?.status === 429) {
-        return {
-          status: 'error',
-          message: 'Too many requests, please try again later.',
-          code: '429',
-        };
-      }
-
-      // Handle 401 (Unauthorized)
       if (axiosError.response?.status === 401) {
-        logOutUser();
+        logOutUser(); // Handle unauthorized access
       }
 
       return {

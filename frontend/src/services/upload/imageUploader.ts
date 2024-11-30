@@ -22,16 +22,14 @@ export const uploadImageToServer = async ({
   try {
     // Call apiHandler to send the image data
     const response = await apiHandler<{ url: string }>(
-      '/api/upload/image', // Adjust the endpoint URL based on your server route
+      '/image/upload', // Adjust the endpoint URL based on your server route
       'POST',
       formData
     );
 
     if (response.status === 'success') {
       return response.data; // Return the uploaded image URL
-    } else {
-      throw new Error(response.message || 'Image upload failed');
-    }
+    } 
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error('Upload failed:', error.response?.data);

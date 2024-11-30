@@ -17,6 +17,7 @@ import {
   updateUserProfile,
 } from '@components/user/controllers/userController';
 import { protect } from '@middleware/protect/protect';
+import { userMiddleware } from '@middleware/userMiddleware';
 // import { userMiddleware } from '@middleware/userMiddleware';
 
 
@@ -60,8 +61,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', protect, 
-  catchApiError(getUser));
+router.get('/me', userMiddleware, catchApiError(getUser));
 
 /**
  * @swagger
