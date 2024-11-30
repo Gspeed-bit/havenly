@@ -17,7 +17,6 @@ import {
   updateUserProfile,
 } from '@components/user/controllers/userController';
 import { protect } from '@middleware/protect/protect';
-import { userMiddleware } from '@middleware/userMiddleware';
 // import { userMiddleware } from '@middleware/userMiddleware';
 
 
