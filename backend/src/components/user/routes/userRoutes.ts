@@ -18,7 +18,7 @@ import {
 } from '@components/user/controllers/userController';
 import { protect } from '@middleware/protect/protect';
 // import { userMiddleware } from '@middleware/userMiddleware';
-import authenticateToken from '@middleware/protect/authenticateToken';
+
 
 const router = express.Router();
 
@@ -60,7 +60,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', protect, authenticateToken, 
+router.get('/me', protect, 
   catchApiError(getUser));
 
 /**
