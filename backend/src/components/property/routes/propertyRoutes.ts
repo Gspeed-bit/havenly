@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '@middleware/authMiddleware';
+// import { authMiddleware } from '@middleware/authMiddleware';
 import {
   createProperty,
   deleteProperty,
@@ -7,6 +7,7 @@ import {
   getPropertyById,
   updateProperty,
 } from '../controllers/propertyController';
+import { protect } from '@middleware/protect/protect';
 
 const router = express.Router();
 
@@ -349,10 +350,10 @@ const router = express.Router();
  */
 
 
-router.post('/properties', authMiddleware, createProperty);
+router.post('/properties', protect, createProperty);
 router.get('/properties', getProperties);
 router.get('/properties/:id', getPropertyById);
-router.put('/properties/:id', authMiddleware, updateProperty);
-router.delete('/properties/:id', authMiddleware, deleteProperty);
+router.put('/properties/:id', protect, updateProperty);
+router.delete('/properties/:id', protect, deleteProperty);
 
 export default router;

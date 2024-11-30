@@ -14,7 +14,7 @@ interface UploadResult {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB limit
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif']; // Allowed image types
 
-export const imageUpload = async (req: Request, res: Response) => {
+export const uploadUserImage = async (req: Request, res: Response) => {
   const { type, entityId } = req.body; // 'type' could be 'user_image' or 'property_image'
 
   if (!req.file) {

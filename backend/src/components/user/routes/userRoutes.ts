@@ -1,13 +1,13 @@
 import express from 'express';
 
-import { authMiddleware } from '@middleware/authMiddleware';
+// import { authMiddleware } from '@middleware/authMiddleware';
 import {
   ApiError,
   catchApiError,
   StatusCodes,
   successResponse,
 } from 'utils/apiResponse';
-import { userMiddleware } from '@middleware/userMiddleware';
+// import { userMiddleware } from '@middleware/userMiddleware';
 import {
   confirmAdminUpdate,
   getAllAdmins,
@@ -16,6 +16,7 @@ import {
   requestAdminUpdatePin,
   updateUserProfile,
 } from '@components/user/controllers/userController';
+import { protect } from '@middleware/protect/protect';
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', authMiddleware, catchApiError(getUser));
+router.get('/me', protect, catchApiError(getUser));
 
 /**
  * @swagger
@@ -100,7 +101,7 @@ router.get('/me', authMiddleware, catchApiError(getUser));
  */
 router.get(
   '/',
-  authMiddleware,
+  protect,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, {
@@ -152,7 +153,7 @@ router.get(
  */
 router.get(
   '/admin',
-  authMiddleware,
+  protect,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, {
@@ -214,7 +215,7 @@ router.get(
  *       500:
  *         description: Server error
  */
-router.put('/update', userMiddleware, updateUserProfile);
+router.put('/update', protect, updateUserProfile);
 
 /**
  * @swagger
@@ -233,7 +234,7 @@ router.put('/update', userMiddleware, updateUserProfile);
  *       500:
  *         description: Server error
  */
-router.post('/request-pin', authMiddleware, requestAdminUpdatePin);
+router.post('/request-pin', protect, requestAdminUpdatePin);
 
 /**
  * @swagger
@@ -290,6 +291,6 @@ router.post('/request-pin', authMiddleware, requestAdminUpdatePin);
  *       500:
  *         description: Server error
  */
-router.post('/confirm-update', authMiddleware, confirmAdminUpdate);
+router.post('/confirm-update', protect, confirmAdminUpdate);
 
 export default router;

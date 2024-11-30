@@ -5,9 +5,10 @@ import { IUser } from '@components/user/models/userModel';
 
 interface UserPayload {
   id: string;
+  isAdmin?: boolean;
 }
 
-export const userMiddleware = async (
+export const protect = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -17,7 +18,7 @@ export const userMiddleware = async (
     if (!token) {
       return res
         .status(401)
-        .json({ message: 'No token, authorization denied' });
+        .json({ message: 'Authorization denied, no token' });
     }
 
     const secret = process.env.JWT_SECRET;
@@ -32,11 +33,15 @@ export const userMiddleware = async (
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Attach user data to the request object
     req.user = user as IUser;
+
+    // Check for admin privileges
+    req.user.isAdmin =
+      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
+
     next();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token.' });
+    console.error(err);
+    res.status(401).json({ message: 'Token is invalid or expired' });
   }
 };

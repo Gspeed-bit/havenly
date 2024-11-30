@@ -1,5 +1,6 @@
 import express from 'express';
-import { authMiddleware } from '@middleware/authMiddleware';
+// import { authMiddleware } from '@middleware/authMiddleware';
+// import { userMiddleware } from '@middleware/userMiddleware';
 import {
   createCompany,
   getAllCompanies,
@@ -7,7 +8,7 @@ import {
   updateCompany,
   deleteCompany,
 } from '../controllers/companyController';
-import { userMiddleware } from '@middleware/userMiddleware';
+import { protect } from '@middleware/protect/protect';
 
 const router = express.Router();
 /**
@@ -100,7 +101,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/companies', authMiddleware, (req, res) => {
+router.post('/companies', protect, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -127,7 +128,7 @@ router.post('/companies', authMiddleware, (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/companies', userMiddleware, getAllCompanies);
+router.get('/companies', protect, getAllCompanies);
 
 /**
  * @openapi
@@ -160,7 +161,7 @@ router.get('/companies', userMiddleware, getAllCompanies);
  *       500:
  *         description: Internal server error
  */
-router.get('/companies/:id', userMiddleware, getCompanyById);
+router.get('/companies/:id', protect, getCompanyById);
 
 /**
  * @openapi
@@ -202,7 +203,7 @@ router.get('/companies/:id', userMiddleware, getCompanyById);
  *       500:
  *         description: Internal server error
  */
-router.put('/companies/:id', authMiddleware, (req, res) => {
+router.put('/companies/:id', protect, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -244,7 +245,7 @@ router.put('/companies/:id', authMiddleware, (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/companies/:id', authMiddleware, (req, res) => {
+router.delete('/companies/:id', protect, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }

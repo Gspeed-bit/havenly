@@ -1,6 +1,7 @@
 import express from 'express';
-import { userMiddleware } from '@middleware/userMiddleware';
+// import { userMiddleware } from '@middleware/userMiddleware';
 import { getNotifications, markAsRead } from '@components/user/controllers/notificationController';
+import { protect } from '@middleware/protect/protect';
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/notifications', userMiddleware, getNotifications);
+router.get('/notifications', protect, getNotifications);
 
 /**
  * @swagger
@@ -89,6 +90,6 @@ router.get('/notifications', userMiddleware, getNotifications);
  *       500:
  *         description: Internal server error
  */
-router.put('/notifications/:notificationId', userMiddleware, markAsRead);
+router.put('/notifications/:notificationId', protect, markAsRead);
 
 export default router;

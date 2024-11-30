@@ -7,9 +7,10 @@ import {
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
 
+
 export const getUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?._id); // Mongoose document returned
+    const user = await User.findById(req.user?._id); // Assuming `req.user` is populated by middleware
 
     if (!user) {
       return res
@@ -17,19 +18,28 @@ export const getUser = async (req: Request, res: Response) => {
         .json({ message: 'User not found' });
     }
 
-    // Convert the document to a plain object
+    // Convert the document to a plain object and sanitize sensitive fields
     const userResponse = sanitizeUser(
       user.toObject() as unknown as Record<string, unknown>,
       ['password', 'resetPasswordCode', 'verificationCode']
-    ); // Sanitize sensitive fields
+    );
 
-    return res.json(userResponse);
+    // Include the `imgUrl` field explicitly if it's not excluded in `sanitizeUser`
+    return res.status(StatusCodes.SUCCESS).json({
+      status: 'success',
+      data: {
+        ...userResponse,
+        imgUrl: user.imgUrl, // Ensuring `imgUrl` is included in the response
+      },
+    });
   } catch (error) {
-    res
+    console.error('Error fetching user:', error);
+    return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Error fetching user', error });
   }
 };
+
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {

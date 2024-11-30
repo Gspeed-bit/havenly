@@ -1,11 +1,12 @@
 import express from 'express';
-import { authMiddleware } from '@middleware/authMiddleware';
-import { userMiddleware } from '@middleware/userMiddleware';
+// import { authMiddleware } from '@middleware/authMiddleware';
+// import { userMiddleware } from '@middleware/userMiddleware';
 import {
   sendInquiry,
   getInquiries,
   updateInquiryStatus,
 } from '../controllers/inquiryController';
+import { protect } from '@middleware/protect/protect';
 
 const router = express.Router();
 
@@ -76,7 +77,7 @@ const router = express.Router();
  *       500:
  *         description: Server error.
  */
-router.post('/inquiries/send', userMiddleware, sendInquiry);
+router.post('/inquiries/send', protect, sendInquiry);
 
 /**
  * @openapi
@@ -182,7 +183,7 @@ router.post('/inquiries/send', userMiddleware, sendInquiry);
  *       500:
  *         description: Server error.
  */
-router.get('/inquiries', userMiddleware, getInquiries);
+router.get('/inquiries', protect, getInquiries);
 
 /**
  * @openapi
@@ -254,6 +255,6 @@ router.get('/inquiries', userMiddleware, getInquiries);
  *       500:
  *         description: Server error.
  */
-router.put('/inquiries/:id', authMiddleware, updateInquiryStatus);
+router.put('/inquiries/:id', protect, updateInquiryStatus);
 
 export default router;

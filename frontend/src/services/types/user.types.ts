@@ -73,7 +73,8 @@ export interface UserProfileUpdateResponse {
   message: string;
   user: {
     _id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     imgUrl?: string;
     createdAt: string;
