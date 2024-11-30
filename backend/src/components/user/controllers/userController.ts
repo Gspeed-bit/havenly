@@ -7,7 +7,6 @@ import {
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
 
-
 export const getUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.user?._id); // Assuming `req.user` is populated by middleware
@@ -39,7 +38,6 @@ export const getUser = async (req: Request, res: Response) => {
       .json({ message: 'Error fetching user', error });
   }
 };
-
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -113,11 +111,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
   // Prevent admins from updating their profile
   if (req.user?.isAdmin) {
-    return res
-      .status(403)
-      .json({
-        message: 'Admins cannot update their profile through this route.',
-      });
+    return res.status(403).json({
+      message: 'Admins cannot update their profile through this route.',
+    });
   }
 
   try {

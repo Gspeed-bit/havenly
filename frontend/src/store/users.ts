@@ -1,18 +1,18 @@
 import { create } from 'zustand';
-import { User } from '../services/types/user.types';
 
-type UserStore = {
-  users: User[];
-};
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  imgUrl: string | null; // Add imgUrl
+}
 
-export const useUsersStore = create<UserStore>(() => ({
-  users: [],
+interface UserStore {
+  user: User | null;
+  setUser: (user: User | null) => void;
+}
+
+export const useUserStore = create<UserStore>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
 }));
-
-export const userStoreActions = {
-  setUsers: (users: User[]) => {
-    useUsersStore.setState((v) => {
-      return { ...v, users };
-    });
-  },
-};

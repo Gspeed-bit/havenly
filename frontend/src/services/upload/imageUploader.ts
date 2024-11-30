@@ -1,35 +1,41 @@
-import { apiHandler } from '@/config/server';
+// services/upload/imageUploader.ts
 
-export interface ImageUploadData {
-  type: string;
+import { apiHandler } from '@/config/server';
+import { AxiosError } from 'axios';
+
+export type ImageUploadData = {
+  type: 'user_image' | 'property_image';
   entityId: string;
   image: File;
-}
-
-interface UploadImageResponse {
-  url: string;
-  id: string;
-}
+};
 
 export const uploadImageToServer = async ({
-  image,
   type,
   entityId,
-}: ImageUploadData): Promise<UploadImageResponse> => {
+  image,
+}: ImageUploadData) => {
   const formData = new FormData();
   formData.append('image', image);
   formData.append('type', type);
   formData.append('entityId', entityId);
 
-  const response = await apiHandler<UploadImageResponse>(
-    '/image/upload',
-    'POST',
-    formData
-  );
+  try {
+    // Call apiHandler to send the image data
+    const response = await apiHandler<{ url: string }>(
+      '/api/upload/image', // Adjust the endpoint URL based on your server route
+      'POST',
+      formData
+    );
 
-  if (response.status === 'success') {
-    return response.data;
-  } else {
-    throw new Error(response.message || 'Image upload failed');
+    if (response.status === 'success') {
+      return response.data; // Return the uploaded image URL
+    } else {
+      throw new Error(response.message || 'Image upload failed');
+    }
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Upload failed:', error.response?.data);
+    }
+    throw new Error('Image upload failed. Please try again later.');
   }
 };
