@@ -1,11 +1,11 @@
-// src/stores/authStore.ts
 import { create } from 'zustand';
 import { User } from '../services/types/user.types';
 
 type AuthStore = {
   isAuthenticated: boolean;
   user: User | null;
-  setAuth: (user: User) => void;
+  token: string | null;
+  setAuth: (user: User, token: string) => void;
   clearAuth: () => void;
   logout: () => void;
 };
@@ -17,36 +17,43 @@ export const useAuthStore = create<AuthStore>((set) => {
 
   const initialState =
     storedUser && storedToken
-      ? { isAuthenticated: true, user: JSON.parse(storedUser) }
-      : { isAuthenticated: false, user: null };
+      ? {
+          isAuthenticated: true,
+          user: JSON.parse(storedUser),
+          token: storedToken,
+        }
+      : { isAuthenticated: false, user: null, token: null };
 
   return {
     ...initialState,
-    setAuth: (user: User) => {
+    setAuth: (user: User, token: string) => {
       if (isClient) {
         localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
+        localStorage.setItem('token', token); // Persist token to localStorage
       }
-      set({ isAuthenticated: true, user });
+      set({ isAuthenticated: true, user, token });
     },
     clearAuth: () => {
       if (isClient) {
         localStorage.removeItem('user'); // Remove user from localStorage
         localStorage.removeItem('token'); // Remove token from localStorage
       }
-      set({ isAuthenticated: false, user: null });
+      set({ isAuthenticated: false, user: null, token: null });
     },
     logout: () => {
       if (isClient) {
-        localStorage.removeItem('user'); // Clear user from localStorage
-        localStorage.removeItem('token'); // Clear token from localStorage
+        localStorage.removeItem('user'); // Remove user from localStorage
+        localStorage.removeItem('token'); // Remove token from localStorage
       }
-      set({ isAuthenticated: false, user: null });
+      set({ isAuthenticated: false, user: null, token: null });
     },
   };
 });
 
 // Export store actions for external usage
 export const authStoreActions = {
-  setAuth: (user: User) => useAuthStore.getState().setAuth(user),
+  setAuth: (user: User, token: string) =>
+    useAuthStore.getState().setAuth(user, token),
   clearAuth: () => useAuthStore.getState().clearAuth(),
+  logout: () => useAuthStore.getState().logout(),
 };

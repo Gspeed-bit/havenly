@@ -1,36 +1,35 @@
-import { apiHandler, ApiResponse } from '@/config/server';
+
+import keys from '@/config/keys';
 import { User } from '../types/user.types';
 import { getAuthToken } from '@/config/helpers';
 
-// src/lib/api/user.ts
 
-export const fetchUser = async () => {
-  const token = getAuthToken();
-  console.log(token);
+export const getUser = async (): Promise<User | null> => {
+  const token = getAuthToken();  // Retrieve the token from localStorage
 
   if (!token) {
-    throw new Error('No token found');
+    console.warn('No authentication token found.');
+    return null;
   }
 
-  const response = await fetch('/user/me', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(`${keys().serverUrl}/user/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user: ${response.statusText}`);
+    if (!response.ok) {
+      console.error('Failed to fetch user data:', response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+    return data?.data || null; // Assuming the user data is in a `data` field
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
   }
-
-  return response.json();
-};
-
-export const getAllUsers = async (): Promise<ApiResponse<User[]>> => {
-  return apiHandler<User[]>('/user', 'GET');
-};
-
-export const getAllAdmins = async (): Promise<ApiResponse<User[]>> => {
-  return apiHandler<User[]>('/user/admin', 'GET');
 };

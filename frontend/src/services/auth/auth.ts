@@ -1,10 +1,5 @@
 import { authStoreActions } from '../../store/auth';
-import {
-  setAuthToken,
-  isBrowser,
-  getAuthToken,
-  authTokenKey,
-} from '../../config/helpers';
+import { setAuthToken, isBrowser, getAuthToken, clearAuthToken } from '../../config/helpers';
 import { apiHandler, ApiResponse } from '../../config/server';
 import {
   LoginCredentials,
@@ -16,9 +11,12 @@ import {
 import { SignUpRequest, SignUpResponse } from '../types/user.types';
 
 export const logOutUser = () => {
-  localStorage.removeItem(authTokenKey);
-  window.location.href = '/auth/login'; // Redirect to login page
+  console.log('Logging out user and clearing token.'); // Debugging log
+  clearAuthToken();
+  authStoreActions.clearAuth();
 };
+
+
 
 export const login = async (loginData: LoginCredentials) => {
   const response = await apiHandler<LoginResponse>('/login', 'POST', loginData);
@@ -30,15 +28,14 @@ export const login = async (loginData: LoginCredentials) => {
       setAuthToken(token);
       console.log('Token stored in localStorage:', getAuthToken()); // Debugging log
     }
-    localStorage.setItem('authToken', response.data.token);
-    console.log('Login successful, token saved to localStorage');
 
-    authStoreActions.setAuth(user as User);
+    authStoreActions.setAuth(user as User, token);
     return { status: 'success', message: 'Login successful' };
   } else {
     return { status: 'error', message: response.message || 'Login failed' };
   }
 };
+
 
 // Signup function
 export const signUp = async (
