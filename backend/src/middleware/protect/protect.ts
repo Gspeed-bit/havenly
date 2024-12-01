@@ -1,7 +1,7 @@
-// backend/middlewares/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '@components/user/models/userModel'; // Import User model
+import User from '@components/user/models/userModel';
+import { IUser } from '@components/user/models/userModel';
 
 interface UserPayload {
   id: string;
@@ -14,35 +14,38 @@ export const protect = async (
   next: NextFunction
 ) => {
   try {
-    // Extract the token from the Authorization header
-    const token = req.header('Authorization')?.split(' ')[1];
+    const authHeader = req.header('Authorization');
+    console.log('Authorization Header:', authHeader);
+
+    const token = authHeader?.split(' ')[1];
     if (!token) {
       return res
         .status(401)
         .json({ message: 'Authorization denied, no token' });
     }
 
-    // Secret key used to verify JWT token
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('JWT_SECRET is not defined');
     }
 
-    // Decode and verify the token
     const decoded = jwt.verify(token, secret) as UserPayload;
+    console.log('Decoded Token:', decoded);
 
-    // Fetch user from the database
     const user = await User.findById(decoded.id);
     if (!user) {
+      console.log('User not found for ID:', decoded.id);
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Attach the user to the request object
-    req.user = user; // Attach the authenticated user to the request
+    req.user = user as IUser;
+    req.user.isAdmin =
+      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
 
     next();
   } catch (err) {
-    console.error(err);
+    console.error('Token validation error:', err);
     res.status(401).json({ message: 'Token is invalid or expired' });
   }
 };
+

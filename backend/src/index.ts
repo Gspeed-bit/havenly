@@ -127,7 +127,7 @@ app.use(
   notificationRoutes,
   inquiryRoutes
 );
-app.use('/image', imageRoutes); // All routes under /user/me
+app.use('/image', imageRoutes); // All routes under
 
 app.use('/user', userRoutes); // All routes under /user/me
 

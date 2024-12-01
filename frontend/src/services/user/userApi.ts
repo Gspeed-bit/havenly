@@ -1,29 +1,31 @@
-import { apiHandler, ApiResponse } from "@/config/server";
-import { User } from "../types/user.types";
+import { apiHandler, ApiResponse } from '@/config/server';
+import { User } from '../types/user.types';
+import { getAuthToken } from '@/config/helpers';
 
-// Function to fetch the current user details
-export const getUserDetails = async () => {
-  const token = localStorage.getItem('token');  // Get token from localStorage
+// src/lib/api/user.ts
+
+export const fetchUser = async () => {
+  const token = getAuthToken();
+  console.log(token);
 
   if (!token) {
-    console.error('No token found');
-    return null;  // Token is missing, return null
+    throw new Error('No token found');
   }
 
-  const response = await apiHandler<{ data: User }>('/user/me', 'GET', undefined, {}, {
-    Authorization: `Bearer ${token}`, // Pass token in header
+  const response = await fetch('/user/me', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
 
-  if (response.status === 'success') {
-    return response.data; // Return the user data from API response
-  } else {
-    console.error('Error fetching user details:', response.message);
-    return null;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.statusText}`);
   }
+
+  return response.json();
 };
-
-
-
 
 export const getAllUsers = async (): Promise<ApiResponse<User[]>> => {
   return apiHandler<User[]>('/user', 'GET');

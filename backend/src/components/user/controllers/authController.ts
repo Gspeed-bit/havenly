@@ -221,11 +221,9 @@ export const requestNewCode = async (req: Request, res: Response) => {
     // Check if the user's email is verified
     if (user.isVerified) {
       console.log(`User ${email} is already verified.`);
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({
-          message: 'User email is already verified. Request not allowed.',
-        });
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: 'User email is already verified. Request not allowed.',
+      });
     }
 
     // Generate a new verification code
@@ -258,7 +256,6 @@ export const requestNewCode = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { token } = req.params;

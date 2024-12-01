@@ -1,48 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { getUserDetails } from '@/services/user/userApi';
-import { useAuthStore } from '@/store/auth';
+'use client';
 
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/components/hooks/useUser';
+import { useEffect } from 'react';
 
 const UserList = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { user, setAuth, logout } = useAuthStore(); // Zustand store to manage auth state
+  const { user, loading } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      getUserDetails()
-        .then((userDetails) => {
-          if (userDetails) {
-            setAuth(userDetails); // Set user in Zustand store
-          } else {
-            logout(); // If no user found, logout
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching user details:', error);
-          logout(); // Log out if the API call fails
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-      logout(); // Log out if no token is found
+    if (!loading && !user) {
+      router.push('/auth/login');
     }
-  }, [setAuth, logout]);
+  }, [loading, router, user]);
 
-  if (isLoading) return <div>Loading...</div>;
-
+  if (!user) {
+    return null; // Render nothing while redirecting
+  }
   return (
-    <div>
-      <h1>Welcome to the App</h1>
-      {user ? (
-        <div>
-          <h2>Welcome, {user.firstName}</h2>
-          <p>Email: {user.email}</p>
-          <p>Phone: {user.phoneNumber}</p>
-        </div>
-      ) : (
-        <p>No user data available</p>
-      )}
+    <div className='max-w-4xl mx-auto p-4'>
+      <h1 className='text-2xl font-bold mb-4'>Profile</h1>
+      <div className='bg-white shadow rounded p-6'>
+        <picture>
+          <img
+            src={user.imgUrl}
+            alt='Profile'
+            className='w-24 h-24 rounded-full mb-4'
+          />
+        </picture>
+        <p>
+          <strong>Name:</strong> {user.firstName} {user.lastName}
+        </p>
+        <p>
+          <strong>Email:</strong> {user.email}
+        </p>
+        <p>
+          <strong>Phone:</strong> {user.phoneNumber}
+        </p>
+      </div>
     </div>
   );
 };

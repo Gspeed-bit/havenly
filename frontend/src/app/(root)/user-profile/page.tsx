@@ -8,9 +8,8 @@ const Page = () => {
   
 
   return (
-   <>
-   
-     <UserList/>
-   </>
-  )}
+    <>
+      <UserList />
+    </>
+  );}
 export default Page;
