@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import keys from './keys';
 import { logOutUser } from '../services/auth/auth';
+import { getAuthToken, clearAuthToken } from './helpers';
 
 export interface SuccessResponse<T> {
   status: 'success';
@@ -17,14 +18,10 @@ export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 const instance = axios.create({
   baseURL: keys().serverUrl,
-  auth: keys().serverAuth,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
-// Retrieve the token from localStorage and set it in the Authorization header
-const getToken = () => localStorage.getItem('authToken'); // Replace with your token storage retrieval
 
 export const apiHandler = async <T>(
   url: string,
@@ -34,7 +31,7 @@ export const apiHandler = async <T>(
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> => {
   try {
-    const token = getToken(); // Retrieve token from localStorage
+    const token = getAuthToken(); // Correctly retrieve token from localStorage
     console.log('Using token:', token); // Debug the token value
 
     const isFormData = data instanceof FormData;
@@ -62,6 +59,7 @@ export const apiHandler = async <T>(
       console.error('Axios error:', axiosError.response?.data); // Debug Axios error
       if (axiosError.response?.status === 401) {
         logOutUser(); // Handle unauthorized access
+        clearAuthToken(); // Clear invalid token
         window.location.href = '/auth/login'; // Redirect to login
       }
 
