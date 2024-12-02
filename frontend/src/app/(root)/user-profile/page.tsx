@@ -1,6 +1,7 @@
 'use client';
 
-import AdminUsersList from '@/components/pages/userList/AdminUsersList';
+import Dashboard from '@/components/pages/userList/Dashboard';
+
 
 import React from 'react';
 
@@ -8,8 +9,7 @@ const Page = () => {
   return (
     <>
       {/* <UserList /> */}
-      <AdminUsersList />
-
+      <Dashboard />
     </>
   );
 };

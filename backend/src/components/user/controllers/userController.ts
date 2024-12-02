@@ -7,7 +7,7 @@ import {
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
 
-export const getcurrentUser = async (req: Request, res: Response) => {
+export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const user = req.user; // User object is already attached to req by the protect middleware
 
@@ -27,6 +27,14 @@ export const getcurrentUser = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
+    // Check if the authenticated user is an admin
+    if (!req.user?.isAdmin) {
+      console.log('Access denied - User is not an admin');
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Access denied' });
+    }
+
     // Fetch all users excluding admins (those with isAdmin: false)
     const users = await User.find({ isAdmin: false }).lean(); // Only non-admin users
 
@@ -51,6 +59,12 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get all admin users
 export const getAllAdmins = async (req: Request, res: Response) => {
   try {
+    if (!req.user?.isAdmin) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Access denied' });
+    }
+
     const admins = await User.find({ adminCode: process.env.ADMIN_CODE });
     // Sanitize the admin users before sending
     const sanitizedAdmins = admins.map((admin) =>

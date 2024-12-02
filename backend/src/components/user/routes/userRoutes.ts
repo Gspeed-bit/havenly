@@ -12,7 +12,7 @@ import {
   confirmAdminUpdate,
   getAllAdmins,
   getAllUsers,
-  getcurrentUser,
+  getCurrentUser,
   requestAdminUpdatePin,
   updateUserProfile,
 } from '@components/user/controllers/userController';
@@ -60,7 +60,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', protect, getcurrentUser);
+router.get('/me', protect, getCurrentUser);
 
 /**
  * @swagger
