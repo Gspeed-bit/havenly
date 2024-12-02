@@ -54,18 +54,20 @@ export const catchApiError =
     try {
       await fn(req, res, next);
     } catch (err) {
+      if (res.headersSent) {
+        console.warn('Headers already sent. Aborting error handler.');
+        return;
+      }
       if (err instanceof ApiError) {
         return res.status(err.statusCode).json(err);
       }
       // Handle unexpected errors
       console.error('Unexpected error:', err);
-      return res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, {
-            message: 'Internal Server Error',
-          })
-        );
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+        new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, {
+          message: 'Internal Server Error',
+        })
+      );
     }
   };
 
@@ -75,6 +77,10 @@ export const successResponse = (
   data: unknown,
   message = 'Operation Successful'
 ) => {
+  if (res.headersSent) {
+    console.warn('Headers already sent. Aborting successResponse.');
+    return;
+  }
   return res.status(StatusCodes.SUCCESS).json({
     statusCode: StatusCodes.SUCCESS,
     message,

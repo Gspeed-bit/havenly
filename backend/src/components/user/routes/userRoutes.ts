@@ -110,7 +110,11 @@ router.get(
         message: 'Access denied',
       });
     }
-    await getAllUsers(req, res); // Admin-only route to get all non-admin users
+    const users = await getAllUsers(req, res);
+    // Ensure no duplicate response
+    if (!res.headersSent) {
+      successResponse(res, users, 'Users retrieved successfully');
+    }
   })
 );
 
