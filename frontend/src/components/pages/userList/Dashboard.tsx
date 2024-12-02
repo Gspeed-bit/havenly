@@ -1,64 +1,52 @@
-import { ApiResponse } from '@/config/server';
-import { User } from '@/services/types/user.types';
-import { fetchAllAdminsApi, fetchAllUsersApi } from '@/services/user/userApi';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
+interface AdminData {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+}
 
 const Dashboard = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [admins, setAdmins] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [adminData, setAdminData] = useState<AdminData[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-
+    const fetchData = async () => {
       try {
-        const userResponse: ApiResponse<{ data: User[] }> = await fetchAllUsersApi();
-        if (userResponse.status === 'success') {
-          setUsers(userResponse.data.data);
+        const response = await fetch(
+          'https://havenly-chdr.onrender.com/user/admin'
+        );
+        const data = await response.json();
+        if (data.status === 'success') {
+          setAdminData(data.data);
         } else {
-          setError(userResponse.message);
+          setError('Unexpected response format');
         }
-
-        const adminResponse: ApiResponse<{ data: User[] }> = await fetchAllAdminsApi();
-        if (adminResponse.status === 'success') {
-          setAdmins(adminResponse.data.data);
-        } else {
-          setError(adminResponse.message);
-        }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (err) {
-        setError('An unexpected error occurred.');
-      } finally {
-        setLoading(false);
+      } catch {
+        setError('Failed to fetch admin data');
       }
     };
 
-    loadData();
+    fetchData();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (error) {
+    return <div className='error-message'>{error}</div>;
+  }
 
   return (
-    <div>
-      <h1>Users</h1>
+    <div className='admin-dashboard'>
+      <h1>Admin Dashboard</h1>
       <ul>
-        {users.map((user) => (
-          <li key={user._id}>
-            {user.firstName} {user.lastName} - {user.email}
-          </li>
-        ))}
-      </ul>
-
-      <h1>Admins</h1>
-      <ul>
-        {admins.map((admin) => (
+        {adminData.map((admin) => (
           <li key={admin._id}>
-            {admin.firstName} {admin.lastName} - {admin.email}
+            <p>
+              Name: {admin.firstName} {admin.lastName}
+            </p>
+            <p>Email: {admin.email}</p>
+            <p>Phone: {admin.phoneNumber}</p>
           </li>
         ))}
       </ul>

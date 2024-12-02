@@ -7,21 +7,27 @@ import {
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
 
-export const getCurrentUser = async (req: Request, res: Response) => {
+export const getUser = async (req: Request, res: Response) => {
   try {
-    const user = req.user; // User object is already attached to req by the protect middleware
+    const user = await User.findById(req.user?._id); // Mongoose document returned
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'User not found' });
     }
 
-    return res.status(200).json({
-      status: 'success',
-      data: user,
-    });
+    // Convert the document to a plain object
+    const userResponse = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password', 'resetPasswordCode', 'verificationCode']
+    ); // Sanitize sensitive fields
+
+    return res.json(userResponse);
   } catch (error) {
-    console.error('Error fetching user:', error);
-    return res.status(500).json({ message: 'Error fetching user details' });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Error fetching user', error });
   }
 };
 
@@ -97,9 +103,11 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
   // Prevent admins from updating their profile
   if (req.user?.isAdmin) {
-    return res.status(403).json({
-      message: 'Admins cannot update their profile through this route.',
-    });
+    return res
+      .status(403)
+      .json({
+        message: 'Admins cannot update their profile through this route.',
+      });
   }
 
   try {

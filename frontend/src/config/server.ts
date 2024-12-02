@@ -23,6 +23,7 @@ const instance = axios.create({
   },
 });
 
+
 export const apiHandler = async <T>(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',

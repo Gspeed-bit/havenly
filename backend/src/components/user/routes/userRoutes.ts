@@ -12,12 +12,14 @@ import {
   confirmAdminUpdate,
   getAllAdmins,
   getAllUsers,
-  getCurrentUser,
+  getUser,
   requestAdminUpdatePin,
   updateUserProfile,
 } from '@components/user/controllers/userController';
 import { protect } from '@middleware/protect/protect';
-// import { userMiddleware } from '@middleware/userMiddleware';
+
+import { userMiddleware } from '@middleware/userMiddleware';
+// import { authMiddleware } from '@middleware/userMiddleware';
 
 
 const router = express.Router();
@@ -60,7 +62,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get('/me', protect, getCurrentUser);
+router.get('/me', userMiddleware, getUser);
 
 /**
  * @swagger
