@@ -1,15 +1,15 @@
 'use client';
 
-
+import AdminsList from '@/components/pages/userList/AdminsList';
 import React from 'react';
-import UserList from '@/components/pages/userList/UserList';
 
 const Page = () => {
-  
-
   return (
     <>
-      <UserList />
+      {/* <UserList /> */}
+      {/* <AdminUsersList /> */}
+      <AdminsList />
     </>
-  );}
+  );
+};
 export default Page;

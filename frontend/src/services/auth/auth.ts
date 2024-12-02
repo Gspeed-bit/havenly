@@ -1,5 +1,9 @@
 import { authStoreActions } from '../../store/auth';
-import { setAuthToken, isBrowser, getAuthToken, clearAuthToken } from '../../config/helpers';
+import {
+  setAuthToken,
+  isBrowser,
+  clearAuthToken,
+} from '../../config/helpers';
 import { apiHandler, ApiResponse } from '../../config/server';
 import {
   LoginCredentials,
@@ -16,8 +20,6 @@ export const logOutUser = () => {
   authStoreActions.clearAuth();
 };
 
-
-
 export const login = async (loginData: LoginCredentials) => {
   const response = await apiHandler<LoginResponse>('/login', 'POST', loginData);
 
@@ -26,7 +28,6 @@ export const login = async (loginData: LoginCredentials) => {
 
     if (isBrowser()) {
       setAuthToken(token);
-      console.log('Token stored in localStorage:', getAuthToken()); // Debugging log
     }
 
     authStoreActions.setAuth(user as User, token);
@@ -35,7 +36,6 @@ export const login = async (loginData: LoginCredentials) => {
     return { status: 'error', message: response.message || 'Login failed' };
   }
 };
-
 
 // Signup function
 export const signUp = async (

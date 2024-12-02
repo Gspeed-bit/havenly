@@ -32,8 +32,6 @@ export const apiHandler = async <T>(
 ): Promise<ApiResponse<T>> => {
   try {
     const token = getAuthToken(); // Correctly retrieve token from localStorage
-    console.log('Using token:', token); // Debug the token value
-
     const isFormData = data instanceof FormData;
 
     const response = await instance({

@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { clearAuthToken } from '../../config/helpers';
+import { clearAuthToken } from '../../../config/helpers';
 import { User } from '@/services/types/user.types';
 import { fetchUserApi } from '@/services/user/userApi';
-
 
 export const useUser = (): { user: User | null; loading: boolean } => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,7 +12,7 @@ export const useUser = (): { user: User | null; loading: boolean } => {
   const fetchUser = async () => {
     try {
       const response = await fetchUserApi();
-
+      console.log('Fetched users:', response); // Log the response here to check the data
       if (response.status === 'success') {
         setUser(response.data.data);
       } else {

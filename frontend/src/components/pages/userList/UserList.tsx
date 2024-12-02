@@ -1,10 +1,9 @@
 'use client';
 
-import { useUser } from '@/components/hooks/useUser';
+import { useUser } from '@/components/hooks/api/useUser';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
 
 const UserList = () => {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -22,16 +21,15 @@ const UserList = () => {
     }
   }, [isAuthenticated, router]);
 
-    // Prevent rendering on the server
-    if (!isHydrated) {
-      return null; // Render nothing until hydrated
-    }
+  // Prevent rendering on the server
+  if (!isHydrated) {
+    return null; // Render nothing until hydrated
+  }
 
-    if (!isAuthenticated) {
-      return <div>Loading...</div>; // Optionally show a loading state while redirecting
-    }
+  if (!isAuthenticated) {
+    return <div>Loading...</div>; // Optionally show a loading state while redirecting
+  }
 
-  
   return (
     <div className='max-w-4xl mx-auto p-4'>
       <h1 className='text-2xl font-bold mb-4'>Profile</h1>
@@ -58,7 +56,6 @@ const UserList = () => {
 };
 
 export default UserList;
-
 
 // 'use client';
 

@@ -5,7 +5,7 @@ import { IUser } from '@components/user/models/userModel';
 
 interface UserPayload {
   id: string;
-  isAdmin?: boolean;
+  isAdmin?: boolean; // Admin field is optional here since it's checked separately
 }
 
 export const protect = async (
@@ -14,38 +14,40 @@ export const protect = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.header('Authorization');
-    console.log('Authorization Header:', authHeader);
-
-    const token = authHeader?.split(' ')[1];
+    // Check for token in the Authorization header
+    const token = req.header('Authorization')?.split(' ')[1];
     if (!token) {
       return res
         .status(401)
-        .json({ message: 'Authorization denied, no token' });
+        .json({ message: 'No token, authorization denied' });
     }
 
+    // Check for the JWT secret
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('JWT_SECRET is not defined');
     }
 
+    // Verify the token and decode the user data
     const decoded = jwt.verify(token, secret) as UserPayload;
-    console.log('Decoded Token:', decoded);
-
     const user = await User.findById(decoded.id);
+
     if (!user) {
-      console.log('User not found for ID:', decoded.id);
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Attach user data to the request object
     req.user = user as IUser;
-    req.user.isAdmin =
-      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
 
+    // Admin check: If the user is not admin, return a 403 status
+    if (decoded.isAdmin === undefined || !req.user.isAdmin) {
+      return res.status(403).json({ message: 'Access denied - Admins only' });
+    }
+
+    // Proceed to the next middleware
     next();
   } catch (err) {
-    console.error('Token validation error:', err);
-    res.status(401).json({ message: 'Token is invalid or expired' });
+    console.error(err);
+    res.status(401).json({ message: 'Token is not valid or has expired' });
   }
 };
-
