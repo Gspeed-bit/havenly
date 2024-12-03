@@ -1,130 +1,97 @@
 'use client';
+import React, { useState } from 'react';
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useUser } from '@/components/hooks/api/useUser';
-
-
-const ProfileUpdateForm = () => {
-  const { user, loading } = useUser();
+const UpdateProfile = ({
+  user,
+}: {
+  user: { _id: string; isAdmin: boolean };
+}) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     phoneNumber: '',
     image: null as File | null,
+    pin: '', // Only used for admins
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && !loading) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        phoneNumber: user.phoneNumber || '',
-        image: null,
-      });
-    }
-  }, [user, loading]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({
-        ...prev,
-        image: e.target.files ? e.target.files[0] : null,
-      }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target as HTMLInputElement;
+    const files = (e.target as HTMLInputElement).files;
+    if (files && files[0]) {
+      setFormData((prev) => ({ ...prev, image: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.firstName || !formData.lastName || !formData.phoneNumber) {
-      setErrorMessage('Please fill in all fields');
-      return;
-    }
-
+  const handleSubmit = async () => {
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
+    const payload = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value) payload.append(key, value as string | Blob);
+    });
+
     try {
-      const updateData = new FormData();
-      updateData.append('firstName', formData.firstName);
-      updateData.append('lastName', formData.lastName);
-      updateData.append('phoneNumber', formData.phoneNumber);
+      const response = await fetch('/user/update', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: payload,
+      });
 
-      if (formData.image) {
-        updateData.append('image', formData.image);
+      const result = await response.json();
+      if (response.ok) {
+        setSuccessMessage(result.message);
+      } else {
+        setErrorMessage(result.message || 'Failed to update profile.');
       }
-
-      const response = await axios.put(
-        `/user/update/${user?._id}`,
-        updateData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      );
-      console.log(response.data);
-
-      setSuccessMessage('Profile updated successfully');
-      setFormData((prev) => ({ ...prev, image: null }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.log(error)
-      setErrorMessage('Failed to update profile');
+      setErrorMessage('An error occurred while updating the profile.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (loading) return <p>Loading user data...</p>;
-
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={(e) => e.preventDefault()}>
       <div>
-        <label htmlFor='firstName'>First Name</label>
+        <label>First Name:</label>
+        <input type='text' name='firstName' onChange={handleChange} />
+      </div>
+      <div>
+        <label>Last Name:</label>
+        <input type='text' name='lastName' onChange={handleChange} />
+      </div>
+      <div>
+        <label>Phone Number:</label>
+        <input type='text' name='phoneNumber' onChange={handleChange} />
+      </div>
+      <div>
+        <label>Profile Image:</label>
         <input
-          type='text'
-          id='firstName'
-          name='firstName'
-          value={formData.firstName}
-          onChange={handleInputChange}
+          type='file'
+          name='image'
+          accept='image/*'
+          onChange={handleChange}
         />
       </div>
-      <div>
-        <label htmlFor='lastName'>Last Name</label>
-        <input
-          type='text'
-          id='lastName'
-          name='lastName'
-          value={formData.lastName}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label htmlFor='phoneNumber'>Phone Number</label>
-        <input
-          type='text'
-          id='phoneNumber'
-          name='phoneNumber'
-          value={formData.phoneNumber}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label htmlFor='image'>Profile Image</label>
-        <input type='file' id='image' onChange={handleImageChange} />
-      </div>
-      <button type='submit' disabled={isLoading}>
+      {user.isAdmin && (
+        <div>
+          <label>Admin PIN:</label>
+          <input type='text' name='pin' onChange={handleChange} />
+        </div>
+      )}
+      <button onClick={handleSubmit} disabled={isLoading}>
         {isLoading ? 'Updating...' : 'Update Profile'}
       </button>
 
@@ -134,4 +101,4 @@ const ProfileUpdateForm = () => {
   );
 };
 
-export default ProfileUpdateForm;
+export default UpdateProfile;

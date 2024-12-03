@@ -13,3 +13,22 @@ export const fetchAllUsersApi = async (): Promise<ApiResponse<User[]>> => {
 export const fetchAllAdminsApi = async (): Promise<ApiResponse<User[]>> => {
   return apiHandler<User[]>('/user/admin', 'GET');
 };
+
+export const updateUserProfile = async (
+  data: object
+): Promise<ApiResponse<User>> => {
+  return await apiHandler('/user/update', 'PUT', data);
+};
+
+// Request admin pin
+export const requestAdminPin = async (): Promise<ApiResponse<User>> => {
+  return await apiHandler('/user/request-pin', 'POST');
+};
+
+export const confirmAdminUpdate = async (
+  pin: string,
+  updates: object
+): Promise<ApiResponse<User>> => {
+  return await apiHandler('/user/confirm-update', 'POST', { pin, updates });
+};
+

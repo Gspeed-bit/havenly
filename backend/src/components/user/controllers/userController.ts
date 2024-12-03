@@ -6,7 +6,8 @@ import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
-import { uploadToCloudinary } from 'utils/cloudinary';
+import { uploadImageToCloudinary } from 'utils/cloudinary';
+
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -92,40 +93,42 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
+// Update User Profile Handler
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { body: updates, user } = req;
-  const { isAdmin, _id } = user;
+  const { updates, pin } = req.body;
+  const { isAdmin, _id: userId } = req.user;
 
-  if (updates.email)
+  // Prevent unauthorized email updates
+  if (updates?.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
+  }
+
+  // Handle Admin PIN validation
+  if (isAdmin) {
+    if (!pin || adminPins[userId] !== pin) {
+      return res.status(400).json({ message: 'Invalid or missing PIN.' });
+    }
+    delete adminPins[userId];
+  }
 
   try {
+    // Handle image upload if file is provided
     if (req.file) {
-      const folder = `user_images/${_id}`;
-      const { secureUrl } = await uploadToCloudinary(req.file.buffer, folder);
-      updates.imgUrl = secureUrl;
+      const { secure_url } = await uploadImageToCloudinary(
+        req.file.buffer,
+        `user_images/${userId}`
+      );
+      updates.imgUrl = secure_url;
     }
 
-    // If admin, ensure updates are restricted unless verified by PIN
-    if (isAdmin) {
-      return res.status(403).json({ message: 'Admins must confirm updates.' });
-    }
+    // Check if the user is trying to update their profile
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    const updatedUser = await User.findByIdAndUpdate(_id, updates, {
-      new: true,
-    });
-
-    if (!updatedUser)
-      return res.status(404).json({ message: 'User not found.' });
-
-    const sanitizedUser = sanitizeUser(updatedUser.toObject() as unknown as Record<string, unknown>, ['password']);
-    res.json({
-      message: 'Profile updated successfully.',
-      user: sanitizedUser,
-    });
+    const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password']);
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-    res.status(500).json({ message: 'Update failed.', error: errorMessage });
+    res.status(500).json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
 
