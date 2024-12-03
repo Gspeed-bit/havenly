@@ -223,7 +223,7 @@ router.get(
  *       500:
  *         description: Server error
  */
-router.put('/update', protect, updateUserProfile);
+router.put('/update',userMiddleware,  updateUserProfile);
 
 /**
  * @swagger
