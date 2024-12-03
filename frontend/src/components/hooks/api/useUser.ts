@@ -14,7 +14,7 @@ export const useUser = (): { user: User | null; loading: boolean } => {
       const response = await fetchUserApi();
       console.log('Fetched users:', response); // Log the response here to check the data
       if (response.status === 'success') {
-        setUser(response.data.data);
+        setUser(response.data);
       } else {
         throw new Error(response.message || 'Failed to fetch user details.');
       }

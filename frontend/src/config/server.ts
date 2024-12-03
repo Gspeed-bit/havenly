@@ -55,7 +55,6 @@ export const apiHandler = async <T>(
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
-      console.error('Axios error:', axiosError.response?.data); // Debug Axios error
       if (axiosError.response?.status === 401) {
         logOutUser(); // Handle unauthorized access
         clearAuthToken(); // Clear invalid token

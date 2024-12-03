@@ -12,6 +12,7 @@ const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAdmin = useAuthStore((state) => state.isAdmin); // Check if the user is an admin
 
   useEffect(() => {
     setHydrated(true); // Resolve server-side rendering issues
@@ -20,35 +21,35 @@ const UserMenu: React.FC = () => {
   if (!hydrated) return null;
 
   // Predefined color map for letters A-Z
-   const letterColorMap: Record<string, string> = {
-     A: '#EF4444',
-     B: '#3B82F6',
-     C: '#10B981',
-     D: '#F59E0B',
-     E: '#8B5CF6',
-     F: '#EC4899',
-     G: '#6366F1',
-     H: '#14B8A6',
-     I: '#F97316',
-     J: '#4B5563',
-     K: '#22C55E',
-     L: '#A855F7',
-     M: '#D946EF',
-     N: '#0EA5E9',
-     O: '#DB2777',
-     P: '#7C3AED',
-     Q: '#059669',
-     R: '#9CA3AF',
-     S: '#1D4ED8',
-     T: '#D97706',
-     U: '#6D28D9',
-     V: '#D1D5DB',
-     W: '#4ADE80',
-     X: '#FACC15',
-     Y: '#EA580C',
-     Z: '#9D174D',
-   };
-  // Default color if letter is invalid
+  const letterColorMap: Record<string, string> = {
+    A: '#EF4444',
+    B: '#3B82F6',
+    C: '#10B981',
+    D: '#F59E0B',
+    E: '#8B5CF6',
+    F: '#EC4899',
+    G: '#6366F1',
+    H: '#14B8A6',
+    I: '#F97316',
+    J: '#4B5563',
+    K: '#22C55E',
+    L: '#A855F7',
+    M: '#D946EF',
+    N: '#0EA5E9',
+    O: '#DB2777',
+    P: '#7C3AED',
+    Q: '#059669',
+    R: '#9CA3AF',
+    S: '#1D4ED8',
+    T: '#D97706',
+    U: '#6D28D9',
+    V: '#D1D5DB',
+    W: '#4ADE80',
+    X: '#FACC15',
+    Y: '#EA580C',
+    Z: '#9D174D',
+  };
+
   const defaultColor = '#374151'; // Neutral Gray
 
   const getUserInitials = (firstName: string, lastName: string): string => {
@@ -91,13 +92,29 @@ const UserMenu: React.FC = () => {
           </PopoverTrigger>
           <PopoverContent className='mt-2 w-52 rounded-lg shadow-lg border-none'>
             <div className=' '>
-              <div className=' py-3'>
+              <div className='py-3'>
                 <p className='text-xs font-semibold'>
                   {user?.firstName} {user?.lastName}
                 </p>
               </div>
               <div className='border-t border-gray-200'></div>
               <ul className='py-1'>
+                {isAdmin && (
+                  <li>
+                    <Link
+                      href='/dashboard'
+                      className='flex items-center py-2 text-sm hover:text-violet'
+                    >
+                      <Icon
+                        type='LayoutDashboard'
+                        color='#3A0CA3'
+                        strokeWidth={1.75}
+                        className='mr-2 h-4 w-4'
+                      />
+                      Dashboard
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link
                     href={Page.getAddress()}
@@ -138,20 +155,6 @@ const UserMenu: React.FC = () => {
                       className='mr-2 h-4 w-4'
                     />
                     Properties
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={Page.getAdminProfileUpdate()}
-                    className='flex items-center py-2 text-sm hover:text-violet'
-                  >
-                    <Icon
-                      type='Settings'
-                      color='#3A0CA3'
-                      strokeWidth={1.75}
-                      className='mr-2 h-4 w-4'
-                    />
-                    Settings
                   </Link>
                 </li>
                 <li>

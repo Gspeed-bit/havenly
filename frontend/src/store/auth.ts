@@ -3,6 +3,7 @@ import { User } from '../services/types/user.types';
 
 type AuthStore = {
   isAuthenticated: boolean;
+  isAdmin: boolean;
   user: User | null;
   token: string | null;
   setAuth: (user: User, token: string) => void;
@@ -19,10 +20,11 @@ export const useAuthStore = create<AuthStore>((set) => {
     storedUser && storedToken
       ? {
           isAuthenticated: true,
+          isAdmin: JSON.parse(storedUser).isAdmin, // Fetch isAdmin from stored user
           user: JSON.parse(storedUser),
           token: storedToken,
         }
-      : { isAuthenticated: false, user: null, token: null };
+      : { isAuthenticated: false, isAdmin: false, user: null, token: null };
 
   return {
     ...initialState,
@@ -31,21 +33,21 @@ export const useAuthStore = create<AuthStore>((set) => {
         localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
         localStorage.setItem('token', token); // Persist token to localStorage
       }
-      set({ isAuthenticated: true, user, token });
+      set({ isAuthenticated: true, isAdmin: user.isAdmin, user, token });
     },
     clearAuth: () => {
       if (isClient) {
         localStorage.removeItem('user'); // Remove user from localStorage
         localStorage.removeItem('token'); // Remove token from localStorage
       }
-      set({ isAuthenticated: false, user: null, token: null });
+      set({ isAuthenticated: false, isAdmin: false, user: null, token: null });
     },
     logout: () => {
       if (isClient) {
         localStorage.removeItem('user'); // Remove user from localStorage
         localStorage.removeItem('token'); // Remove token from localStorage
       }
-      set({ isAuthenticated: false, user: null, token: null });
+      set({ isAuthenticated: false, isAdmin: false, user: null, token: null });
     },
   };
 });

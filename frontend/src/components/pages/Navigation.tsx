@@ -17,7 +17,15 @@ const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [activeNav, setActiveNav] = useState('Home'); // Active navigation state
   const [hydrated, setHydrated] = useState(false); // Hydration state
-  const navItems = ['Home', 'About', 'Listings', 'Services'];
+
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'About', path: '/about' },
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Profile', path: '/profile' },
+    { label: 'Listings', path: '/listings' },
+    { label: 'Services', path: '/services' },
+  ];
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -41,26 +49,25 @@ const Navigation: React.FC<NavigationProps> = ({
 
           {/* Desktop Menu */}
           <div className='hidden md:flex items-center space-x-6'>
-            {navItems.map((item) => (
+            {navItems.map(({ label, path }) => (
               <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={label}
+                href={path}
                 className={`px-4 py-2 text-sm font-medium ${
-                  activeNav === item
+                  activeNav === label
                     ? 'bg-blue text-darkGray rounded-full'
                     : 'text-darkGray hover:text-blue-700'
                 }`}
-                onClick={() => setActiveNav(item)}
+                onClick={() => setActiveNav(label)}
               >
-                {item}
+                {label}
               </Link>
             ))}
           </div>
 
           {/* Actions */}
           <div className='hidden md:flex items-center space-x-4'>
-            {!hydrated ? // Do not render anything until hydrated
-            null : isAuthenticated ? (
+            {!hydrated ? null : isAuthenticated ? (
               <div className='hidden md:flex items-center space-x-4'>
                 <UserMenu />
               </div>
@@ -105,21 +112,21 @@ const Navigation: React.FC<NavigationProps> = ({
       {isMobileMenuOpen && (
         <div className='md:hidden bg-white border-t'>
           <div className='flex flex-col space-y-4 py-4 px-6'>
-            {navItems.map((item) => (
+            {navItems.map(({ label, path }) => (
               <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={label}
+                href={path}
                 className={`text-sm font-medium ${
-                  activeNav === item
+                  activeNav === label
                     ? 'text-blue-700 font-semibold'
                     : 'text-gray-600 hover:text-blue-700'
                 }`}
                 onClick={() => {
-                  setActiveNav(item);
+                  setActiveNav(label);
                   setIsMobileMenuOpen(false);
                 }}
               >
-                {item}
+                {label}
               </Link>
             ))}
           </div>
