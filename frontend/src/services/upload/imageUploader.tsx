@@ -1,11 +1,9 @@
-'use client';
 import { apiHandler } from '@/config/server';
 import React, { useState } from 'react';
-// Assuming your apiHandler is in this path
 
-const UpdateProfile = () => {
+
+const UploadImage = ({ entityId, entityType }: { entityId: string, entityType: string }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [name, setName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -16,9 +14,9 @@ const UpdateProfile = () => {
     }
   };
 
-  const handleUpdateProfile = async () => {
-    if (!name) {
-      setErrorMessage('Please fill in your name.');
+  const handleUpload = async () => {
+    if (!file) {
+      setErrorMessage('Please select an image to upload.');
       return;
     }
 
@@ -27,21 +25,19 @@ const UpdateProfile = () => {
     setSuccessMessage(null);
 
     const formData = new FormData();
-    formData.append('name', name); // Keep name but don't include email
-
-    if (file) {
-      formData.append('image', file);
-    }
+    formData.append('image', file); // 'image' is the key expected by your backend
+    formData.append('type', entityType); // 'user_image' or 'property_image'
+    formData.append('entityId', entityId); // The ID of the user or property
 
     try {
-      const response = await apiHandler('/user/update', 'PUT', formData);
+      const response = await apiHandler('/image/upload', 'POST', formData);
       if (response.status === 'success') {
-        setSuccessMessage('Profile updated successfully!');
+        setSuccessMessage('Image uploaded successfully!');
       } else {
         setErrorMessage(response.message);
       }
     } catch (error) {
-      setErrorMessage('An error occurred during the profile update.');
+      setErrorMessage('An error occurred during the upload.');
     } finally {
       setIsLoading(false);
     }
@@ -49,15 +45,9 @@ const UpdateProfile = () => {
 
   return (
     <div>
-      <input
-        type='text'
-        placeholder='Name'
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input type='file' onChange={handleFileChange} />
-      <button onClick={handleUpdateProfile} disabled={isLoading}>
-        {isLoading ? 'Updating Profile...' : 'Update Profile'}
+      <input type="file" onChange={handleFileChange} />
+      <button onClick={handleUpload} disabled={isLoading}>
+        {isLoading ? 'Uploading...' : 'Upload Image'}
       </button>
 
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
@@ -66,4 +56,4 @@ const UpdateProfile = () => {
   );
 };
 
-export default UpdateProfile;
+export default UploadImage;

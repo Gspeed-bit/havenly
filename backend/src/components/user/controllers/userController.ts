@@ -6,6 +6,7 @@ import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
+import { imageUploadToEntity } from '@components/imageUpload/controllers/imageUploadToEntity';
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -91,8 +92,26 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   const updates = req.body;
+
+  // If an image is provided, upload it to Cloudinary
+  if (req.file) {
+    try {
+      const result = await imageUploadToEntity(
+        'user_image',
+        req.user._id,
+        req.file
+      );
+      updates.imgUrl = result.secure_url; // Update the user with the new image URL
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Image upload failed',
+        error: (error as Error).message,
+      });
+    }
+  }
 
   // Prevent email updates
   if (updates.email) {
@@ -103,11 +122,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
   // Prevent admins from updating their profile
   if (req.user?.isAdmin) {
-    return res
-      .status(403)
-      .json({
-        message: 'Admins cannot update their profile through this route.',
-      });
+    return res.status(403).json({
+      message: 'Admins cannot update their profile through this route.',
+    });
   }
 
   try {
@@ -116,7 +133,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    // Sanitize user data before returning
     const sanitizedUser = sanitizeUser(
       user.toObject() as unknown as Record<string, unknown>,
       ['password', 'email']
@@ -130,6 +146,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
+
+
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs

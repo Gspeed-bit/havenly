@@ -117,7 +117,7 @@ const UserMenu: React.FC = () => {
                 )}
                 <li>
                   <Link
-                    href={Page.getAddress()}
+                    href={Page.getProfile()}
                     className='flex items-center py-2 text-sm hover:text-violet'
                   >
                     <Icon
