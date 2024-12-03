@@ -21,7 +21,6 @@ import { protect } from '@middleware/protect/protect';
 import { userMiddleware } from '@middleware/userMiddleware';
 // import { authMiddleware } from '@middleware/userMiddleware';
 
-
 const router = express.Router();
 
 /**
@@ -185,16 +184,23 @@ router.get(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
  *               firstName:
  *                 type: string
+ *                 description: The user's first name
  *               lastName:
  *                 type: string
+ *                 description: The user's last name
  *               phoneNumber:
  *                 type: string
+ *                 description: The user's phone number
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: An optional profile image file
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -205,25 +211,68 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: Profile updated successfully
  *                 user:
  *                   type: object
  *                   properties:
  *                     _id:
  *                       type: string
+ *                       example: 63cfe2f9e7d1e812b79b2d3a
  *                     firstName:
  *                       type: string
+ *                       example: John
  *                     lastName:
  *                       type: string
+ *                       example: Doe
  *                     phoneNumber:
  *                       type: string
+ *                       example: +1234567890
+ *                     imgUrl:
+ *                       type: string
+ *                       example: https://example.com/profile-image.jpg
  *       400:
  *         description: Invalid email update attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Users cannot update their email.
+ *       403:
+ *         description: Admins cannot update their profile through this route
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Admins cannot update their profile through this route.
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found.
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: An error occurred.
  */
-router.put('/update',userMiddleware,  updateUserProfile);
+router.put('/update', protect, updateUserProfile);
+
 
 /**
  * @swagger

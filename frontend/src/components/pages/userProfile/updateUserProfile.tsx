@@ -1,11 +1,12 @@
 'use client';
 import { apiHandler } from '@/config/server';
 import React, { useState } from 'react';
-// Assuming your apiHandler is in this path
 
 const UpdateProfile = () => {
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-  const [name, setName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -17,8 +18,9 @@ const UpdateProfile = () => {
   };
 
   const handleUpdateProfile = async () => {
-    if (!name) {
-      setErrorMessage('Please fill in your name.');
+    // Validate required fields
+    if (!firstName || !lastName || !phoneNumber) {
+      setErrorMessage('Please fill in all required fields.');
       return;
     }
 
@@ -26,22 +28,27 @@ const UpdateProfile = () => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
+    // Prepare form data
     const formData = new FormData();
-    formData.append('name', name); // Keep name but don't include email
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('phoneNumber', phoneNumber);
 
     if (file) {
-      formData.append('image', file);
+      formData.append('image', file); // Add the image if selected
     }
 
     try {
+      // Send the form data to the API
       const response = await apiHandler('/user/update', 'PUT', formData);
+
       if (response.status === 'success') {
         setSuccessMessage('Profile updated successfully!');
       } else {
-        setErrorMessage(response.message);
+        setErrorMessage(response.message || 'Failed to update profile.');
       }
     } catch (error) {
-      setErrorMessage('An error occurred during the profile update.');
+      setErrorMessage('An error occurred while updating the profile.');
     } finally {
       setIsLoading(false);
     }
@@ -49,11 +56,25 @@ const UpdateProfile = () => {
 
   return (
     <div>
+      <h1>Update Profile</h1>
+
       <input
         type='text'
-        placeholder='Name'
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        placeholder='First Name'
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+      />
+      <input
+        type='text'
+        placeholder='Last Name'
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+      />
+      <input
+        type='text'
+        placeholder='Phone Number'
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
       />
       <input type='file' onChange={handleFileChange} />
       <button onClick={handleUpdateProfile} disabled={isLoading}>
