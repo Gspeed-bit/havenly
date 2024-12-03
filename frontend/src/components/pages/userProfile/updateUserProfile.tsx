@@ -71,17 +71,13 @@ const ProfileUpdate = () => {
   const uploadImage = async (image: File) => {
     const formData = new FormData();
     formData.append('image', image);
+    formData.append('type', 'user_image'); // or 'property_image', dynamically decide based on context
+    formData.append('entityId', user?._id || 'default-entity-id');
 
-    // Ensure folder is defined (e.g., based on user or profile)
-const folderName = user?.firstName
-  ? `profile-pictures/${user.firstName}`
-  : 'profile-pictures/default';    
-  console.log('Folder Name:', folderName);
     const response = await apiHandler<SuccessResponse<{ url: string }>>(
       '/image/upload',
       'POST',
-      formData,
-      { params: { folder: folderName } } // Pass the folder name here
+      formData
     );
 
     if (response.status === 'error') {
