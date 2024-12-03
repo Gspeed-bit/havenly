@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '@/components/hooks/api/useUser';
 import { apiHandler, SuccessResponse } from '@/config/server';
 
-
 const ProfileUpdate = () => {
   const { user, loading: userLoading } = useUser();
   const [userData, setUserData] = useState({
@@ -61,7 +60,7 @@ const ProfileUpdate = () => {
       } else {
         alert('Please verify your PIN');
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       alert('Failed to update profile');
     } finally {
@@ -69,26 +68,28 @@ const ProfileUpdate = () => {
     }
   };
 
- const uploadImage = async (image: File) => {
-   const formData = new FormData();
-   formData.append('image', image);
+  const uploadImage = async (image: File) => {
+    const formData = new FormData();
+    formData.append('image', image);
 
-   // Ensure folder is defined (e.g., based on user or profile)
-   const folderName = `profile-pictures/${user?.firstName || 'default'}`;
+    // Ensure folder is defined (e.g., based on user or profile)
+const folderName = user?.firstName
+  ? `profile-pictures/${user.firstName}`
+  : 'profile-pictures/default';    
+  console.log('Folder Name:', folderName);
+    const response = await apiHandler<SuccessResponse<{ url: string }>>(
+      '/image/upload',
+      'POST',
+      formData,
+      { params: { folder: folderName } } // Pass the folder name here
+    );
 
-   const response = await apiHandler<SuccessResponse<{ url: string }>>(
-     '/image/upload',
-     'POST',
-     formData,
-     { params: { folder: folderName } } // Pass the folder name here
-   );
+    if (response.status === 'error') {
+      throw new Error(response.message);
+    }
 
-   if (response.status === 'error') {
-     throw new Error(response.message);
-   }
-
-   return response.data;
- };
+    return response.data;
+  };
 
   const updateProfile = async (updatedData: {
     firstName: string;

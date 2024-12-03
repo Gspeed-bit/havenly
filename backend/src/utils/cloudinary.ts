@@ -15,14 +15,25 @@ export const uploadImageToCloudinary = async (
   folder: string
 ): Promise<{ secure_url: string; public_id: string }> => {
   return new Promise((resolve, reject) => {
+    console.log('Uploading image to folder:', folder); // Debugging line
+
     cloudinary.uploader
-      .upload_stream({ folder, resource_type: 'image' }, (error, result) => {
-        if (error) return reject(error);
-        if (!result) return reject(new Error('No result from Cloudinary.'));
-        resolve({ secure_url: result.secure_url, public_id: result.public_id });
-      })
+      .upload_stream(
+        { folder, resource_type: 'image' }, // Ensure this is the correct parameter for folder
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error); // Log the error for debugging
+            return reject(error);
+          }
+          if (!result) {
+            return reject(new Error('No result from Cloudinary.'));
+          }
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      )
       .end(fileBuffer);
   });
 };
-
-export default cloudinary;
