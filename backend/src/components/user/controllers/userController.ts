@@ -6,7 +6,7 @@ import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
-import { imageUploadToEntity } from '@components/imageUpload/controllers/imageUploadToEntity';
+import { uploadToCloudinary } from 'utils/cloudinary';
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -92,68 +92,42 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const updates = req.body;
+  const { body: updates, user } = req;
+  const { isAdmin, _id } = user;
 
-  // Block admin users from accessing this route
-  if (req.user?.isAdmin) {
-    return res.status(403).json({
-      message: 'Admins cannot update their profile through this route.',
-    });
-  }
-
-  // Prevent email updates
-  if (updates.email) {
-    return res
-      .status(400)
-      .json({ message: 'Users cannot update their email.' });
-  }
-
-  if (req.file) {
-    try {
-      const result = await imageUploadToEntity(
-        'user_image',
-        req.user._id,
-        req.file
-      );
-      updates.imgUrl = result.secure_url;
-    } catch (error) {
-      return res.status(500).json({
-        message: 'Image upload failed',
-        error: (error as Error).message,
-      });
-    }
-  }
+  if (updates.email)
+    return res.status(400).json({ message: 'Email updates are not allowed.' });
 
   try {
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+    if (req.file) {
+      const folder = `user_images/${_id}`;
+      const { secureUrl } = await uploadToCloudinary(req.file.buffer, folder);
+      updates.imgUrl = secureUrl;
+    }
+
+    // If admin, ensure updates are restricted unless verified by PIN
+    if (isAdmin) {
+      return res.status(403).json({ message: 'Admins must confirm updates.' });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(_id, updates, {
       new: true,
     });
 
-    if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (!updatedUser)
+      return res.status(404).json({ message: 'User not found.' });
 
+    const sanitizedUser = sanitizeUser(updatedUser.toObject() as unknown as Record<string, unknown>, ['password']);
     res.json({
       message: 'Profile updated successfully.',
-      user: {
-        id: user._id,
-       firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
-        imgUrl: user.imgUrl,
-      },
+      user: sanitizedUser,
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred.';
-    res
-      .status(500)
-      .json({ message: 'An error occurred.', error: errorMessage });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ message: 'Update failed.', error: errorMessage });
   }
 };
-
-
-
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs

@@ -1,26 +1,55 @@
 'use client';
-import { apiHandler } from '@/config/server';
-import React, { useState } from 'react';
 
-const UpdateProfile = () => {
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useUser } from '@/components/hooks/api/useUser';
+
+
+const ProfileUpdateForm = () => {
+  const { user, loading } = useUser();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    image: null as File | null,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (user && !loading) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phoneNumber: user.phoneNumber || '',
+        image: null,
+      });
+    }
+  }, [user, loading]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      setFormData((prev) => ({
+        ...prev,
+        image: e.target.files ? e.target.files[0] : null,
+      }));
     }
   };
 
-  const handleUpdateProfile = async () => {
-    // Validate required fields
-    if (!firstName || !lastName || !phoneNumber) {
-      setErrorMessage('Please fill in all required fields.');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.firstName || !formData.lastName || !formData.phoneNumber) {
+      setErrorMessage('Please fill in all fields');
       return;
     }
 
@@ -28,63 +57,80 @@ const UpdateProfile = () => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // Prepare form data
-    const formData = new FormData();
-    formData.append('firstName', firstName);
-    formData.append('lastName', lastName);
-    formData.append('phoneNumber', phoneNumber);
-
-    if (file) {
-      formData.append('image', file); // Add the image if selected
-    }
-
     try {
-      // Send the form data to the API
-      const response = await apiHandler('/user/update', 'PUT', formData);
+      const updateData = new FormData();
+      updateData.append('firstName', formData.firstName);
+      updateData.append('lastName', formData.lastName);
+      updateData.append('phoneNumber', formData.phoneNumber);
 
-      if (response.status === 'success') {
-        setSuccessMessage('Profile updated successfully!');
-      } else {
-        setErrorMessage(response.message || 'Failed to update profile.');
+      if (formData.image) {
+        updateData.append('image', formData.image);
       }
+
+      const response = await axios.put(
+        `/user/update/${user?._id}`,
+        updateData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+      console.log(response.data);
+
+      setSuccessMessage('Profile updated successfully');
+      setFormData((prev) => ({ ...prev, image: null }));
     } catch (error) {
-      setErrorMessage('An error occurred while updating the profile.');
+      setErrorMessage('Failed to update profile');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div>
-      <h1>Update Profile</h1>
+  if (loading) return <p>Loading user data...</p>;
 
-      <input
-        type='text'
-        placeholder='First Name'
-        value={firstName}
-        onChange={(e) => setFirstName(e.target.value)}
-      />
-      <input
-        type='text'
-        placeholder='Last Name'
-        value={lastName}
-        onChange={(e) => setLastName(e.target.value)}
-      />
-      <input
-        type='text'
-        placeholder='Phone Number'
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-      />
-      <input type='file' onChange={handleFileChange} />
-      <button onClick={handleUpdateProfile} disabled={isLoading}>
-        {isLoading ? 'Updating Profile...' : 'Update Profile'}
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <label htmlFor='firstName'>First Name</label>
+        <input
+          type='text'
+          id='firstName'
+          name='firstName'
+          value={formData.firstName}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div>
+        <label htmlFor='lastName'>Last Name</label>
+        <input
+          type='text'
+          id='lastName'
+          name='lastName'
+          value={formData.lastName}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div>
+        <label htmlFor='phoneNumber'>Phone Number</label>
+        <input
+          type='text'
+          id='phoneNumber'
+          name='phoneNumber'
+          value={formData.phoneNumber}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div>
+        <label htmlFor='image'>Profile Image</label>
+        <input type='file' id='image' onChange={handleImageChange} />
+      </div>
+      <button type='submit' disabled={isLoading}>
+        {isLoading ? 'Updating...' : 'Update Profile'}
       </button>
 
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-    </div>
+    </form>
   );
 };
 
-export default UpdateProfile;
+export default ProfileUpdateForm;

@@ -9,7 +9,8 @@ export interface IUser {
   phoneNumber: string;
   email: string;
   password: string;
-  imgUrl?: string;
+  imgUrl?: string; // Optional profile image URL
+  imgPublicId?: string; // Optional Cloudinary image ID
   confirmPassword: string;
   isVerified: boolean;
   verificationCode: string | null;

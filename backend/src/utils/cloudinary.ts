@@ -10,4 +10,19 @@ cloudinary.config({
   api_secret: KEYS.apiSecret,
 });
 
+export const uploadToCloudinary = async (
+  fileBuffer: Buffer,
+  folder: string
+): Promise<{ secureUrl: string; publicId: string }> => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ folder, resource_type: 'image' }, (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error('No result from Cloudinary'));
+        resolve({ secureUrl: result.secure_url, publicId: result.public_id });
+      })
+      .end(fileBuffer);
+  });
+};
+
 export default cloudinary;

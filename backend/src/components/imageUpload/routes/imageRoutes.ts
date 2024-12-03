@@ -1,8 +1,7 @@
 import express from 'express';
 
 import upload from '@middleware/fileUpload/multer';
-import { imageUpload } from '../controllers/imageUploadToEntity';
-
+import { imageUpload } from '../controllers/imageController';
 
 const router = express.Router();
 
