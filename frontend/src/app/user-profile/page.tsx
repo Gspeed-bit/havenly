@@ -6,10 +6,7 @@ const page = () => {
   return (
     <div>
       <UserList />
-      <ProfileUpdateForm user={{
-        _id: '',
-        isAdmin: false
-      }} />
+      <ProfileUpdateForm />
     </div>
   );
 };
