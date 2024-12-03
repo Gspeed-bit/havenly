@@ -79,6 +79,7 @@ const ProfileUpdateForm = () => {
       setSuccessMessage('Profile updated successfully');
       setFormData((prev) => ({ ...prev, image: null }));
     } catch (error) {
+      console.log(error)
       setErrorMessage('Failed to update profile');
     } finally {
       setIsLoading(false);

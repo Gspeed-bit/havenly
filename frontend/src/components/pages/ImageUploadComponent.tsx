@@ -44,6 +44,7 @@ const UploadImage = ({
         setStatusMessage(data.message || 'Upload failed.');
       }
     } catch (error) {
+      console.log(error);
       setStatusMessage('An error occurred during upload.');
     } finally {
       setIsLoading(false);

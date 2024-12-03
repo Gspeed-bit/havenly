@@ -37,6 +37,7 @@ const UploadImage = ({ entityId, entityType }: { entityId: string, entityType: s
         setErrorMessage(response.message);
       }
     } catch (error) {
+      console.error(error);
       setErrorMessage('An error occurred during the upload.');
     } finally {
       setIsLoading(false);
