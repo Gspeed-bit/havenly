@@ -200,6 +200,9 @@ router.get(
  *                 type: string
  *                 format: binary
  *                 description: An optional profile image file
+ *               pin:
+ *                 type: string
+ *                 description: (Admin-only) PIN for admin verification when updating profile
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -270,7 +273,8 @@ router.get(
  *                   type: string
  *                   example: An error occurred.
  */
-router.put('/update' ,userMiddleware, updateUserProfile);
+router.put('/update', userMiddleware, updateUserProfile);
+
 
 /**
  * @swagger

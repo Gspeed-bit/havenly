@@ -113,6 +113,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 
   try {
+    // Log the received updates for debugging
+    console.log('Received updates:', updates);
+
     // Handle image upload if file is provided
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
@@ -122,17 +125,18 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       updates.imgUrl = secure_url; // Set the image URL from Cloudinary
     }
 
-    console.log('Updates:', updates); // Log updates for debugging
-
     // Update user in the database
     const user = await User.findByIdAndUpdate(userId, updates, {
-      new: true, // Return updated user
+      new: true, // Ensure the updated user is returned
       runValidators: true, // Validate fields before saving
     });
 
-    if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
-    console.log('Updated User:', user); // Log updated user for debugging
+    // Log updated user for debugging
+    console.log('Updated User:', user);
 
     // Remove sensitive information (like password) from the response
     const sanitizedUser = sanitizeUser(
@@ -151,6 +155,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
+
 
 
 // Admin Profile Update Handler
