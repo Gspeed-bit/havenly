@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/userModel';
 import { StatusCodes } from 'utils/apiResponse';
-import { sanitizeUser } from 'utils/sanitizeUser';
+
 import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
@@ -94,41 +94,74 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 
 // User Profile Update Handler
 
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
+  // Ensure updates object is present
+  if (!updates) {
+    return res.status(400).json({ message: 'No updates provided.' });
+  }
+
+  // Prevent email updates
   if (updates?.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
+  // Admin pin validation
   if (isAdmin && (!pin || adminPins[userId] !== pin)) {
     return res.status(400).json({ message: 'Invalid or missing PIN.' });
   }
 
+  // Remove PIN after successful validation for admins
   if (isAdmin) delete adminPins[userId];
 
   try {
+    // Handle profile image upload
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
         `user_images/${userId}`
       );
-      updates.imgUrl = secure_url;
+      updates.imgUrl = secure_url; // Assign the new image URL to updates
     }
 
+    // Log the updates to check what's being passed
+    console.log('Updates:', updates);
+
+    // Update the user profile in the database
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password']);
-    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+    // Log the updated user for debugging
+    console.log('Updated User:', user);
+
+    // Sanitize the user object to remove sensitive data (e.g., password)
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password']
+    );
+
+    // Send response with updated user
+    return res.json({
+      message: 'Profile updated successfully.',
+      user: sanitizedUser,
+    });
   } catch (error) {
     console.error('Error updating profile:', error);
-    res
+    return res
       .status(500)
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
+
+// Helper function to sanitize user data (if necessary)
+function sanitizeUser(user: Record<string, unknown>, fieldsToRemove: string[]) {
+  fieldsToRemove.forEach((field) => delete user[field]);
+  return user;
+}
+
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs
