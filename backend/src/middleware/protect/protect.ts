@@ -5,7 +5,7 @@ import { IUser } from '@components/user/models/userModel';
 
 interface UserPayload {
   id: string;
-  isAdmin?: boolean; // Admin field is optional here since it's checked separately
+  isAdmin?: boolean;
 }
 
 export const protect = async (
@@ -27,15 +27,18 @@ export const protect = async (
     }
 
     const decoded = jwt.verify(token, secret) as UserPayload;
+
+    console.log('Decoded Token:', decoded); // Debug
+
     const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    req.user = user as IUser;
+    console.log('Authenticated User:', user); // Debug
 
-    // Proceed without checking admin here; defer it to route-specific logic if needed
+    req.user = user as IUser;
     next();
   } catch (err) {
     console.error(err);
@@ -43,7 +46,7 @@ export const protect = async (
   }
 };
 
-// Middleware for admin-only routes
+// Admin-only middleware
 export const adminOnly = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user?.isAdmin) {
     return res.status(403).json({ message: 'Access denied - Admins only' });

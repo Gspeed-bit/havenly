@@ -98,12 +98,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
-  // Prevent unauthorized email updates
   if (updates?.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
-  // Handle Admin PIN validation
   if (isAdmin) {
     const { pin } = req.body;
     if (!pin || adminPins[userId] !== pin) {
@@ -122,9 +120,17 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       updates.imgUrl = secure_url;
     }
 
+    console.log('Updates:', updates); // Log updates for debugging
+
     // Update user in the database
-    const user = await User.findByIdAndUpdate(userId, updates, { new: true });
+    const user = await User.findByIdAndUpdate(userId, updates, {
+      new: true, // Return updated user
+      runValidators: true, // Validate fields before saving
+    });
+
     if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    console.log('Updated User:', user); // Log updated user for debugging
 
     const sanitizedUser = sanitizeUser(
       user.toObject() as unknown as Record<string, unknown>,
@@ -136,13 +142,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       user: sanitizedUser,
     });
   } catch (error) {
-    if (error instanceof Error) {
-      res
-        .status(500)
-        .json({ message: 'An error occurred.', error: error.message });
-    } else {
-      res.status(500).json({ message: 'An unknown error occurred.' });
-    }
+    console.error('Error updating profile:', error);
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
 
