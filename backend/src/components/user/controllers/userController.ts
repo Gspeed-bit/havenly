@@ -133,8 +133,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
-// Admin Profile Update Handler
-const adminPins: Record<string, string> = {}; // Temporary storage for PINs
+
+const adminPins: Record<string, { pin: string; expiresAt: Date }> = {}; // Store PINs with expiration
 
 // Request PIN for Admin Profile Update
 export const requestAdminUpdatePin = async (req: Request, res: Response) => {
@@ -143,12 +143,18 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
   }
 
   const pin = generateVerificationCode(6); // Generate a 6-digit PIN
-  adminPins[req.user._id] = pin;
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // PIN expires in 10 minutes
+  adminPins[req.user._id] = { pin, expiresAt };
 
-  // Send the PIN to the admin's email
-  await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
-
-  return res.json({ message: 'PIN sent to your Email.' });
+  try {
+    // Send the PIN to the admin's email
+    await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
+    return res.json({ message: 'PIN sent to your Email.' });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to send PIN email.';
+    return res.status(500).json({ message: errorMessage });
+  }
 };
 
 // Confirm Admin Profile Update
@@ -159,17 +165,31 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
 
-  if (adminPins[req.user._id] !== pin) {
+  const storedPinData = adminPins[req.user._id];
+  if (
+    !storedPinData ||
+    storedPinData.pin !== pin ||
+    new Date() > storedPinData.expiresAt
+  ) {
     return res.status(400).json({ message: 'Invalid or expired PIN.' });
   }
 
   delete adminPins[req.user._id]; // Remove used PIN
 
-  // Ensure updates object exists before checking for email
-  if (updates && updates.email) {
+  if (updates?.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
+  }
+
+  // Prevent sensitive field modifications
+  const disallowedFields = ['_id', 'isAdmin'];
+  for (const field of disallowedFields) {
+    if (updates?.[field] !== undefined) {
+      return res
+        .status(400)
+        .json({ message: `Modification of "${field}" is not allowed.` });
+    }
   }
 
   try {
@@ -183,13 +203,11 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       user.toObject() as unknown as Record<string, unknown>,
       ['password', 'email']
     );
-    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+    return res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
-    res
-      .status(500)
-      .json({ message: 'An error occurred.', error: errorMessage });
+    return res.status(500).json({ message: 'An error occurred.', error: errorMessage });
   }
 };
 export const changePassword = async (req: Request, res: Response) => {

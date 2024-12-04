@@ -20,6 +20,7 @@ import {
 import { protect } from '@middleware/protect/protect';
 
 import { userMiddleware } from '@middleware/userMiddleware';
+import { authMiddleware } from '@middleware/authMiddleware';
 // import { authMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
@@ -272,8 +273,7 @@ router.get(
  *                   type: string
  *                   example: An error occurred.
  */
-router.put('/update', protect, updateUserProfile);
-
+router.put('/update', authMiddleware, userMiddleware, updateUserProfile);
 
 /**
  * @swagger
@@ -352,6 +352,5 @@ router.post('/request-pin', protect, requestAdminUpdatePin);
 router.post('/confirm-update', protect, confirmAdminUpdate);
 
 router.post('/change-password', changePassword);
-
 
 export default router;
