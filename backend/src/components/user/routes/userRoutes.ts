@@ -202,15 +202,14 @@ router.get(
  *                 description: The admin PIN (required for admin users)
  *               imgUrl:
  *                 type: string
- *                 format: uri
+ *                 format: binary
  *                 description: The user's profile image (optional, if updated). Should be sent as a file.
- *                 # No need to provide a URL, just leave this to represent the file upload.
  *             example:
  *               firstName: "joe"
  *               lastName: "don"
  *               phoneNumber: "08012345678"
  *               pin: "admin-pin"
- *               imgUrl: "file-to-be-uploaded"  # In Swagger, this just serves as a placeholder, real image upload happens via form data
+ *               imgUrl: "file-to-be-uploaded"  # This is a placeholder, in practice, you will upload the file
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -279,7 +278,7 @@ router.get(
  *                 error:
  *                   type: string
  *                   example: "Error message details"
-  */
+ */
 router.put('/update', userMiddleware, updateUserProfile);
 
 
