@@ -148,7 +148,7 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
   // Send the PIN to the admin's email
   await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
 
-  return res.json({ message: 'PIN sent to your email.' });
+  return res.json({ message: 'PIN sent to your Email.' });
 };
 
 // Confirm Admin Profile Update
@@ -191,11 +191,6 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
-
-
-
-
-
 
 export const changePassword = async (req: Request, res: Response) => {
   try {
