@@ -99,8 +99,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
-  // Ensure updates object is present
-  if (!updates) {
+  // Ensure updates object is present and correctly structured
+  if (!updates || Object.keys(updates).length === 0) {
     return res.status(400).json({ message: 'No updates provided.' });
   }
 
@@ -155,6 +155,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
+
 
 // Helper function to sanitize user data (if necessary)
 function sanitizeUser(user: Record<string, unknown>, fieldsToRemove: string[]) {
