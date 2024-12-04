@@ -17,10 +17,8 @@ import {
   requestAdminUpdatePin,
   updateUserProfile,
 } from '@components/user/controllers/userController';
-import { protect } from '@middleware/protect/protect';
+import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
 
-import { userMiddleware } from '@middleware/userMiddleware';
-// import { authMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
 
@@ -105,7 +103,7 @@ router.get('/me', userMiddleware, getUser);
  */
 router.get(
   '/',
-  protect,
+  adminMiddleware,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, {
@@ -161,7 +159,7 @@ router.get(
  */
 router.get(
   '/admin',
-  protect,
+  adminMiddleware,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, {
@@ -272,7 +270,7 @@ router.get(
  *                   type: string
  *                   example: An error occurred.
  */
-router.put('/update', updateUserProfile);
+router.put('/update', adminMiddleware ,userMiddleware, updateUserProfile);
 
 /**
  * @swagger
@@ -291,7 +289,7 @@ router.put('/update', updateUserProfile);
  *       500:
  *         description: Server error
  */
-router.post('/request-pin', protect, requestAdminUpdatePin);
+router.post('/request-pin', adminMiddleware, requestAdminUpdatePin);
 
 /**
  * @swagger
@@ -348,7 +346,7 @@ router.post('/request-pin', protect, requestAdminUpdatePin);
  *       500:
  *         description: Server error
  */
-router.post('/confirm-update', protect, confirmAdminUpdate);
+router.post('/confirm-update', adminMiddleware, confirmAdminUpdate);
 
 /**
  * @swagger
@@ -424,6 +422,6 @@ router.post('/confirm-update', protect, confirmAdminUpdate);
  *                   type: string
  *                   example: An error occurred
  */
-router.post('/confirm-password', protect, changePassword);
+router.post('/confirm-password', userMiddleware,adminMiddleware, changePassword);
 
 export default router;

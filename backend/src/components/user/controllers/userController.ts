@@ -93,36 +93,62 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-export const updateUserProfile = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user.id; // Assumes authentication middleware adds the user object to the request
-    const { updates } = req.body;
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+  const { updates } = req.body;
+  const { isAdmin, _id: userId } = req.user;
+
+  // Prevent email updates
+  if (updates?.email) {
+    return res.status(400).json({ message: 'Email updates are not allowed.' });
+  }
+
+  // Handle admin-specific checks (PIN validation)
+  if (isAdmin) {
+    const { pin } = req.body;
+    if (!pin || adminPins[userId] !== pin) {
+      return res.status(400).json({ message: 'Invalid or missing PIN.' });
+    }
+    delete adminPins[userId]; // Clear the PIN after validation
+  }
+
+  try {
+    // Handle image upload if file is provided
     if (req.file) {
-      const cloudinaryResponse = await uploadImageToCloudinary(
+      const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
-        'user-profiles'
+        `user_images/${userId}`
       );
-      updates.imgUrl = cloudinaryResponse.secure_url;
+      updates.imgUrl = secure_url; // Set the image URL from Cloudinary
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
-      new: true,
-      runValidators: true,
+    console.log('Updates:', updates); // Log updates for debugging
+
+    // Update user in the database
+    const user = await User.findByIdAndUpdate(userId, updates, {
+      new: true, // Return updated user
+      runValidators: true, // Validate fields before saving
     });
 
-    if (!updatedUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    const sanitizedUser = sanitizeUser(updatedUser.toObject() as unknown as Record<string, unknown>, [
-      'password',
-      'refreshToken',
-    ]);
-    res.status(200).json(sanitizedUser);
+    console.log('Updated User:', user); // Log updated user for debugging
+
+    // Remove sensitive information (like password) from the response
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password']
+    );
+
+    return res.json({
+      message: 'Profile updated successfully.',
+      user: sanitizedUser,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error updating profile:', error);
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
 
