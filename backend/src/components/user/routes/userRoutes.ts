@@ -270,7 +270,7 @@ router.get(
  *                   type: string
  *                   example: An error occurred.
  */
-router.put('/update', adminMiddleware ,userMiddleware, updateUserProfile);
+router.put('/update' ,userMiddleware, updateUserProfile);
 
 /**
  * @swagger
