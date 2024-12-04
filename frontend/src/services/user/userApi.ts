@@ -31,4 +31,3 @@ export const confirmAdminUpdate = async (
 ): Promise<ApiResponse<User>> => {
   return await apiHandler('/user/confirm-update', 'POST', { pin, updates });
 };
-

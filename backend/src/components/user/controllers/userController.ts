@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/userModel';
 import { StatusCodes } from 'utils/apiResponse';
-
+import { sanitizeUser } from 'utils/sanitizeUser';
 import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
@@ -93,6 +93,7 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
@@ -136,15 +137,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
-
-
-// Helper function to sanitize user data (if necessary)
-function sanitizeUser(user: Record<string, unknown>, fieldsToRemove: string[]) {
-  fieldsToRemove.forEach((field) => delete user[field]);
-  return user;
-}
-
-
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs
 
@@ -154,12 +146,13 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
 
-  const pin = generateVerificationCode(6);
+  const pin = generateVerificationCode(6); // Generate a 6-digit PIN
   adminPins[req.user._id] = pin;
 
+  // Send the PIN to the admin's email
   await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
 
-  return res.json({ message: 'PIN sent to your email.' });
+  return res.json({ message: 'PIN sent to your Email.' });
 };
 
 // Confirm Admin Profile Update
@@ -174,9 +167,10 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'Invalid or expired PIN.' });
   }
 
-  delete adminPins[req.user._id];
+  delete adminPins[req.user._id]; // Remove used PIN
 
-  if (updates?.email) {
+  // Ensure updates object exists before checking for email
+  if (updates && updates.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
@@ -188,54 +182,70 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     });
     if (!user) return res.status(404).json({ message: 'Admin not found.' });
 
-    const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password', 'email']);
+    // Sanitize user data before returning
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password', 'email']
+    );
     res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred.';
     res
       .status(500)
-      .json({ message: 'An error occurred.', error: (error as Error).message });
+      .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
-
 export const changePassword = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info
     const { currentPassword, newPassword } = req.body;
 
+    // Validate input
     if (!currentPassword || !newPassword) {
       return res
-        .status(400)
+        .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'Both current and new passwords are required.' });
     }
 
+    // Fetch user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'User not found.' });
     }
 
+    // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res
-        .status(401)
+        .status(StatusCodes.UNAUTHORIZED)
         .json({ message: 'Current password is incorrect.' });
     }
 
-    if (await bcrypt.compare(newPassword, user.password)) {
-      return res
-        .status(400)
-        .json({
-          message: 'New password must be different from the old password.',
-        });
+    // Check if new password matches the old password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'New password must be different from the old password.',
+      });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: 'Password changed successfully.' });
+    return res
+      .status(StatusCodes.SUCCESS)
+      .json({ message: 'Password changed successfully.' });
   } catch (error) {
     console.error('Error changing password:', error);
     res
-      .status(500)
-      .json({ message: 'An error occurred.', error: (error as Error).message });
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'An error occurred while changing the password.' });
   }
 };

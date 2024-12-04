@@ -94,8 +94,8 @@ const ProfileUpdate = () => {
           text: 'Please verify your PIN before updating.',
         });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.log(error)
       setMessage({
         type: 'error',
         text: 'An error occurred while updating your profile.',
@@ -451,8 +451,8 @@ const PasswordChangeForm = () => {
           text: 'Failed to change password. Please try again.',
         });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error(error);
       setMessage({
         type: 'error',
         text: 'An error occurred while changing the password.',

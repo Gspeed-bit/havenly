@@ -20,17 +20,9 @@ import {
 import { protect } from '@middleware/protect/protect';
 
 import { userMiddleware } from '@middleware/userMiddleware';
-import { authMiddleware } from '@middleware/authMiddleware';
 // import { authMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
-
-/**
- * @swagger
- * tags:
- *   name: User
- *   description: User management and profile operations
- */
 
 /**
  * @swagger
@@ -70,6 +62,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
+router.get('/me', userMiddleware, getUser);
 
 /**
  * @swagger
@@ -110,6 +103,22 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
+router.get(
+  '/',
+  protect,
+  catchApiError(async (req, res) => {
+    if (!req.user?.isAdmin) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, {
+        message: 'Access denied',
+      });
+    }
+    const users = await getAllUsers(req, res);
+    // Ensure no duplicate response
+    if (!res.headersSent) {
+      successResponse(res, users, 'Users retrieved successfully');
+    }
+  })
+);
 
 /**
  * @swagger
@@ -150,6 +159,19 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
+router.get(
+  '/admin',
+  protect,
+  catchApiError(async (req, res) => {
+    if (!req.user?.isAdmin) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, {
+        message: 'Access denied',
+      });
+    }
+    const admins = await getAllAdmins(req, res);
+    return successResponse(res, admins, 'Admins retrieved successfully');
+  })
+);
 
 /**
  * @swagger
@@ -211,11 +233,46 @@ const router = express.Router();
  *                       example: https://example.com/profile-image.jpg
  *       400:
  *         description: Invalid email update attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Users cannot update their email.
+ *       403:
+ *         description: Admins cannot update their profile through this route
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Admins cannot update their profile through this route.
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found.
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: An error occurred.
  */
+router.put('/update', protect, updateUserProfile);
 
 /**
  * @swagger
@@ -234,6 +291,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
+router.post('/request-pin', protect, requestAdminUpdatePin);
 
 /**
  * @swagger
@@ -253,19 +311,15 @@ const router = express.Router();
  *             properties:
  *               pin:
  *                 type: string
- *                 example: 123456
  *               updates:
  *                 type: object
  *                 properties:
  *                   firstName:
  *                     type: string
- *                     example: John
  *                   lastName:
  *                     type: string
- *                     example: Doe
  *                   phoneNumber:
  *                     type: string
- *                     example: +1234567890
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -276,22 +330,17 @@ const router = express.Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Profile updated successfully
  *                 user:
  *                   type: object
  *                   properties:
  *                     _id:
  *                       type: string
- *                     example: 63cfe2f9e7d1e812b79b2d3a
  *                     firstName:
  *                       type: string
- *                       example: John
  *                     lastName:
  *                       type: string
- *                       example: Doe
  *                     phoneNumber:
  *                       type: string
- *                       example: +1234567890
  *       400:
  *         description: Invalid or expired PIN
  *       403:
@@ -299,80 +348,8 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-
-/**
- * @swagger
- * /user/change-password:
- *   post:
- *     summary: Change the authenticated user's password
- *     tags:
- *       - User
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               currentPassword:
- *                 type: string
- *                 example: oldpassword123
- *               newPassword:
- *                 type: string
- *                 example: newpassword123
- *     responses:
- *       200:
- *         description: Password changed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Password changed successfully
- *       400:
- *         description: Invalid input or password mismatch
- *       500:
- *         description: Server error
- */
-
-router.get('/me', userMiddleware, getUser);
-router.get(
-  '/',
-  protect,
-  catchApiError(async (req, res) => {
-    if (!req.user?.isAdmin) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, {
-        message: 'Access denied',
-      });
-    }
-    const users = await getAllUsers(req, res);
-    // Ensure no duplicate response
-    if (!res.headersSent) {
-      successResponse(res, users, 'Users retrieved successfully');
-    }
-  })
-);
-router.get(
-  '/admin',
-  protect,
-  catchApiError(async (req, res) => {
-    if (!req.user?.isAdmin) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, {
-        message: 'Access denied',
-      });
-    }
-    const admins = await getAllAdmins(req, res);
-    return successResponse(res, admins, 'Admins retrieved successfully');
-  })
-);
 router.post('/confirm-update', protect, confirmAdminUpdate);
-router.put('/update', userMiddleware, authMiddleware, updateUserProfile);
-router.post('/request-pin', protect, requestAdminUpdatePin);
 
-router.post('/change-password', protect, changePassword);
+router.post('/change-password', changePassword);
 
 export default router;

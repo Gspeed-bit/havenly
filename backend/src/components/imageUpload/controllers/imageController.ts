@@ -30,7 +30,7 @@ export const imageUpload = async (req: Request, res: Response) => {
     res
       .status(200)
       .json({ message: 'Image uploaded successfully.', url: secure_url });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     res
       .status(500)

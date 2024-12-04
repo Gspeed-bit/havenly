@@ -2,8 +2,6 @@
 import { User } from '@/services/types/user.types';
 import { create } from 'zustand';
 
-
-
 interface UserState {
   user: User | null;
   setUser: (user: User | null) => void;

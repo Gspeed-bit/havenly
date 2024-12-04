@@ -15,7 +15,7 @@ export const uploadImageToCloudinary = async (
   folder: string
 ): Promise<{ secure_url: string; public_id: string }> => {
   return new Promise((resolve, reject) => {
-    console.log("Uploading image to folder:", folder); // Debugging line
+    console.log('Uploading image to folder:', folder); // Debugging line
 
     cloudinary.uploader
       .upload_stream(
@@ -28,7 +28,10 @@ export const uploadImageToCloudinary = async (
           if (!result) {
             return reject(new Error('No result from Cloudinary.'));
           }
-          resolve({ secure_url: result.secure_url, public_id: result.public_id });
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
         }
       )
       .end(fileBuffer);
