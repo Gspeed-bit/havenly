@@ -6,7 +6,7 @@ import {
   getInquiries,
   updateInquiryStatus,
 } from '../controllers/inquiryController';
-import { protect } from '@middleware/protect/protect';
+import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
 
 const router = express.Router();
 
@@ -77,7 +77,7 @@ const router = express.Router();
  *       500:
  *         description: Server error.
  */
-router.post('/inquiries/send', protect, sendInquiry);
+router.post('/inquiries/send', adminMiddleware, userMiddleware, sendInquiry);
 
 /**
  * @openapi
@@ -183,7 +183,7 @@ router.post('/inquiries/send', protect, sendInquiry);
  *       500:
  *         description: Server error.
  */
-router.get('/inquiries', protect, getInquiries);
+router.get('/inquiries', userMiddleware,adminMiddleware, getInquiries);
 
 /**
  * @openapi
@@ -255,6 +255,6 @@ router.get('/inquiries', protect, getInquiries);
  *       500:
  *         description: Server error.
  */
-router.put('/inquiries/:id', protect, updateInquiryStatus);
+router.put('/inquiries/:id', adminMiddleware, updateInquiryStatus);
 
 export default router;

@@ -8,7 +8,7 @@ import {
   updateCompany,
   deleteCompany,
 } from '../controllers/companyController';
-import { protect } from '@middleware/protect/protect';
+import { adminMiddleware } from '@middleware/protect/protect';
 
 const router = express.Router();
 /**
@@ -101,7 +101,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/companies', protect, (req, res) => {
+router.post('/companies', adminMiddleware, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -128,7 +128,7 @@ router.post('/companies', protect, (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/companies', protect, getAllCompanies);
+router.get('/companies', adminMiddleware, getAllCompanies);
 
 /**
  * @openapi
@@ -161,7 +161,7 @@ router.get('/companies', protect, getAllCompanies);
  *       500:
  *         description: Internal server error
  */
-router.get('/companies/:id', protect, getCompanyById);
+router.get('/companies/:id', adminMiddleware, getCompanyById);
 
 /**
  * @openapi
@@ -203,7 +203,7 @@ router.get('/companies/:id', protect, getCompanyById);
  *       500:
  *         description: Internal server error
  */
-router.put('/companies/:id', protect, (req, res) => {
+router.put('/companies/:id', adminMiddleware, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -245,7 +245,7 @@ router.put('/companies/:id', protect, (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/companies/:id', protect, (req, res) => {
+router.delete('/companies/:id', adminMiddleware, (req, res) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
