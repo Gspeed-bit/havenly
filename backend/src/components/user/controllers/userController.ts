@@ -7,6 +7,7 @@ import {
   sendAdminUpdatePinEmail,
 } from 'utils/emailUtils';
 import { uploadImageToCloudinary } from 'utils/cloudinary';
+import bcrypt from 'bcrypt';
 
 
 export const getUser = async (req: Request, res: Response) => {
@@ -93,7 +94,7 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-// Update User Profile Handler
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
@@ -188,5 +189,66 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: 'An error occurred.', error: errorMessage });
+  }
+};
+
+
+
+
+
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Both current and new passwords are required.' });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'User not found.' });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Current password is incorrect.' });
+    }
+
+    // Check if new password matches the old password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({
+          message: 'New password must be different from the old password.',
+        });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    user.password = hashedPassword;
+    await user.save();
+
+    return res
+      .status(StatusCodes.SUCCESS)
+      .json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'An error occurred while changing the password.' });
   }
 };

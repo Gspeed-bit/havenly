@@ -9,6 +9,7 @@ import {
 } from 'utils/apiResponse';
 // import { userMiddleware } from '@middleware/userMiddleware';
 import {
+  changePassword,
   confirmAdminUpdate,
   getAllAdmins,
   getAllUsers,
@@ -349,5 +350,8 @@ router.post('/request-pin', protect, requestAdminUpdatePin);
  *         description: Server error
  */
 router.post('/confirm-update', protect, confirmAdminUpdate);
+
+router.post('/change-password', protect, changePassword);
+
 
 export default router;
