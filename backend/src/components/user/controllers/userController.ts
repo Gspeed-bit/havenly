@@ -165,7 +165,8 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
 
   delete adminPins[req.user._id]; // Remove used PIN
 
-  if (updates.email) {
+  // Ensure updates object exists before checking for email
+  if (updates && updates.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
@@ -191,7 +192,6 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
-
 export const changePassword = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info
