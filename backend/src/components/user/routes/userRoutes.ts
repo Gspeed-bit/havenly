@@ -18,6 +18,7 @@ import {
   updateUserProfile,
 } from '@components/user/controllers/userController';
 import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
+import upload from '@middleware/fileUpload/multer';
 
 
 const router = express.Router();
@@ -279,7 +280,7 @@ router.get(
  *                   type: string
  *                   example: "Error message details"
  */
-router.put('/update', userMiddleware, updateUserProfile);
+router.put('/update', userMiddleware, upload, updateUserProfile);
 
 
 /**

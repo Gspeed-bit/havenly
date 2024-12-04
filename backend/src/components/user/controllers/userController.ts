@@ -96,20 +96,12 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 // User Profile Update Handler
 
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { firstName, lastName, phoneNumber, pin } = req.body;
-  const { isAdmin, _id: userId } = req.user;
+  const { firstName, lastName, phoneNumber } = req.body;
+  const { _id: userId } = req.user;
 
   // Prevent email updates
   if (req.body.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
-  }
-
-  // Handle admin-specific checks (PIN validation)
-  if (isAdmin) {
-    if (!pin || adminPins[userId] !== pin) {
-      return res.status(400).json({ message: 'Invalid or missing PIN.' });
-    }
-    delete adminPins[userId]; // Clear the PIN after validation
   }
 
   // First, handle file upload
@@ -159,15 +151,14 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       });
     } catch (error) {
       console.error('Error updating profile:', error);
-      res
-        .status(500)
-        .json({
-          message: 'An error occurred.',
-          error: (error as Error).message,
-        });
+      res.status(500).json({
+        message: 'An error occurred.',
+        error: (error as Error).message,
+      });
     }
   });
 };
+
 
 
 // Admin Profile Update Handler
