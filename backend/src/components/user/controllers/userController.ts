@@ -93,68 +93,49 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-
-
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
-  // Ensure updates object is present and correctly structured
-  if (!updates || Object.keys(updates).length === 0) {
-    return res.status(400).json({ message: 'No updates provided.' });
-  }
-
-  // Prevent email updates
+  // Prevent unauthorized email updates
   if (updates?.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
-  // Admin pin validation
-  if (isAdmin && (!pin || adminPins[userId] !== pin)) {
-    return res.status(400).json({ message: 'Invalid or missing PIN.' });
+  // Handle Admin PIN validation
+  if (isAdmin) {
+    if (!pin || adminPins[userId] !== pin) {
+      return res.status(400).json({ message: 'Invalid or missing PIN.' });
+    }
+    delete adminPins[userId];
   }
 
-  // Remove PIN after successful validation for admins
-  if (isAdmin) delete adminPins[userId];
-
   try {
-    // Handle profile image upload
+    // Handle image upload if file is provided
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
         `user_images/${userId}`
       );
-      updates.imgUrl = secure_url; // Assign the new image URL to updates
+      updates.imgUrl = secure_url;
     }
 
-    // Log the updates to check what's being passed
-    console.log('Updates:', updates);
-
-    // Update the user profile in the database
+    // Check if the user is trying to update their profile
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    // Log the updated user for debugging
-    console.log('Updated User:', user);
-
-    // Sanitize the user object to remove sensitive data (e.g., password)
     const sanitizedUser = sanitizeUser(
       user.toObject() as unknown as Record<string, unknown>,
       ['password']
     );
-
-    // Send response with updated user
-    return res.json({
-      message: 'Profile updated successfully.',
-      user: sanitizedUser,
-    });
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    return res
+    res
       .status(500)
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
+
 
 
 // Helper function to sanitize user data (if necessary)

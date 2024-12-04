@@ -20,6 +20,7 @@ import {
 import { protect } from '@middleware/protect/protect';
 
 import { userMiddleware } from '@middleware/userMiddleware';
+import { authMiddleware } from '@middleware/authMiddleware';
 // import { authMiddleware } from '@middleware/userMiddleware';
 
 const router = express.Router();
@@ -338,9 +339,6 @@ const router = express.Router();
  *         description: Server error
  */
 
-
-
-
 router.get('/me', userMiddleware, getUser);
 router.get(
   '/',
@@ -372,10 +370,9 @@ router.get(
   })
 );
 router.post('/confirm-update', protect, confirmAdminUpdate);
-router.put('/update', protect, updateUserProfile);
+router.put('/update', userMiddleware, authMiddleware, updateUserProfile);
 router.post('/request-pin', protect, requestAdminUpdatePin);
 
 router.post('/change-password', protect, changePassword);
-
 
 export default router;
