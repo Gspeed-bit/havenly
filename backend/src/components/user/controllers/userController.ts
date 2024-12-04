@@ -94,66 +94,38 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 
 // User Profile Update Handler
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { updates } = req.body;
-  const { _id: userId } = req.user;
-
-  // Log the entire request body to debug
-  console.log('Request body:', req.body);
-
-  // Log incoming updates field
-  console.log('Received updates:', updates);
-
   try {
-    // Check if updates exist
-    if (!updates || Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'No updates provided.' });
-    }
+    const userId = req.user.id; // Assumes authentication middleware adds the user object to the request
+    const { updates } = req.body;
 
-    // Handle file uploads if present
     if (req.file) {
-      const { secure_url } = await uploadImageToCloudinary(
+      const cloudinaryResponse = await uploadImageToCloudinary(
         req.file.buffer,
-        `user_images/${userId}`
+        'user-profiles'
       );
-      updates.imgUrl = secure_url;
+      updates.imgUrl = cloudinaryResponse.secure_url;
     }
 
-    // Perform the update
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: updates },
-      {
-        new: true, // Return the updated document
-        runValidators: true, // Validate the updates against the schema
-      }
-    );
-
-    // Debugging - Log updated user data
-    console.log('Updated user:', updatedUser);
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Sanitize and return the updated user
-    const sanitizedUser = sanitizeUser(
-      updatedUser.toObject() as unknown as Record<string, unknown>,
-      ['password']
-    );
-    res.json({
-      message: 'Profile updated successfully.',
-      user: sanitizedUser,
-    });
+    const sanitizedUser = sanitizeUser(updatedUser.toObject() as unknown as Record<string, unknown>, [
+      'password',
+      'refreshToken',
+    ]);
+    res.status(200).json(sanitizedUser);
   } catch (error) {
-    console.error('Error updating user profile:', error);
-    res
-      .status(500)
-      .json({
-        message: 'An error occurred.',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs

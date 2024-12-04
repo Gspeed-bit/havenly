@@ -272,7 +272,7 @@ router.get(
  *                   type: string
  *                   example: An error occurred.
  */
-router.put('/update', protect, updateUserProfile);
+router.put('/update', updateUserProfile);
 
 /**
  * @swagger
