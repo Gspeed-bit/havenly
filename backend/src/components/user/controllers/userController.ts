@@ -97,31 +97,34 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates } = req.body;
   const { _id: userId } = req.user;
 
-  // Debugging - Log incoming updates
+  // Log the entire request body to debug
+  console.log('Request body:', req.body);
+
+  // Log incoming updates field
   console.log('Received updates:', updates);
 
   try {
-    // Validate if updates were provided
+    // Check if updates exist
     if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({ message: 'No updates provided.' });
     }
 
-    // Handle file upload if an image is provided
+    // Handle file uploads if present
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
         `user_images/${userId}`
       );
-      updates.imgUrl = secure_url; // Set the uploaded image URL to the updates object
+      updates.imgUrl = secure_url;
     }
 
-    // Update the user in the database
+    // Perform the update
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updates },
       {
         new: true, // Return the updated document
-        runValidators: true, // Ensure the updates are validated according to the schema
+        runValidators: true, // Validate the updates against the schema
       }
     );
 
@@ -132,20 +135,23 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Sanitize the user data (remove sensitive fields like password)
-    const sanitizedUser = sanitizeUser(updatedUser.toObject() as unknown as Record<string, unknown>, ['password']);
-
-    // Send the response
+    // Sanitize and return the updated user
+    const sanitizedUser = sanitizeUser(
+      updatedUser.toObject() as unknown as Record<string, unknown>,
+      ['password']
+    );
     res.json({
       message: 'Profile updated successfully.',
       user: sanitizedUser,
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
-    res.status(500).json({
-      message: 'An error occurred while updating the profile.',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    res
+      .status(500)
+      .json({
+        message: 'An error occurred.',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
   }
 };
 
