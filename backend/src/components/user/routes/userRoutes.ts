@@ -351,7 +351,7 @@ router.post('/request-pin', protect, requestAdminUpdatePin);
  */
 router.post('/confirm-update', protect, confirmAdminUpdate);
 
-router.post('/change-password', protect, changePassword);
+router.post('/change-password', changePassword);
 
 
 export default router;
