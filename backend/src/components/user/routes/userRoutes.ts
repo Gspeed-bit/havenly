@@ -350,6 +350,80 @@ router.post('/request-pin', protect, requestAdminUpdatePin);
  */
 router.post('/confirm-update', protect, confirmAdminUpdate);
 
-router.post('/change-password', changePassword);
+/**
+ * @swagger
+ * /user/confirm-password:
+ *   post:
+ *     summary: Confirm a password update for the authenticated user
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 description: The current password of the user
+ *               newPassword:
+ *                 type: string
+ *                 description: The new password to be set
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password changed successfully
+ *       400:
+ *         description: New password must be different from the old password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: New password must be different from the old password
+ *       401:
+ *         description: Incorrect current password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Current password is incorrect
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: An error occurred
+ */
+router.post('/confirm-password', protect, changePassword);
 
 export default router;

@@ -95,7 +95,7 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 // User Profile Update Handler
 
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { updates, pin } = req.body;
+  const { updates } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
   // Prevent unauthorized email updates
@@ -105,6 +105,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
   // Handle Admin PIN validation
   if (isAdmin) {
+    const { pin } = req.body;
     if (!pin || adminPins[userId] !== pin) {
       return res.status(400).json({ message: 'Invalid or missing PIN.' });
     }
@@ -121,7 +122,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       updates.imgUrl = secure_url;
     }
 
-    // Check if the user is trying to update their profile
+    // Update user in the database
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
@@ -129,11 +130,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       user.toObject() as unknown as Record<string, unknown>,
       ['password']
     );
-    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+
+    return res.json({
+      message: 'Profile updated successfully.',
+      user: sanitizedUser,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: 'An error occurred.', error: (error as Error).message });
+    if (error instanceof Error) {
+      res
+        .status(500)
+        .json({ message: 'An error occurred.', error: error.message });
+    } else {
+      res.status(500).json({ message: 'An unknown error occurred.' });
+    }
   }
 };
 

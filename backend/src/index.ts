@@ -98,6 +98,8 @@ const swaggerOptions = {
   apis: [
     './src/components/user/routes/**/*.ts',
     './src/components/property/routes/**/*.ts',
+    './src/components/imageUpload/routes/**/*.ts',
+    
   ], // Specify your route files
 };
 
