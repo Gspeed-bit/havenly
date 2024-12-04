@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import User from '../models/userModel';
+import User, { IUser } from '@components/user/models/userModel';
 import { StatusCodes } from 'utils/apiResponse';
 import { sanitizeUser } from 'utils/sanitizeUser';
 import {
@@ -95,17 +95,16 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 // User Profile Update Handler
 
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { updates } = req.body;
+  const { firstName, lastName, phoneNumber, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
   // Prevent email updates
-  if (updates?.email) {
+  if (req.body.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
   // Handle admin-specific checks (PIN validation)
   if (isAdmin) {
-    const { pin } = req.body;
     if (!pin || adminPins[userId] !== pin) {
       return res.status(400).json({ message: 'Invalid or missing PIN.' });
     }
@@ -113,8 +112,11 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 
   try {
-    // Log the received updates for debugging
-    console.log('Received updates:', updates);
+    // Prepare the updates object with the allowed fields
+    const updates: Partial<IUser> = {}; // Use Partial<IUser> instead of any
+    if (firstName) updates.firstName = firstName;
+    if (lastName) updates.lastName = lastName;
+    if (phoneNumber) updates.phoneNumber = phoneNumber;
 
     // Handle image upload if file is provided
     if (req.file) {
@@ -122,7 +124,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         req.file.buffer,
         `user_images/${userId}`
       );
-      updates.imgUrl = secure_url; // Set the image URL from Cloudinary
+      updates.imgUrl = secure_url; // Set the new image URL from Cloudinary
     }
 
     // Update user in the database
@@ -155,8 +157,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
-
-
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs

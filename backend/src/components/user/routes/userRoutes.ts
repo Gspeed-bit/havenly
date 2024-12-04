@@ -173,17 +173,18 @@ router.get(
 
 /**
  * @swagger
- * /user/update:
+ * /api/users/profile:
  *   put:
- *     summary: Update the authenticated user's profile
+ *     summary: Update user profile
+ *     description: Allows a user to update their profile details. Admins can also update additional fields after verifying the PIN.
  *     tags:
- *       - User
+ *       - Users
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []  // If you're using JWT, ensure the user is authenticated
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -196,13 +197,18 @@ router.get(
  *               phoneNumber:
  *                 type: string
  *                 description: The user's phone number
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: An optional profile image file
  *               pin:
  *                 type: string
- *                 description: (Admin-only) PIN for admin verification when updating profile
+ *                 description: The admin PIN (required for admin users)
+ *               imgUrl:
+ *                 type: string
+ *                 description: The URL of the user's profile image (optional, if updated)
+ *             example:
+ *               firstName: John
+ *               lastName: Doe
+ *               phoneNumber: "+491234567890"
+ *               pin: "admin-pin"
+ *               imgUrl: "http://image.url/abc123.jpg"
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -213,27 +219,33 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Profile updated successfully
+ *                   example: "Profile updated successfully."
  *                 user:
  *                   type: object
  *                   properties:
  *                     _id:
  *                       type: string
- *                       example: 63cfe2f9e7d1e812b79b2d3a
+ *                       description: The unique ID of the user
  *                     firstName:
  *                       type: string
- *                       example: John
+ *                       description: The user's first name
  *                     lastName:
  *                       type: string
- *                       example: Doe
+ *                       description: The user's last name
  *                     phoneNumber:
  *                       type: string
- *                       example: +1234567890
+ *                       description: The user's phone number
+ *                     email:
+ *                       type: string
+ *                       description: The user's email
  *                     imgUrl:
  *                       type: string
- *                       example: https://example.com/profile-image.jpg
+ *                       description: The URL of the user's profile image
+ *                     isVerified:
+ *                       type: boolean
+ *                       description: Indicates whether the user is verified
  *       400:
- *         description: Invalid email update attempt
+ *         description: Bad request. Validation failed, or invalid admin PIN.
  *         content:
  *           application/json:
  *             schema:
@@ -241,19 +253,9 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Users cannot update their email.
- *       403:
- *         description: Admins cannot update their profile through this route
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Admins cannot update their profile through this route.
+ *                   example: "Invalid or missing PIN."
  *       404:
- *         description: User not found
+ *         description: User not found.
  *         content:
  *           application/json:
  *             schema:
@@ -261,9 +263,9 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: User not found.
+ *                   example: "User not found."
  *       500:
- *         description: Server error
+ *         description: Server error.
  *         content:
  *           application/json:
  *             schema:
@@ -271,8 +273,18 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: An error occurred.
+ *                   example: "An error occurred."
+ *                 error:
+ *                   type: string
+ *                   example: "Error message details"
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  */
+
 router.put('/update', userMiddleware, updateUserProfile);
 
 
