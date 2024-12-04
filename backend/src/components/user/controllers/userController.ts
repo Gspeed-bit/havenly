@@ -9,7 +9,6 @@ import {
 import { uploadImageToCloudinary } from 'utils/cloudinary';
 import bcrypt from 'bcrypt';
 
-
 export const getUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.user?._id); // Mongoose document returned
@@ -94,7 +93,6 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
@@ -122,19 +120,21 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       updates.imgUrl = secure_url;
     }
 
-    // Check if the user is trying to update their profile
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
     const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password']);
     res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred.', error: (error as Error).message });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
 
-
-const adminPins: Record<string, { pin: string; expiresAt: Date }> = {}; // Store PINs with expiration
+// Admin Profile Update Handler
+const adminPins: Record<string, string> = {}; // Temporary storage for PINs
 
 // Request PIN for Admin Profile Update
 export const requestAdminUpdatePin = async (req: Request, res: Response) => {
@@ -143,18 +143,12 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
   }
 
   const pin = generateVerificationCode(6); // Generate a 6-digit PIN
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // PIN expires in 10 minutes
-  adminPins[req.user._id] = { pin, expiresAt };
+  adminPins[req.user._id] = pin;
 
-  try {
-    // Send the PIN to the admin's email
-    await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
-    return res.json({ message: 'PIN sent to your Email.' });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to send PIN email.';
-    return res.status(500).json({ message: errorMessage });
-  }
+  // Send the PIN to the admin's email
+  await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
+
+  return res.json({ message: 'PIN sent to your email.' });
 };
 
 // Confirm Admin Profile Update
@@ -165,31 +159,16 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
 
-  const storedPinData = adminPins[req.user._id];
-  if (
-    !storedPinData ||
-    storedPinData.pin !== pin ||
-    new Date() > storedPinData.expiresAt
-  ) {
+  if (adminPins[req.user._id] !== pin) {
     return res.status(400).json({ message: 'Invalid or expired PIN.' });
   }
 
   delete adminPins[req.user._id]; // Remove used PIN
 
-  if (updates?.email) {
+  if (updates.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
-  }
-
-  // Prevent sensitive field modifications
-  const disallowedFields = ['_id', 'isAdmin'];
-  for (const field of disallowedFields) {
-    if (updates?.[field] !== undefined) {
-      return res
-        .status(400)
-        .json({ message: `Modification of "${field}" is not allowed.` });
-    }
   }
 
   try {
@@ -203,13 +182,16 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       user.toObject() as unknown as Record<string, unknown>,
       ['password', 'email']
     );
-    return res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
-    return res.status(500).json({ message: 'An error occurred.', error: errorMessage });
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
+
 export const changePassword = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info
@@ -241,11 +223,9 @@ export const changePassword = async (req: Request, res: Response) => {
     // Check if new password matches the old password
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({
-          message: 'New password must be different from the old password.',
-        });
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'New password must be different from the old password.',
+      });
     }
 
     // Hash the new password
