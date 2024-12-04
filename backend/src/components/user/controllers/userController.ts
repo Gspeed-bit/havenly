@@ -120,6 +120,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     // Handle image upload if file is provided
     if (req.file) {
+      // Upload the image to Cloudinary or your preferred cloud service
       const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
         `user_images/${userId}`
@@ -157,6 +158,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
+
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs
