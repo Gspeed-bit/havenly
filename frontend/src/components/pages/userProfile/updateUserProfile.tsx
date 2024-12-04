@@ -95,7 +95,7 @@ const ProfileUpdate = () => {
         });
       }
     } catch (error) {
-      console.log(error);
+      console.log(error)
       setMessage({
         type: 'error',
         text: 'An error occurred while updating your profile.',

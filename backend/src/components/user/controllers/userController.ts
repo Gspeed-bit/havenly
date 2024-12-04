@@ -93,25 +93,22 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   const { updates, pin } = req.body;
   const { isAdmin, _id: userId } = req.user;
 
-  // Prevent unauthorized email updates
   if (updates?.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
-  // Handle Admin PIN validation
-  if (isAdmin) {
-    if (!pin || adminPins[userId] !== pin) {
-      return res.status(400).json({ message: 'Invalid or missing PIN.' });
-    }
-    delete adminPins[userId];
+  if (isAdmin && (!pin || adminPins[userId] !== pin)) {
+    return res.status(400).json({ message: 'Invalid or missing PIN.' });
   }
 
+  if (isAdmin) delete adminPins[userId];
+
   try {
-    // Handle image upload if file is provided
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file.buffer,
@@ -126,10 +123,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password']);
     res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    console.error('Error updating profile:', error);
     res
       .status(500)
-      .json({ message: 'An error occurred.', error: errorMessage });
+      .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
 
@@ -142,10 +139,9 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
 
-  const pin = generateVerificationCode(6); // Generate a 6-digit PIN
+  const pin = generateVerificationCode(6);
   adminPins[req.user._id] = pin;
 
-  // Send the PIN to the admin's email
   await sendAdminUpdatePinEmail(req.user.email, pin, req.user.name);
 
   return res.json({ message: 'PIN sent to your email.' });
@@ -163,9 +159,9 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'Invalid or expired PIN.' });
   }
 
-  delete adminPins[req.user._id]; // Remove used PIN
+  delete adminPins[req.user._id];
 
-  if (updates.email) {
+  if (updates?.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
@@ -177,71 +173,54 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
     });
     if (!user) return res.status(404).json({ message: 'Admin not found.' });
 
-    // Sanitize user data before returning
-    const sanitizedUser = sanitizeUser(
-      user.toObject() as unknown as Record<string, unknown>,
-      ['password', 'email']
-    );
+    const sanitizedUser = sanitizeUser(user.toObject() as unknown as Record<string, unknown>, ['password', 'email']);
     res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred.';
     res
       .status(500)
-      .json({ message: 'An error occurred.', error: errorMessage });
+      .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
 
 export const changePassword = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info
+    const userId = req.user?._id;
     const { currentPassword, newPassword } = req.body;
 
-    // Validate input
     if (!currentPassword || !newPassword) {
       return res
-        .status(StatusCodes.BAD_REQUEST)
+        .status(400)
         .json({ message: 'Both current and new passwords are required.' });
     }
 
-    // Fetch user
     const user = await User.findById(userId);
     if (!user) {
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ message: 'User not found.' });
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res
-        .status(StatusCodes.UNAUTHORIZED)
+        .status(401)
         .json({ message: 'Current password is incorrect.' });
     }
 
-    // Check if new password matches the old password
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-    if (isSamePassword) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: 'New password must be different from the old password.',
-      });
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res
+        .status(400)
+        .json({
+          message: 'New password must be different from the old password.',
+        });
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update user's password
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    return res
-      .status(StatusCodes.SUCCESS)
-      .json({ message: 'Password changed successfully.' });
+    res.json({ message: 'Password changed successfully.' });
   } catch (error) {
     console.error('Error changing password:', error);
     res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'An error occurred while changing the password.' });
+      .status(500)
+      .json({ message: 'An error occurred.', error: (error as Error).message });
   }
 };
