@@ -170,7 +170,6 @@ router.get(
     return successResponse(res, admins, 'Admins retrieved successfully');
   })
 );
-
 /**
  * @swagger
  * /api/users/profile:
@@ -180,7 +179,7 @@ router.get(
  *     tags:
  *       - Users
  *     security:
- *       - BearerAuth: []  // If you're using JWT, ensure the user is authenticated
+ *       - BearerAuth: []  # If you're using JWT, ensure the user is authenticated
  *     requestBody:
  *       required: true
  *       content:
@@ -204,8 +203,8 @@ router.get(
  *                 type: string
  *                 description: The URL of the user's profile image (optional, if updated)
  *             example:
- *               firstName: John
- *               lastName: Doe
+ *               firstName: "ifeoluwa"
+ *               lastName: "tobi"
  *               phoneNumber: "+491234567890"
  *               pin: "admin-pin"
  *               imgUrl: "http://image.url/abc123.jpg"
