@@ -170,20 +170,22 @@ router.get(
     return successResponse(res, admins, 'Admins retrieved successfully');
   })
 );
+
+
+
+
 /**
  * @swagger
- * /api/users/profile:
+ * /user/update:
  *   put:
  *     summary: Update user profile
  *     description: Allows a user to update their profile details. Admins can also update additional fields after verifying the PIN.
  *     tags:
  *       - Users
- *     security:
- *       - BearerAuth: []  # If you're using JWT, ensure the user is authenticated
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -202,12 +204,18 @@ router.get(
  *               imgUrl:
  *                 type: string
  *                 description: The URL of the user's profile image (optional, if updated)
+ *                 format: uri
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: The image file to upload (optional)
  *             example:
- *               firstName: "ifeoluwa"
- *               lastName: "tobi"
+ *               firstName: John
+ *               lastName: Doe
  *               phoneNumber: "+491234567890"
  *               pin: "admin-pin"
  *               imgUrl: "http://image.url/abc123.jpg"
+ *               image: "image-file.jpg"
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -276,12 +284,6 @@ router.get(
  *                 error:
  *                   type: string
  *                   example: "Error message details"
- * components:
- *   securitySchemes:
- *     BearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  */
 
 router.put('/update', userMiddleware, updateUserProfile);
