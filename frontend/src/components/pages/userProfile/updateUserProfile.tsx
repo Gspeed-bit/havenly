@@ -15,16 +15,9 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { motion } from 'framer-motion';
-import {
-  User,
-  Phone,
-  Lock,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
-const ProfileUpdate = () => {
+const UserProfileUpdate = () => {
   const { user, loading: userLoading } = useUser();
   const [userData, setUserData] = useState({
     firstName: '',
@@ -34,10 +27,6 @@ const ProfileUpdate = () => {
   });
   const [image, setImage] = useState<File | null>(null);
   const [previewImgUrl, setPreviewImgUrl] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [pin, setPin] = useState('');
-  const [pinRequested, setPinRequested] = useState(false);
-  const [pinVerified, setPinVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
@@ -52,7 +41,6 @@ const ProfileUpdate = () => {
         phoneNumber: user.phoneNumber || '',
         imgUrl: user.imgUrl || '',
       });
-      setIsAdmin(user.isAdmin || false);
     }
   }, [user]);
 
@@ -75,28 +63,39 @@ const ProfileUpdate = () => {
 
     try {
       let imageUrl = userData.imgUrl;
+
       if (image) {
-        const uploadResponse = await uploadImage(image);
-        imageUrl = uploadResponse.data.url;
+        try {
+          const uploadResponse = await uploadImage(image);
+          imageUrl = uploadResponse?.data?.url ?? userData.imgUrl;
+          if (!imageUrl) {
+            throw new Error('Image URL is missing from the upload response.');
+          }
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw new Error('Failed to upload the image. Please try again.');
+        }
       }
 
       const updatedData = { ...userData, imgUrl: imageUrl };
+      const response = await updateProfile(updatedData);
 
-      if (isAdmin && pinVerified) {
-        await updateProfile(updatedData);
-      } else if (!isAdmin) {
-        await updateProfile(updatedData);
-      } else {
+      if (response?.status === 'success') {
         setMessage({
-          type: 'error',
-          text: 'Please verify your PIN before updating.',
+          type: 'success',
+          text: 'Your profile has been successfully updated.',
         });
+      } else {
+        throw new Error(response?.data || 'Profile update failed.');
       }
     } catch (error) {
-      console.log(error);
+      console.error('Profile update failed:', error);
       setMessage({
         type: 'error',
-        text: 'An error occurred while updating your profile.',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred.',
       });
     } finally {
       setLoading(false);
@@ -115,11 +114,11 @@ const ProfileUpdate = () => {
       formData
     );
 
-    if (response.status === 'error') {
-      throw new Error(response.message);
+    if (response.status !== 'success' || !response.data?.url) {
+      throw new Error('Invalid upload response or missing URL.');
     }
 
-    return response.data;
+    return response;
   };
 
   const updateProfile = async (updatedData: {
@@ -128,57 +127,16 @@ const ProfileUpdate = () => {
     phoneNumber: string;
     imgUrl: string;
   }) => {
-    const response = await apiHandler<SuccessResponse<object>>(
+    const response = await apiHandler<SuccessResponse<{ url: string }>>(
       '/user/update',
       'PUT',
       updatedData
     );
-    if (response.status === 'success') {
-      setMessage({
-        type: 'success',
-        text: 'Your profile has been successfully updated.',
-      });
-    } else {
-      setMessage({
-        type: 'error',
-        text: 'Failed to update profile. Please try again.',
-      });
-    }
-  };
 
-  const handlePinRequest = async () => {
-    const response = await apiHandler<SuccessResponse<object>>(
-      '/user/request-pin',
-      'POST'
-    );
     if (response.status === 'success') {
-      setPinRequested(true);
-      setMessage({
-        type: 'success',
-        text: 'A PIN has been sent to your registered email.',
-      });
+      return response;
     } else {
-      setMessage({
-        type: 'error',
-        text: 'Failed to request PIN. Please try again.',
-      });
-    }
-  };
-
-  const handlePinVerification = async () => {
-    const response = await apiHandler<SuccessResponse<object>>(
-      '/user/confirm-update',
-      'POST',
-      { pin }
-    );
-    if (response.status === 'success') {
-      setPinVerified(true);
-      setMessage({
-        type: 'success',
-        text: 'Your PIN has been verified. You can now update your profile.',
-      });
-    } else {
-      setMessage({ type: 'error', text: 'Invalid PIN. Please try again.' });
+      throw new Error(response.message || 'Failed to update profile.');
     }
   };
 
@@ -198,7 +156,7 @@ const ProfileUpdate = () => {
             Update Your Profile
           </CardTitle>
           <CardDescription className='text-blue'>
-            Manage your account details and preferences
+            Manage your account details
           </CardDescription>
         </CardHeader>
         <CardContent className='p-6 bg-veryLightGray'>
@@ -228,145 +186,57 @@ const ProfileUpdate = () => {
                 />
               </Label>
             </div>
-
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='firstName' className='text-darkGray'>
-                  First Name
-                </Label>
+                <Label htmlFor='firstName'>First Name</Label>
                 <Input
-                  type='text'
                   id='firstName'
                   value={userData.firstName}
                   onChange={(e) =>
                     setUserData({ ...userData, firstName: e.target.value })
                   }
-                  className='transition-all duration-300 focus:ring-2 focus:ring-primary_main border-gray'
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lastName' className='text-darkGray'>
-                  Last Name
-                </Label>
+                <Label htmlFor='lastName'>Last Name</Label>
                 <Input
-                  type='text'
                   id='lastName'
                   value={userData.lastName}
                   onChange={(e) =>
                     setUserData({ ...userData, lastName: e.target.value })
                   }
-                  className='transition-all duration-300 focus:ring-2 focus:ring-primary_main border-gray'
                 />
               </div>
             </div>
-
             <div className='space-y-2'>
-              <Label htmlFor='phoneNumber' className='text-darkGray'>
-                Phone Number
-              </Label>
-              <div className='relative'>
-                <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray' />
-                <Input
-                  type='tel'
-                  id='phoneNumber'
-                  value={userData.phoneNumber}
-                  onChange={(e) =>
-                    setUserData({ ...userData, phoneNumber: e.target.value })
-                  }
-                  className='pl-10 transition-all duration-300 focus:ring-2 focus:ring-primary_main border-gray'
-                />
-              </div>
+              <Label htmlFor='phoneNumber'>Phone Number</Label>
+              <Input
+                id='phoneNumber'
+                value={userData.phoneNumber}
+                onChange={(e) =>
+                  setUserData({ ...userData, phoneNumber: e.target.value })
+                }
+              />
             </div>
-
-            {isAdmin && (
-              <div className='space-y-4 bg-blue p-4 rounded-lg'>
-                <h3 className='text-lg font-semibold flex items-center text-primary_main'>
-                  <Lock className='mr-2' /> Admin Verification
-                </h3>
-                {!pinVerified ? (
-                  <>
-                    <Button
-                      type='button'
-                      onClick={handlePinRequest}
-                      variant='outline'
-                      className='w-full border-primary_main text-primary_main hover:bg-primary_main hover:text-white'
-                    >
-                      Request PIN
-                    </Button>
-                    {pinRequested && (
-                      <div className='space-y-2'>
-                        <Label htmlFor='pin' className='text-darkGray'>
-                          Enter PIN
-                        </Label>
-                        <div className='flex space-x-2'>
-                          <Input
-                            type='text'
-                            id='pin'
-                            value={pin}
-                            onChange={(e) => setPin(e.target.value)}
-                            className='transition-all duration-300 focus:ring-2 focus:ring-primary_main border-gray'
-                          />
-                          <Button
-                            type='button'
-                            onClick={handlePinVerification}
-                            className='bg-primary_main text-white hover:bg-violet'
-                          >
-                            Verify PIN
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className='text-center text-green-600 flex items-center justify-center'>
-                    <CheckCircle2 className='mr-2' /> Admin status verified
-                  </div>
-                )}
-              </div>
-            )}
-
             {message && (
               <Alert
                 variant={message.type === 'error' ? 'destructive' : 'default'}
-                className={
-                  message.type === 'error'
-                    ? 'bg-pink text-white'
-                    : 'bg-blue text-primary_main'
-                }
               >
-                <AlertCircle className='h-4 w-4' />
+                <AlertCircle />
                 <AlertTitle>
                   {message.type === 'error' ? 'Error' : 'Success'}
                 </AlertTitle>
                 <AlertDescription>{message.text}</AlertDescription>
               </Alert>
             )}
-
-            <Button
-              type='submit'
-              disabled={loading}
-              className='w-full bg-primary_main hover:bg-violet text-white transition-colors'
-            >
-              {loading ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className='w-5 h-5 border-t-2 border-white rounded-full'
-                />
-              ) : (
-                <>
-                  <User className='mr-2' />
-                  Update Profile
-                </>
-              )}
+            <Button type='submit' disabled={loading}>
+              {loading ? 'Updating...' : 'Update Profile'}
             </Button>
           </form>
         </CardContent>
       </Card>
-
-     
     </div>
   );
 };
 
-export default ProfileUpdate;
+export default UserProfileUpdate;
