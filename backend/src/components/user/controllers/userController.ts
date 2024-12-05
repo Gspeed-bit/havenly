@@ -165,7 +165,7 @@ export const requestAdminUpdatePin = async (req: Request, res: Response) => {
 
 // Confirm Admin Profile Update
 export const confirmAdminUpdate = async (req: Request, res: Response) => {
-  const { pin, updates } = req.body;
+  const { firstName, lastName, phoneNumber, pin } = req.body;
 
   if (!req.user?.isAdmin) {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
@@ -178,11 +178,18 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
   delete adminPins[req.user._id]; // Remove used PIN
 
   // Ensure updates object exists before checking for email
-  if (updates && updates.email) {
+
+  if (req.body.email) {
     return res
       .status(400)
       .json({ message: 'Admins cannot update their email.' });
   }
+
+  // Build updates object dynamically
+  const updates: Partial<IUser> = {}; // Type-safe updates object
+  if (firstName) updates.firstName = firstName;
+  if (lastName) updates.lastName = lastName;
+  if (phoneNumber) updates.phoneNumber = phoneNumber;
 
   try {
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
