@@ -18,8 +18,8 @@ export const useUser = (): { user: User | null; loading: boolean } => {
       } else {
         throw new Error(response.message || 'Failed to fetch user details.');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error('Error loading user:', error);
       clearAuthToken(); // Clear token if the user fetch fails
       setUser(null);
     } finally {

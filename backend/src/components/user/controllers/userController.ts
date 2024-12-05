@@ -8,7 +8,6 @@ import {
 } from 'utils/emailUtils';
 import { uploadImageToCloudinary } from 'utils/cloudinary';
 import bcrypt from 'bcrypt';
-import upload from '@middleware/fileUpload/multer';
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -94,72 +93,57 @@ export const getAllAdmins = async (req: Request, res: Response) => {
 };
 
 // User Profile Update Handler
-
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const { firstName, lastName, phoneNumber } = req.body;
-  const { _id: userId } = req.user;
+  const { firstName, lastName, phoneNumber, pin } = req.body;
+  const { isAdmin, _id: userId } = req.user;
 
-  // Prevent email updates
+  // Build updates object dynamically
+  const updates: Partial<IUser> = {}; // Type-safe updates object
+  if (firstName) updates.firstName = firstName;
+  if (lastName) updates.lastName = lastName;
+  if (phoneNumber) updates.phoneNumber = phoneNumber;
+
+  // Prevent unauthorized email updates
   if (req.body.email) {
     return res.status(400).json({ message: 'Email updates are not allowed.' });
   }
 
-  // First, handle file upload
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: 'Error uploading file.' });
+  // Handle Admin PIN validation
+  if (isAdmin) {
+    if (!pin || adminPins[userId] !== pin) {
+      return res.status(400).json({ message: 'Invalid or missing PIN.' });
     }
+    delete adminPins[userId]; // Clear the PIN after validation
+  }
 
-    try {
-      // Prepare the updates object with the allowed fields
-      const updates: Partial<IUser> = {}; // Use Partial<IUser> instead of any
-      if (firstName) updates.firstName = firstName;
-      if (lastName) updates.lastName = lastName;
-      if (phoneNumber) updates.phoneNumber = phoneNumber;
-
-      // Handle image upload if file is provided
-      if (req.file) {
-        const { secure_url } = await uploadImageToCloudinary(
-          req.file.buffer,
-          `user_images/${userId}`
-        );
-        updates.imgUrl = secure_url; // Set the new image URL from Cloudinary
-      }
-
-      // Update user in the database
-      const user = await User.findByIdAndUpdate(userId, updates, {
-        new: true, // Ensure the updated user is returned
-        runValidators: true, // Validate fields before saving
-      });
-
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-
-      // Log updated user for debugging
-      console.log('Updated User:', user);
-
-      // Remove sensitive information (like password) from the response
-      const sanitizedUser = sanitizeUser(
-        user.toObject() as unknown as Record<string, unknown>,
-        ['password']
+  try {
+    // Handle image upload if a file is provided
+    if (req.file) {
+      const { secure_url } = await uploadImageToCloudinary(
+        req.file.buffer,
+        `user_images/${userId}`
       );
-
-      return res.json({
-        message: 'Profile updated successfully.',
-        user: sanitizedUser,
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({
-        message: 'An error occurred.',
-        error: (error as Error).message,
-      });
+      updates.imgUrl = secure_url;
     }
-  });
+
+    // Update user profile in the database
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    // Sanitize the user data before returning
+    const sanitizedUser = sanitizeUser(
+      user.toObject() as unknown as Record<string, unknown>,
+      ['password']
+    );
+    res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred.';
+    res
+      .status(500)
+      .json({ message: 'An error occurred.', error: errorMessage });
+  }
 };
-
-
 
 // Admin Profile Update Handler
 const adminPins: Record<string, string> = {}; // Temporary storage for PINs

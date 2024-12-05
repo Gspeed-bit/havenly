@@ -280,7 +280,12 @@ router.get(
  *                   type: string
  *                   example: "Error message details"
  */
-router.put('/update', userMiddleware, upload, updateUserProfile);
+router.put(
+  '/update',
+  userMiddleware,
+  upload.single('image'),
+  updateUserProfile
+);
 
 
 /**
