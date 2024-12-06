@@ -27,13 +27,16 @@ export const imageUpload = async (req: Request, res: Response) => {
       await property.save();
     }
 
-    res
-      .status(200)
-      .json({ message: 'Image uploaded successfully.', url: secure_url });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Image upload failed.', error: error.message });
+    return res.status(200).json({
+      status: 'success',
+      data: { url: secure_url },
+      message: 'Image uploaded successfully.',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Image upload failed.',
+      error: (error as Error).message,
+    });
   }
 };

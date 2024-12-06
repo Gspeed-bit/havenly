@@ -32,6 +32,9 @@ const UserProfileUpdate = () => {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [pinRequested, setPinRequested] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,6 +44,7 @@ const UserProfileUpdate = () => {
         phoneNumber: user.phoneNumber || '',
         imgUrl: user.imgUrl || '',
       });
+      setIsAdmin(user.isAdmin || false);
     }
   }, [user]);
 
@@ -56,89 +60,153 @@ const UserProfileUpdate = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
+const validateForm = () => {
+  const phoneRegex = /^\+?\d{10,15}$/; // Matches 10-15 digits, with optional + for country code
+  const emailRegex = /^\S+@\S+\.\S+$/;
+  const errors: string[] = [];
+
+  if (!phoneRegex.test(userData.phoneNumber)) {
+    errors.push(
+      'Please enter a valid phone number (10-15 digits, including optional country code).'
+    );
+  }
+  if (!emailRegex.test(user?.email || '')) {
+    errors.push('Please enter a valid email address.');
+  }
+
+  if (errors.length > 0) {
+    setMessage({
+      type: 'error',
+      text: errors.join(' '),
+    });
+    return false;
+  }
+  return true;
+};
+
+
+  const handleImageUpload = async () => {
+    if (!image) return;
 
     try {
-      let imageUrl = userData.imgUrl;
+      const formData = new FormData();
+      formData.append('image', image as File);
+      formData.append('type', 'user_image');
+      formData.append('entityId', user?._id || 'default-entity-id');
+      if (isAdmin) formData.append('pin', adminPin);
 
-      if (image) {
-        try {
-          const uploadResponse = await uploadImage(image);
-          imageUrl = uploadResponse?.data?.url ?? userData.imgUrl;
-          if (!imageUrl) {
-            throw new Error('Image URL is missing from the upload response.');
-          }
-        } catch (uploadError) {
-          console.error('Image upload error:', uploadError);
-          throw new Error('Failed to upload the image. Please try again.');
-        }
-      }
+      const response = await apiHandler<SuccessResponse<{ url: string }>>(
+        '/image/upload',
+        'POST',
+        formData
+      );
 
-      const updatedData = { ...userData, imgUrl: imageUrl };
-      const response = await updateProfile(updatedData);
-
-      if (response?.status === 'success') {
-        setMessage({
-          type: 'success',
-          text: 'Your profile has been successfully updated.',
-        });
+      if (response.status === 'success') {
+        setUserData({ ...userData, imgUrl: response.data?.data?.url });
+        setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+        // Refresh the page after image upload
+        window.location.reload();
       } else {
-        throw new Error(response?.data || 'Profile update failed.');
+        throw new Error(response.message || 'Image upload failed.');
       }
     } catch (error) {
-      console.error('Profile update failed:', error);
       setMessage({
         type: 'error',
-        text:
-          error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred.',
+        text: error instanceof Error ? error.message : 'Image upload failed.',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const uploadImage = async (image: File) => {
-    const formData = new FormData();
-    formData.append('image', image);
-    formData.append('type', 'user_image');
-    formData.append('entityId', user?._id || 'default-entity-id');
+ const handleRequestPin = async () => {
+   setLoading(true);
+   setMessage(null);
+   try {
+     const response = await apiHandler('/user/request-pin', 'POST');
+     if (response.status === 'success') {
+       setPinRequested(true);
+       setMessage({
+         type: 'success',
+         text: 'A PIN has been sent to your email.',
+       });
+     } else {
+       throw new Error(response.message || 'Failed to request PIN.');
+     }
+   } catch (error) {
+     setMessage({
+       type: 'error',
+       text: error instanceof Error ? error.message : 'Failed to request PIN.',
+     });
+     setPinRequested(false); // Ensure the button is available again on error
+   } finally {
+     setLoading(false);
+   }
+ };
 
-    const response = await apiHandler<SuccessResponse<{ url: string }>>(
-      '/image/upload',
-      'POST',
-      formData
-    );
+ const handleSubmit = async (e: React.FormEvent) => {
+   e.preventDefault();
+   setLoading(true);
+   setMessage(null);
 
-    if (response.status !== 'success' || !response.data?.url) {
-      throw new Error('Invalid upload response or missing URL.');
-    }
+   // Validate the form first
+   if (!validateForm()) {
+     setLoading(false);
+     return; // Stop further execution if validation fails
+   }
 
-    return response;
-  };
+   try {
+     const updatedData = {
+       ...userData,
+       ...(isAdmin ? { pin: adminPin } : {}),
+     };
 
-  const updateProfile = async (updatedData: {
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    imgUrl: string;
-  }) => {
-    const response = await apiHandler<SuccessResponse<{ url: string }>>(
-      '/user/update',
-      'PUT',
-      updatedData
-    );
+     if (isAdmin && !pinRequested) {
+       setMessage({
+         type: 'error',
+         text: 'Invalid or missing PIN.',
+       });
+       setPinRequested(false); // Reset pinRequested to false
+       setLoading(false);
+       return;
+     }
 
-    if (response.status === 'success') {
-      return response;
-    } else {
-      throw new Error(response.message || 'Failed to update profile.');
-    }
-  };
+     const response = await apiHandler<SuccessResponse<object>>(
+       '/user/update',
+       'PUT',
+       updatedData
+     );
+
+     if (response.status === 'success') {
+       setMessage({
+         type: 'success',
+         text: 'Your profile has been successfully updated.',
+       });
+       // If image is changed, upload it
+       await handleImageUpload();
+       // Refresh the page after successful update
+       window.location.reload();
+     } else {
+       throw new Error(response.message || 'Profile update failed.');
+     }
+   } catch (error) {
+     setMessage({
+       type: 'error',
+       text:
+         error instanceof Error
+           ? error.message
+           : 'An unexpected error occurred.',
+     });
+
+     if (
+       error instanceof Error &&
+       error.message.includes('invalid or missing PIN')
+     ) {
+       setPinRequested(false); // Ensure button visibility after error
+     }
+   } finally {
+     setLoading(false);
+   }
+ };
+
 
   if (userLoading) {
     return (
@@ -155,8 +223,10 @@ const UserProfileUpdate = () => {
           <CardTitle className='text-3xl font-bold'>
             Update Your Profile
           </CardTitle>
-          <CardDescription className='text-blue'>
-            Manage your account details
+          <CardDescription>
+            {isAdmin
+              ? 'Admins require a PIN for profile updates and image uploads.'
+              : 'Manage your account details.'}
           </CardDescription>
         </CardHeader>
         <CardContent className='p-6 bg-veryLightGray'>
@@ -169,7 +239,6 @@ const UserProfileUpdate = () => {
                 />
                 <AvatarFallback className='text-4xl bg-violet text-white'>
                   {userData.firstName[0]}
-                  {userData.lastName[0]}
                 </AvatarFallback>
               </Avatar>
               <Label
@@ -216,22 +285,59 @@ const UserProfileUpdate = () => {
                 onChange={(e) =>
                   setUserData({ ...userData, phoneNumber: e.target.value })
                 }
+                type='tel'
               />
             </div>
+            {isAdmin && pinRequested && (
+              <div className='space-y-2'>
+                <Label htmlFor='adminPin'>Admin PIN</Label>
+                <Input
+                  id='adminPin'
+                  type='text'
+                  value={adminPin}
+                  onChange={(e) => setAdminPin(e.target.value)}
+                  placeholder='Enter your PIN'
+                />
+              </div>
+            )}
             {message && (
               <Alert
                 variant={message.type === 'error' ? 'destructive' : 'default'}
               >
-                <AlertCircle />
+                <AlertCircle className='w-6 h-6' />
                 <AlertTitle>
-                  {message.type === 'error' ? 'Error' : 'Success'}
+                  {message.type === 'success' ? 'Success' : 'Error'}
                 </AlertTitle>
                 <AlertDescription>{message.text}</AlertDescription>
               </Alert>
             )}
-            <Button type='submit' disabled={loading}>
-              {loading ? 'Updating...' : 'Update Profile'}
-            </Button>
+            <div className='flex justify-between items-center'>
+              {isAdmin && !pinRequested && (
+                <Button
+                  type='button'
+                  onClick={handleRequestPin}
+                  disabled={loading}
+                  variant='outline'
+                  className='bg-blue text-white'
+                >
+                  Request Admin PIN
+                </Button>
+              )}
+              {isAdmin && pinRequested && (
+                <Button
+                  type='button'
+                  onClick={handleRequestPin}
+                  disabled={loading}
+                  variant='outline'
+                  className='bg-blue text-white'
+                >
+                  Request New PIN
+                </Button>
+              )}
+              <Button type='submit' className='bg-primary_main text-white'>
+                Save Changes
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

@@ -50,6 +50,7 @@ const DashboardPage = () => {
           <p>Here you can display recent user activities or system logs.</p>
         </CardContent>
       </Card>
+    
     </div>
   );
 };

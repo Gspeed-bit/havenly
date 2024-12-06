@@ -4,6 +4,7 @@ import { logOutUser } from '../services/auth/auth';
 import { getAuthToken, clearAuthToken } from './helpers';
 
 export interface SuccessResponse<T> {
+  message: string;
   status: 'success';
   data: T;
 }
@@ -49,6 +50,7 @@ export const apiHandler = async <T>(
 
     return {
       status: 'success',
+      message: response.data.message || 'Request successful',
       data: response.data,
     };
   } catch (error) {
