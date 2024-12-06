@@ -5,6 +5,7 @@ const Page = {
   getSignup: () => '/signup',
   getVerify: () => '/verify',
   getEditProfile: () => '/edit-profile',
+  getAdminProfile: () => '/dashboard/update-profile',
   getUserProfilePage: () => '/user/me',
   getSettings: () => '/settings',
   getDashboard: () => '/dashboard',

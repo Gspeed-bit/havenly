@@ -15,8 +15,9 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Camera, Phone, User } from 'lucide-react';
-import Icon from '@/components/common/icon/icons';
+import { AlertCircle, Camera, Phone, User, ShieldCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const UserProfileUpdate = () => {
   const { user, loading: userLoading } = useUser();
@@ -36,19 +37,32 @@ const UserProfileUpdate = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [pinRequested, setPinRequested] = useState(false);
+  // State to control loading behavior
+
+  const router = useRouter(); // Initialize the router for redirection
 
   useEffect(() => {
-    if (user) {
-      setUserData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        phoneNumber: user.phoneNumber || '',
-        imgUrl: user.imgUrl || '',
-      });
-      setIsAdmin(user.isAdmin || false);
-    }
-  }, [user]);
+    // Wait for user data to be fully loaded
+    if (!userLoading) {
+      // Check if user is an admin and redirect accordingly
+      if (user) {
+        setUserData({
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          phoneNumber: user.phoneNumber || '',
+          imgUrl: user.imgUrl || '',
+        });
+        setIsAdmin(user.isAdmin || false);
+      }
 
+      // Check if user is an admin
+      if (isAdmin) {
+        router.push('/dashboard/update-profile'); // Redirect to the admin dashboard
+      } else {
+        router.push('/user-profile'); // Redirect to the user profile
+      }
+    }
+  }, [user, userLoading, isAdmin, router]);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const file = e.target.files[0];
@@ -217,181 +231,205 @@ const UserProfileUpdate = () => {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8'>
-      <Card className='max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden'>
-        <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8'>
-          <CardTitle className='text-3xl font-extrabold'>
-            Update Your Profile
-          </CardTitle>
-          <CardDescription className='mt-2 text-blue-100'>
-            {isAdmin
-              ? 'Admins require a PIN for profile updates and image uploads.'
-              : 'Manage your account details and keep your information up to date.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='p-8'>
-          <form onSubmit={handleSubmit} className='space-y-8'>
-            <div className='flex flex-col items-center space-y-6'>
-              <div className='relative group'>
-                <Avatar className='w-40 h-40 border-4 border-blue-600 shadow-lg group-hover:border-indigo-600 transition-all duration-300'>
-                  <AvatarImage
-                    src={previewImgUrl || userData.imgUrl}
-                    alt='Profile'
-                    className='object-cover'
-                  />
-                  <AvatarFallback className='text-5xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white'>
-                    {userData.firstName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <Label
-                  htmlFor='image'
-                  className='absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-600 transition-colors duration-300'
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className='max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden'>
+          <CardHeader className='bg-gradient-to-r from-primary_main to-violet text-white p-8'>
+            <CardTitle className='text-3xl font-extrabold'>
+              Update Your Profile
+            </CardTitle>
+            <CardDescription className='mt-2 text-blue-100'>
+              {isAdmin
+                ? 'Admins require a PIN for profile updates and image uploads.'
+                : 'Manage your account details and keep your information up to date.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='p-8'>
+            <form onSubmit={handleSubmit} className='space-y-8'>
+              <div className='flex flex-col items-center space-y-6'>
+                <motion.div
+                  className='relative group'
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 10 }}
                 >
-                  <Camera className='w-6 h-6' />
-                  <Input
-                    type='file'
-                    id='image'
-                    onChange={handleImageChange}
-                    className='hidden'
-                    accept='image/*'
-                  />
-                </Label>
+                  <Avatar className='w-40 h-40 border-4 border-primary_main shadow-lg group-hover:border-violet transition-all duration-300'>
+                    <AvatarImage
+                      src={previewImgUrl || userData.imgUrl}
+                      alt='Profile'
+                      className='object-cover'
+                    />
+                    <AvatarFallback className='text-5xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white'>
+                      {userData.firstName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Label
+                    htmlFor='image'
+                    className='absolute bottom-0 right-0 bg-primary_main text-white p-2 rounded-full cursor-pointer hover:bg-violet transition-colors duration-300'
+                  >
+                    <Camera className='w-6 h-6' />
+                    <Input
+                      type='file'
+                      id='image'
+                      onChange={handleImageChange}
+                      className='hidden'
+                      accept='image/*'
+                    />
+                  </Label>
+                </motion.div>
               </div>
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='firstName'
-                  className='text-sm font-medium text-gray-700'
-                >
-                  First Name
-                </Label>
-                <div className='relative'>
-                  <User
-                    className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400'
-                    size={18}
-                  />
-                  <Input
-                    id='firstName'
-                    value={userData.firstName}
-                    onChange={(e) =>
-                      setUserData({ ...userData, firstName: e.target.value })
-                    }
-                    className='pl-15 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-9'
-                  />
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='firstName'
+                    className='text-sm font-medium text-gray-700'
+                  >
+                    First Name
+                  </Label>
+                  <div className='relative'>
+                    <Input
+                      id='firstName'
+                      value={userData.firstName}
+                      onChange={(e) =>
+                        setUserData({ ...userData, firstName: e.target.value })
+                      }
+                      className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-10'
+                    />
+                    <User
+                      className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                      size={18}
+                    />
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='lastName'
+                    className='text-sm font-medium text-gray-700'
+                  >
+                    Last Name
+                  </Label>
+                  <div className='relative'>
+                    <Input
+                      id='lastName'
+                      value={userData.lastName}
+                      onChange={(e) =>
+                        setUserData({ ...userData, lastName: e.target.value })
+                      }
+                      className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-10'
+                    />
+                    <User
+                      className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                      size={18}
+                    />
+                  </div>
                 </div>
               </div>
               <div className='space-y-2'>
                 <Label
-                  htmlFor='lastName'
+                  htmlFor='phoneNumber'
                   className='text-sm font-medium text-gray-700'
                 >
-                  Last Name
+                  Phone Number
                 </Label>
                 <div className='relative'>
                   <Input
-                    id='lastName'
-                    value={userData.lastName}
+                    id='phoneNumber'
+                    value={userData.phoneNumber}
                     onChange={(e) =>
-                      setUserData({ ...userData, lastName: e.target.value })
+                      setUserData({ ...userData, phoneNumber: e.target.value })
                     }
-                    className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-9'
+                    type='tel'
+                    className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-10'
                   />
-                  <User
+                  <Phone
                     className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                     size={18}
                   />
                 </div>
               </div>
-            </div>
-            <div className='space-y-2'>
-              <Label
-                htmlFor='phoneNumber'
-                className='text-sm font-medium text-gray-700'
-              >
-                Phone Number
-              </Label>
-              <div className='relative'>
-                <Input
-                  id='phoneNumber'
-                  value={userData.phoneNumber}
-                  onChange={(e) =>
-                    setUserData({ ...userData, phoneNumber: e.target.value })
-                  }
-                  type='tel'
-                  className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-9'
-                />
-                <Phone
-                  className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-                  size={18}
-                />
-              </div>
-            </div>
-            {isAdmin && pinRequested && (
-              <div className='space-y-2 relative'>
-                <Label
-                  htmlFor='adminPin'
-                  className='text-sm font-medium text-gray-700'
+              {isAdmin && pinRequested && (
+                <motion.div
+                  className='space-y-2'
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  Admin PIN
-                </Label>
-
-                <Input
-                  id='adminPin'
-                  type='text'
-                  value={adminPin}
-                  onChange={(e) => setAdminPin(e.target.value)}
-                  placeholder='Enter your PIN'
-                  className='bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-9'
-                />
-                <Icon
-                  size={20}
-                  type='ShieldEllipsis'
-                  className='absolute left-3 top-10 transform -translate-y-1/2 text-gray-400'
-                />
-              </div>
-            )}
-            {message && (
-              <Alert
-                variant={message.type === 'error' ? 'destructive' : 'default'}
-                className={`${
-                  message.type === 'error'
-                    ? 'bg-red-50 text-red-800'
-                    : 'bg-green-50 text-green-800'
-                } rounded-lg p-4`}
-              >
-                <AlertCircle className='w-5 h-5 inline mr-2' />
-                <AlertTitle className='font-semibold'>
-                  {message.type === 'success' ? 'Success' : 'Error'}
-                </AlertTitle>
-                <AlertDescription>{message.text}</AlertDescription>
-              </Alert>
-            )}
-            <div className='flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4'>
-              {isAdmin && (
-                <Button
-                  type='button'
-                  onClick={handleRequestPin}
-                  disabled={loading}
-                  variant='outline'
-                  className={`w-full sm:w-auto ${
-                    pinRequested
-                      ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
-                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                  } transition-colors duration-300`}
-                >
-                  {pinRequested ? 'Request New PIN' : 'Request Admin PIN'}
-                </Button>
+                  <Label
+                    htmlFor='adminPin'
+                    className='text-sm font-medium text-gray-700'
+                  >
+                    Admin PIN
+                  </Label>
+                  <div className='relative'>
+                    <Input
+                      id='adminPin'
+                      type='text'
+                      value={adminPin}
+                      onChange={(e) => setAdminPin(e.target.value)}
+                      placeholder='Enter your PIN'
+                      className='pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 px-10'
+                    />
+                    <ShieldCheck
+                      className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                      size={18}
+                    />
+                  </div>
+                </motion.div>
               )}
-              <Button
-                type='submit'
-                className='w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105'
-              >
-                Save Changes
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              {message && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Alert
+                    variant={
+                      message.type === 'error' ? 'destructive' : 'default'
+                    }
+                    className={`${
+                      message.type === 'error'
+                        ? 'bg-red-50 text-red-800'
+                        : 'bg-green-50 text-green-800'
+                    } rounded-lg p-4`}
+                  >
+                    <AlertCircle className='w-5 h-5 inline mr-2' />
+                    <AlertTitle className='font-semibold'>
+                      {message.type === 'success' ? 'Success' : 'Error'}
+                    </AlertTitle>
+                    <AlertDescription>{message.text}</AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+              <div className='flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4'>
+                {isAdmin && (
+                  <Button
+                    type='button'
+                    onClick={handleRequestPin}
+                    disabled={loading}
+                    variant='outline'
+                    className={`w-full sm:w-auto ${
+                      pinRequested
+                        ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+                        : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                    } transition-colors duration-300`}
+                  >
+                    {pinRequested ? 'Request New PIN' : 'Request Admin PIN'}
+                  </Button>
+                )}
+                <Button
+                  type='submit'
+                  disabled={loading}
+                  className='w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md bg-primary_main hover:bg-violet transition-all duration-300 transform hover:scale-105'
+                >
+                  {loading ? 'Updating...' : '  Update Profile'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

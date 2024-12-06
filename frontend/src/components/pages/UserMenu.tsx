@@ -1,12 +1,16 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@store/auth';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import Page from '../common/links/page';
-import { Button } from '../ui/button';
-import Icon from '../icons/Icon';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/icons/Icon';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
@@ -20,163 +24,102 @@ const UserMenu: React.FC = () => {
 
   if (!hydrated) return null;
 
-  // Predefined color map for letters A-Z
-  const letterColorMap: Record<string, string> = {
-    A: '#EF4444',
-    B: '#3B82F6',
-    C: '#10B981',
-    D: '#F59E0B',
-    E: '#8B5CF6',
-    F: '#EC4899',
-    G: '#6366F1',
-    H: '#14B8A6',
-    I: '#F97316',
-    J: '#4B5563',
-    K: '#22C55E',
-    L: '#A855F7',
-    M: '#D946EF',
-    N: '#0EA5E9',
-    O: '#DB2777',
-    P: '#7C3AED',
-    Q: '#059669',
-    R: '#9CA3AF',
-    S: '#1D4ED8',
-    T: '#D97706',
-    U: '#6D28D9',
-    V: '#D1D5DB',
-    W: '#4ADE80',
-    X: '#FACC15',
-    Y: '#EA580C',
-    Z: '#9D174D',
-  };
-
-  const defaultColor = '#374151'; // Neutral Gray
-
-  const getUserInitials = (firstName: string, lastName: string): string => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  };
-
-  const getColorForLetter = (letter: string): string => {
-    return letterColorMap[letter.toUpperCase()] || defaultColor;
-  };
-
-  const userInitials = getUserInitials(
-    user?.firstName || '',
-    user?.lastName || ''
-  );
-  const backgroundColor = getColorForLetter(user?.lastName?.charAt(0) || '');
-
   return (
     <div className='relative'>
       {isAuthenticated && user ? (
-        <Popover>
-          <PopoverTrigger asChild>
-            <div className='w-10 h-10 cursor-pointer flex items-center justify-center'>
-              {user.imgUrl ? (
-                <picture>
-                  <img
-                    src={user.imgUrl}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    className='object-cover w-full h-full rounded-full'
-                  />
-                </picture>
-              ) : (
-                <span
-                  className='text-sm w-10 h-10 rounded-full font-medium flex items-center justify-center'
-                  style={{ backgroundColor, color: 'white' }}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className='flex items-center space-x-2 cursor-pointer'>
+              <Avatar className='h-8 w-8'>
+                <AvatarImage src={user?.imgUrl} />
+                <AvatarFallback>
+                  {user?.firstName?.[0]}
+                  {user?.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <span className='hidden md:inline-block font-medium'>
+                {user?.firstName}
+              </span>
+              <Icon
+                type='ChevronDown'
+                color='#000'
+                strokeWidth={1.75}
+                className='h-4 w-4'
+              />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align='end'
+            className='w-52 mt-2 rounded-lg shadow-md border'
+          >
+            <div className='py-2 px-4'>
+              <p className='text-sm font-semibold'>
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className='text-xs text-gray-500'>{user?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href='/dashboard'
+                  className='flex items-center py-2 px-4 text-sm hover:text-violet'
                 >
-                  {userInitials}
-                </span>
-              )}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className='mt-2 w-52 rounded-lg shadow-lg border-none'>
-            <div className=' '>
-              <div className='py-3'>
-                <p className='text-xs font-semibold'>
-                  {user?.firstName} {user?.lastName}
-                </p>
-              </div>
-              <div className='border-t border-gray-200'></div>
-              <ul className='py-1'>
-                {isAdmin && (
-                  <li>
-                    <Link
-                      href='/dashboard'
-                      className='flex items-center py-2 text-sm hover:text-violet'
-                    >
-                      <Icon
-                        type='LayoutDashboard'
-                        color='#3A0CA3'
-                        strokeWidth={1.75}
-                        className='mr-2 h-4 w-4'
-                      />
-                      Dashboard
-                    </Link>
-                  </li>
-                )}
-                <li>
-                  <Link
-                    href={Page.getProfile()}
-                    className='flex items-center py-2 text-sm hover:text-violet'
-                  >
-                    <Icon
-                      type='User'
-                      color='#3A0CA3'
-                      strokeWidth={1.75}
-                      className='mr-2 h-4 w-4'
-                    />
-                    Profile
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={Page.getAdminLogs()}
-                    className='flex items-center py-2 text-sm hover:text-violet'
-                  >
-                    <Icon
-                      type='Inbox'
-                      color='#3A0CA3'
-                      strokeWidth={1.75}
-                      className='mr-2 h-4 w-4'
-                    />
-                    Inbox
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={Page.getSettings()}
-                    className='flex items-center py-2 text-sm hover:text-violet'
-                  >
-                    <Icon
-                      type='Home'
-                      color='#3A0CA3'
-                      strokeWidth={1.75}
-                      className='mr-2 h-4 w-4'
-                    />
-                    Properties
-                  </Link>
-                </li>
-                <li>
-                  <Button
-                    onClick={() => {
-                      useAuthStore.getState().logout();
-                    }}
-                    className='flex items-center justify-start w-full py-2 text-left text-sm bg-primary_main hover:bg-red-600 hover:text-white'
-                  >
-                    <Icon
-                      type='LogOut'
-                      color='#ffffff'
-                      strokeWidth={1.75}
-                      className='mr-2 h-4 w-4'
-                    />
-                    Sign Out
-                  </Button>
-                </li>
-              </ul>
-            </div>
-          </PopoverContent>
-        </Popover>
+                  <Icon
+                    type='LayoutDashboard'
+                    color='#3A0CA3'
+                    strokeWidth={1.75}
+                    className='mr-2 h-4 w-4'
+                  />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link
+                href='/profile'
+                className='flex items-center py-2 px-4 text-sm hover:text-violet'
+              >
+                <Icon
+                  type='User'
+                  color='#3A0CA3'
+                  strokeWidth={1.75}
+                  className='mr-2 h-4 w-4'
+                />
+                Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href='/settings'
+                className='flex items-center py-2 px-4 text-sm hover:text-violet'
+              >
+                <Icon
+                  type='Settings'
+                  color='#3A0CA3'
+                  strokeWidth={1.75}
+                  className='mr-2 h-4 w-4'
+                />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Button
+                onClick={() => useAuthStore.getState().logout()}
+                className='w-full py-2 px-4 text-sm text-left bg-red-500 hover:bg-red-200'
+              >
+                <Icon
+                  type='LogOut'
+                  color='#ffffff'
+                  strokeWidth={1.75}
+                  className='mr-2 h-4 w-4'
+                />
+                Sign Out
+              </Button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <Link
           href='/auth/login'
