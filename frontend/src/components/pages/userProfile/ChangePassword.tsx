@@ -96,7 +96,7 @@ export function ChangePassword() {
         });
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
       setAlertState({
         type: 'destructive',
         message: 'An unexpected error occurred. Please try again.',

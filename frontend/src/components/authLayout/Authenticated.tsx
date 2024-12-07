@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken, isBrowser } from '@/config/helpers';
@@ -17,12 +16,19 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
 }) => {
   const router = useRouter();
   const { isAuthenticated, user, isAdmin } = useAuthStore();
-  const token = getAuthToken();
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true); // Added loading state
 
   useEffect(() => {
+    if (isBrowser()) {
+      const tokenFromStorage = getAuthToken();
+      setToken(tokenFromStorage);
+    }
+  }, []);
+
+  useEffect(() => {
     // If no token, immediately redirect to login
-    if (isBrowser() && !token) {
+    if (!token) {
       setLoading(false);
       router.push('/auth/login'); // Redirect if not authenticated
       return;
@@ -53,7 +59,7 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
   // Show a loading state until checks are complete
   if (loading || isAuthenticated === null) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className='flex justify-center items-center h-screen'>
         <p>Loading...</p>
       </div>
     );
@@ -61,7 +67,7 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
 
   // Render children if the user is authenticated
   if (isAuthenticated && user) {
-    return <div className="flex-1">{children}</div>;
+    return <div className='flex-1'>{children}</div>;
   }
 
   return null; // Render nothing if not authenticated

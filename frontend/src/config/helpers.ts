@@ -1,15 +1,22 @@
 export const isBrowser = () => typeof window !== 'undefined';
 
-export const authTokenKey = 'token';
+export const authTokenKey = 'authToken';
 
 export const setAuthToken = (token: string) => {
-  localStorage.setItem('authToken', token); // Save token in localStorage
+  if (isBrowser()) {
+    localStorage.setItem(authTokenKey, token); // Save token in localStorage
+  }
 };
 
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('authToken'); // Retrieve token from localStorage
+  if (isBrowser()) {
+    return localStorage.getItem(authTokenKey); // Retrieve token from localStorage
+  }
+  return null; // Return null if not in browser
 };
 
 export const clearAuthToken = () => {
-  localStorage.removeItem('authToken'); // Clear the token from localStorage
+  if (isBrowser()) {
+    localStorage.removeItem(authTokenKey); // Clear the token from localStorage
+  }
 };
