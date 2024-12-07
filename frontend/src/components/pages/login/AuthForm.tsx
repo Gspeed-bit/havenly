@@ -4,12 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { login, signUp } from '../../../services/auth/auth';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../../components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
   CardContent,
@@ -17,17 +12,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../../../components/ui/card';
-
+} from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { Input } from '@components/ui/input';
-import { Button } from '@components/ui/button';
-import { Label } from '@components/ui/label';
-import { Checkbox } from '@components/ui/checkbox';
-import { Toaster, toast } from 'sonner'; // Import Sonner components
-import { ThreeDots } from 'react-loader-spinner'; // Add loader
-import useLoading from '../../hooks/useLoading'; // Import the custom hook
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ThreeDots } from 'react-loader-spinner';
+import useLoading from '../../hooks/useLoading';
 
 export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +34,10 @@ export default function AuthPage() {
   const [adminCode, setAdminCode] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [alertState, setAlertState] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -47,8 +45,11 @@ export default function AuthPage() {
     startLoading: startLoginLoading,
     stopLoading: stopLoginLoading,
   } = useLoading();
-  const { startLoading: startSignUpLoading, stopLoading: stopSignUpLoading } =
-    useLoading();
+  const {
+    loading: signUpLoading,
+    startLoading: startSignUpLoading,
+    stopLoading: stopSignUpLoading,
+  } = useLoading();
 
   useEffect(() => {
     if (pathname === '/auth/register') {
@@ -57,52 +58,123 @@ export default function AuthPage() {
       setActiveTab('login');
     }
 
-    const storedEmail = localStorage.getItem('email');
-    if (storedEmail) {
-      setEmail(storedEmail);
+    const rememberMeValue = localStorage.getItem('rememberMe');
+    if (rememberMeValue === 'true') {
+      const storedEmail = localStorage.getItem('email');
+      if (storedEmail) {
+        setEmail(storedEmail);
+        setRememberMe(true);
+      }
     }
   }, [pathname]);
 
+  const validateEmail = (email: string) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 8;
+  };
+
+  const validatePhoneNumber = (phoneNumber: string) => {
+    const re = /^\+?[1-9]\d{1,14}$/;
+    return re.test(phoneNumber);
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmail(email)) {
+      setAlertState({
+        type: 'error',
+        message: 'Please enter a valid email address.',
+      });
+      return;
+    }
+    if (!validatePassword(password)) {
+      setAlertState({
+        type: 'error',
+        message: 'Password must be at least 8 characters long.',
+      });
+      return;
+    }
+
     const loginData = { email, password };
 
-    startLoginLoading(); // Start loading
+    startLoginLoading();
     try {
       const result = await login(loginData);
       if (result.status === 'success') {
-        toast.success('Login successful! Redirecting...');
+        setAlertState({
+          type: 'success',
+          message: 'Login successful! Redirecting...',
+        });
 
         if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('email', email);
         } else {
+          localStorage.removeItem('rememberMe');
           localStorage.removeItem('email');
         }
 
         setTimeout(() => {
-          router.push('/'); // Redirect to dashboard
-        }, 1500);
+          router.push('/');
+        }, 2000);
       } else if (result.message === 'Account not verified') {
-        toast.error(
-          'Your account is not verified. Redirecting to verification...'
-        );
+        setAlertState({
+          type: 'error',
+          message:
+            'Your account is not verified. Redirecting to verification...',
+        });
+
         setTimeout(() => {
-          router.push('/auth/verification-code'); // Redirect to verification page
-        }, 1500);
+          router.push('/auth/verification-code');
+        }, 2000);
       } else {
-        toast.error(result.message || 'Login failed! Please try again.');
+        setAlertState({
+          type: 'error',
+          message: result.message || 'Login failed! Please try again.',
+        });
       }
     } catch {
-      toast.error('An unexpected error occurred.');
+      setAlertState({
+        type: 'error',
+        message: 'An unexpected error occurred.',
+      });
     } finally {
-      stopLoginLoading(); // Stop loading
+      stopLoginLoading();
     }
   };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmail(email)) {
+      setAlertState({
+        type: 'error',
+        message: 'Please enter a valid email address.',
+      });
+      return;
+    }
+    if (!validatePassword(password)) {
+      setAlertState({
+        type: 'error',
+        message: 'Password must be at least 8 characters long.',
+      });
+      return;
+    }
     if (password !== confirmPassword) {
-      toast.error("Passwords don't match");
+      setAlertState({
+        type: 'error',
+        message: "Passwords don't match",
+      });
+      return;
+    }
+    if (!validatePhoneNumber(phoneNumber)) {
+      setAlertState({
+        type: 'error',
+        message: 'Please enter a valid phone number.',
+      });
       return;
     }
 
@@ -116,32 +188,36 @@ export default function AuthPage() {
       adminCode,
     };
 
-    startSignUpLoading(); // Start loading
+    startSignUpLoading();
     try {
       const result = await signUp(user);
       if (result.status === 'success') {
-        toast.success('Sign Up successful! Redirecting...');
+        setAlertState({
+          type: 'success',
+          message: 'Sign Up successful! Redirecting...',
+        });
         setTimeout(() => {
-          router.push('/verify'); // Redirect after successful sign-up
-        }, 1500);
+          router.push('/verify');
+        }, 2000);
       } else {
-        toast.error(result.message || 'Sign Up failed! Please try again.');
+        setAlertState({
+          type: 'error',
+          message: result.message || 'Sign Up failed! Please try again.',
+        });
       }
     } catch (error) {
       console.log(error);
-      toast.error('An unexpected error occurred.');
+      setAlertState({
+        type: 'error',
+        message: 'An unexpected error occurred.',
+      });
     } finally {
-      stopSignUpLoading(); // Stop loading
+      stopSignUpLoading();
     }
-  };
-
-  const handleTabSwitch = (tab: 'login' | 'signup') => {
-    setActiveTab(tab); // Update the active tab state
   };
 
   return (
     <div className='flex min-h-screen'>
-      <Toaster position='top-right' richColors /> {/* Sonner Toaster */}
       <div className='hidden lg:block lg:w-1/2 relative'>
         <Image
           src='/authImage/auth.jpg'
@@ -150,6 +226,7 @@ export default function AuthPage() {
           objectFit='cover'
         />
       </div>
+
       <div className='w-full lg:w-1/2 flex items-center justify-center p-8'>
         <Card className='border-none shadow-lg w-full max-w-md'>
           <CardHeader className='space-y-1'>
@@ -164,10 +241,10 @@ export default function AuthPage() {
             <Tabs
               value={activeTab}
               onValueChange={(value) => {
-                setActiveTab(value as 'login' | 'signup'); // Update the active tab state
+                setActiveTab(value as 'login' | 'signup');
                 router.push(
                   value === 'login' ? '/auth/login' : '/auth/register'
-                ); // Change route dynamically
+                );
               }}
               className='w-full'
             >
@@ -175,6 +252,19 @@ export default function AuthPage() {
                 <TabsTrigger value='login'>Login</TabsTrigger>
                 <TabsTrigger value='signup'>Sign Up</TabsTrigger>
               </TabsList>
+              {alertState.type && (
+                <Alert
+                  variant={
+                    alertState.type === 'success' ? 'default' : 'destructive'
+                  }
+                  className='mb-4 sticky top-0 z-50 transition-opacity duration-500 ease-in-out'
+                >
+                  <AlertTitle>
+                    {alertState.type === 'success' ? 'Success' : 'Error'}
+                  </AlertTitle>
+                  <AlertDescription>{alertState.message}</AlertDescription>
+                </Alert>
+              )}
               <TabsContent value='login'>
                 <form onSubmit={handleLoginSubmit}>
                   <div className='space-y-4'>
@@ -215,12 +305,11 @@ export default function AuthPage() {
                     <div className='flex items-center space-x-2'>
                       <Checkbox
                         id='remember'
-                        checked={rememberMe} // Controlled state
+                        checked={rememberMe}
                         onCheckedChange={(checked) =>
                           setRememberMe(checked === true)
-                        } // Ensure boolean
+                        }
                       />
-
                       <Label
                         htmlFor='remember'
                         className='text-sm font-medium leading-none p'
@@ -369,11 +458,11 @@ export default function AuthPage() {
                   <Button
                     type='submit'
                     className={`w-full mt-5 py-3 font-bold text-white bg-primary_main hover:bg-purple rounded-lg shadow-lg hover:bg-lightPrimaryfocus:outline-none ${
-                      loginLoading ? 'opacity-70 cursor-not-allowed' : ''
+                      signUpLoading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
-                    disabled={loginLoading}
+                    disabled={signUpLoading}
                   >
-                    {loginLoading ? (
+                    {signUpLoading ? (
                       <ThreeDots
                         visible
                         height='20'
@@ -390,18 +479,14 @@ export default function AuthPage() {
           </CardContent>
           <CardFooter className='flex flex-wrap items-center justify-between gap-2'>
             <div className='text-sm text-muted-foreground'>
-              <span className='mr-1  sm:inline-block'>
+              <span className='mr-1 sm:inline-block'>
                 {activeTab === 'login'
                   ? "Don't have an account?"
                   : 'Already have an account?'}
               </span>
               <Link
                 aria-label={activeTab === 'login' ? 'Sign up' : 'Log in'}
-                href='/auth?tab=signup'
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabSwitch(activeTab === 'login' ? 'signup' : 'login'); // Toggle tab
-                }}
+                href={activeTab === 'login' ? '/auth/register' : '/auth/login'}
                 className='text-primary underline-offset-4 transition-colors hover:underline'
               >
                 {activeTab === 'login' ? 'Sign up' : 'Login'}
@@ -412,7 +497,7 @@ export default function AuthPage() {
               href='/forgot-password'
               className='text-primary text-sm hover:underline'
             >
-              {activeTab === 'login' ? ' Forgot password?' : ''}
+              {activeTab === 'login' ? 'Forgot password?' : ''}
             </Link>
           </CardFooter>
         </Card>

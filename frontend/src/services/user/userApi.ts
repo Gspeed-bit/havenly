@@ -2,7 +2,7 @@ import { apiHandler } from '@/config/server';
 import { User } from '@/services/types/user.types';
 import { ApiResponse } from '@/config/server';
 
-export const fetchUserApi = async (): Promise<ApiResponse<User>> => {
+export const getLoggedInUser = async (): Promise<ApiResponse<User>> => {
   return apiHandler<User>('/user/me', 'GET');
 };
 
@@ -30,4 +30,14 @@ export const confirmAdminUpdate = async (
   updates: object
 ): Promise<ApiResponse<User>> => {
   return await apiHandler('/user/confirm-update', 'POST', { pin, updates });
+};
+
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<ApiResponse<User>> => {
+  return await apiHandler('/user/confirm-password', 'POST', {
+    currentPassword,
+    newPassword,
+  });
 };

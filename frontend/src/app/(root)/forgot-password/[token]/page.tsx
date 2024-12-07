@@ -1,11 +1,12 @@
+import NotAuthenticated from '@/components/authLayout/NotAuthenticated';
 import ResetPasswordPage from '@/components/pages/login/auth/ResetPasswordPage';
 import React from 'react';
 
 const page = () => {
   return (
-    <div>
+    <NotAuthenticated>
       <ResetPasswordPage />
-    </div>
+    </NotAuthenticated>
   );
 };
 

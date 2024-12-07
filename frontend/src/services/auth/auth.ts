@@ -15,7 +15,7 @@ import {
 import { SignUpRequest, SignUpResponse } from '../types/user.types';
 
 export const logOutUser = () => {
-  console.log('Logging out user and clearing token.'); // Debugging log
+  
   clearAuthToken();
   authStoreActions.clearAuth();
 };

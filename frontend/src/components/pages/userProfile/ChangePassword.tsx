@@ -23,7 +23,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { confirmAdminUpdate } from '@/services/user/userApi';
+import { changePassword } from '@/services/user/userApi';
+import { useRouter } from 'next/navigation';
+import { authStoreActions } from '@/store/auth';
 
 const passwordSchema = z
   .object({
@@ -57,6 +59,7 @@ export function ChangePassword() {
     type: null,
     message: '',
   });
+  const router = useRouter();
 
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -69,10 +72,10 @@ export function ChangePassword() {
 
   const onSubmit = async (data: PasswordFormValues) => {
     try {
-      const response = await confirmAdminUpdate('', {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-      });
+      const response = await changePassword(
+        data.currentPassword,
+        data.newPassword
+      );
 
       if (response.status === 'success') {
         setAlertState({
@@ -80,6 +83,11 @@ export function ChangePassword() {
           message: 'Your password has been changed successfully.',
         });
         form.reset();
+
+        authStoreActions.clearAuth();
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 500);
       } else {
         setAlertState({
           type: 'destructive',
@@ -88,6 +96,7 @@ export function ChangePassword() {
         });
       }
     } catch (error) {
+      console.log(error)
       setAlertState({
         type: 'destructive',
         message: 'An unexpected error occurred. Please try again.',

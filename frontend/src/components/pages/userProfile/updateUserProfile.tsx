@@ -54,13 +54,6 @@ const UserProfileUpdate = () => {
         });
         setIsAdmin(user.isAdmin || false);
       }
-
-      // Check if user is an admin
-      if (isAdmin) {
-        router.push('/dashboard/update-profile'); // Redirect to the admin dashboard
-      } else {
-        router.push('/user-profile'); // Redirect to the user profile
-      }
     }
   }, [user, userLoading, isAdmin, router]);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

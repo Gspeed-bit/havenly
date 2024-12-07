@@ -4,14 +4,14 @@ import Image from 'next/image';
 import Header from '../../components/pages/Header';
 import Navigation from '../../components/pages/Navigation';
 import MainContent from '../../components/pages/MainContent';
-import AuthRedirectLayout from '@/components/pages/AuthLayout';
+
 
 
 export default function Page() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <AuthRedirectLayout>
+    <>
       <div className='min-h-screen'>
         {/* Background */}
         <div className='absolute inset-0 overflow-hidden pointer-events-none'>
@@ -32,6 +32,6 @@ export default function Page() {
         <MainContent />
        
       </div>
-    </AuthRedirectLayout>
+    </>
   );
 }

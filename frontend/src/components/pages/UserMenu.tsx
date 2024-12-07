@@ -11,10 +11,11 @@ import {
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/icons/Icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUser } from '../hooks/api/useUser';
 
 const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const { user } = useUser(); // Fetch the user data
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.isAdmin); // Check if the user is an admin
 
@@ -31,15 +32,13 @@ const UserMenu: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <div className='flex items-center space-x-2 cursor-pointer'>
               <Avatar className='h-8 w-8'>
-                <AvatarImage src={user?.imgUrl} />
+                <AvatarImage src={user.imgUrl} />
                 <AvatarFallback>
                   {user?.firstName?.[0]}
                   {user?.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
-              <span className='hidden md:inline-block font-medium'>
-                {user?.firstName}
-              </span>
+
               <Icon
                 type='ChevronDown'
                 color='#000'
@@ -77,7 +76,7 @@ const UserMenu: React.FC = () => {
             )}
             <DropdownMenuItem asChild>
               <Link
-                href='/profile'
+                href='/user-profile'
                 className='flex items-center py-2 px-4 text-sm hover:text-violet'
               >
                 <Icon

@@ -211,6 +211,8 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
+
+
 export const changePassword = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id; // Assume `req.user` contains the authenticated user's info

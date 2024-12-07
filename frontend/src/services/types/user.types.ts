@@ -25,6 +25,7 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
+  status: 'success' | 'error';
   token: string;
   user: {
     _id: string;
