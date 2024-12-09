@@ -35,17 +35,20 @@ export default function AuthPage() {
   const [adminCode, setAdminCode] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
-  const [alertState, setAlertState] = useState<{
-    type: 'success' | 'error' | null;
-    message: string;
-  }>({ type: null, message: '' });
+  const [alertState, setAlertState] = useState({
+    type: null as 'success' | 'error' | null,
+    message: '',
+  });
+
   const router = useRouter();
   const pathname = usePathname();
+
   const {
     loading: loginLoading,
     startLoading: startLoginLoading,
     stopLoading: stopLoginLoading,
   } = useLoading();
+
   const {
     loading: signUpLoading,
     startLoading: startSignUpLoading,
@@ -53,35 +56,27 @@ export default function AuthPage() {
   } = useLoading();
 
   useEffect(() => {
+    // Set active tab based on pathname
     if (pathname === '/auth/register') {
       setActiveTab('signup');
     } else if (pathname === '/auth/login') {
       setActiveTab('login');
     }
 
+    // Remember email functionality
     const rememberMeValue = localStorage.getItem('rememberMe');
-    if (rememberMeValue === 'true') {
-      const storedEmail = localStorage.getItem('email');
-      if (storedEmail) {
-        setEmail(storedEmail);
-        setRememberMe(true);
-      }
+    const storedEmail = localStorage.getItem('email');
+    if (rememberMeValue === 'true' && storedEmail) {
+      setEmail(storedEmail);
+      setRememberMe(true);
     }
   }, [pathname]);
 
-  const validateEmail = (email: string) => {
-    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return re.test(email);
-  };
-
-  const validatePassword = (password: string) => {
-    return password.length >= 8;
-  };
-
-  const validatePhoneNumber = (phoneNumber: string) => {
-    const re = /^\+?[1-9]\d{1,14}$/;
-    return re.test(phoneNumber);
-  };
+  const validateEmail = (email: string) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  const validatePassword = (password: string) => password.length >= 8;
+  const validatePhoneNumber = (phoneNumber: string) =>
+    /^\+?[1-9]\d{1,14}$/.test(phoneNumber);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,17 +95,14 @@ export default function AuthPage() {
       return;
     }
 
-    const loginData = { email, password };
-
     startLoginLoading();
     try {
-      const result = await login(loginData);
+      const result = await login({ email, password });
       if (result.status === 'success') {
         setAlertState({
           type: 'success',
           message: 'Login successful! Redirecting...',
         });
-
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('email', email);
@@ -118,24 +110,17 @@ export default function AuthPage() {
           localStorage.removeItem('rememberMe');
           localStorage.removeItem('email');
         }
-
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
+        setTimeout(() => router.push('/'), 2000);
       } else if (result.message === 'Account not verified') {
         setAlertState({
           type: 'error',
-          message:
-            'Your account is not verified. Redirecting to verification...',
+          message: 'Account not verified. Redirecting...',
         });
-
-        setTimeout(() => {
-          router.push('/auth/verification-code');
-        }, 2000);
+        setTimeout(() => router.push('/auth/verification-code'), 2000);
       } else {
         setAlertState({
           type: 'error',
-          message: result.message || 'Login failed! Please try again.',
+          message: result.message || 'Login failed!',
         });
       }
     } catch {
@@ -165,10 +150,7 @@ export default function AuthPage() {
       return;
     }
     if (password !== confirmPassword) {
-      setAlertState({
-        type: 'error',
-        message: "Passwords don't match",
-      });
+      setAlertState({ type: 'error', message: "Passwords don't match" });
       return;
     }
     if (!validatePhoneNumber(phoneNumber)) {
@@ -179,35 +161,30 @@ export default function AuthPage() {
       return;
     }
 
-    const user = {
-      firstName,
-      lastName,
-      phoneNumber,
-      email,
-      password,
-      confirmPassword,
-      adminCode,
-    };
-
     startSignUpLoading();
     try {
-      const result = await signUp(user);
+      const result = await signUp({
+        firstName,
+        lastName,
+        phoneNumber,
+        email,
+        password,
+        adminCode,
+        confirmPassword: ''
+      });
       if (result.status === 'success') {
         setAlertState({
           type: 'success',
           message: 'Sign Up successful! Redirecting...',
         });
-        setTimeout(() => {
-          router.push('/verify');
-        }, 2000);
+        setTimeout(() => router.push('/verify'), 2000);
       } else {
         setAlertState({
           type: 'error',
-          message: result.message || 'Sign Up failed! Please try again.',
+          message: result.message || 'Sign Up failed!',
         });
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       setAlertState({
         type: 'error',
         message: 'An unexpected error occurred.',
@@ -227,35 +204,28 @@ export default function AuthPage() {
           objectFit='cover'
         />
       </div>
-
       <div className='w-full lg:w-1/2 flex items-center justify-center p-8'>
         <Card className='border-none shadow-lg w-full max-w-md'>
           <CardHeader className='flex justify-center items-center'>
-            <div className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'>
-             <Link href={Page.getHome()}>
-                <picture>
-                  <img src='/home.png' alt='Rezilla Logo' className='w-5 h-5' />
-                </picture>
-             </Link>
-            </div>
-
+            <Link
+              href={Page.getHome()}
+              className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'
+            >
+              <img src='/home.png' alt='Home' className='w-5 h-5' />
+            </Link>
             <CardTitle className='text-2xl font-bold text-center'>
               Welcome to Havenly
             </CardTitle>
             <CardDescription className='text-center'>
-              Enter your email below to create your account or log in
+              Enter your email to create an account or log in.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs
               value={activeTab}
-              onValueChange={(value) => {
-                setActiveTab(value as 'login' | 'signup');
-                router.push(
-                  value === 'login' ? '/auth/login' : '/auth/register'
-                );
-              }}
-              className='w-full'
+              onValueChange={(value) =>
+                setActiveTab(value as 'login' | 'signup')
+              }
             >
               <TabsList className='grid w-full grid-cols-2 mb-4'>
                 <TabsTrigger value='login'>Login</TabsTrigger>
@@ -266,7 +236,7 @@ export default function AuthPage() {
                   variant={
                     alertState.type === 'success' ? 'default' : 'destructive'
                   }
-                  className='mb-4 sticky top-0 z-50 transition-opacity duration-500 ease-in-out'
+                  className='mb-4'
                 >
                   <AlertTitle>
                     {alertState.type === 'success' ? 'Success' : 'Error'}

@@ -9,6 +9,7 @@
     "lint": "eslint '**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.2",
@@ -33,6 +34,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.2",
+    "react-hot-toast": "^2.4.1",
     "react-loader-spinner": "^6.1.6",
     "socket.io-client": "^4.8.1",
     "sonner": "^1.4.41",

@@ -223,15 +223,15 @@ const UserProfileUpdate = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8'>
+    <div className='w-full'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className='max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden'>
-          <CardHeader className='bg-gradient-to-r from-primary_main to-violet text-white p-8'>
-            <CardTitle className='text-3xl font-extrabold'>
+        <Card className='w-full bg-white shadow-xl rounded-2xl overflow-hidden'>
+          <CardHeader className='bg-gradient-to-r from-primary_main to-violet text-white p-6'>
+            <CardTitle className='text-2xl font-extrabold'>
               Update Your Profile
             </CardTitle>
             <CardDescription className='mt-2 text-blue-100'>
@@ -240,21 +240,21 @@ const UserProfileUpdate = () => {
                 : 'Manage your account details and keep your information up to date.'}
             </CardDescription>
           </CardHeader>
-          <CardContent className='p-8'>
-            <form onSubmit={handleSubmit} className='space-y-8'>
+          <CardContent className='p-6'>
+            <form onSubmit={handleSubmit} className='space-y-6'>
               <div className='flex flex-col items-center space-y-6'>
                 <motion.div
                   className='relative group'
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 10 }}
                 >
-                  <Avatar className='w-40 h-40 border-4 border-primary_main shadow-lg group-hover:border-violet transition-all duration-300'>
+                  <Avatar className='w-32 h-32 lg:w-40 lg:h-40 border-4 border-primary_main shadow-lg group-hover:border-violet transition-all duration-300'>
                     <AvatarImage
                       src={previewImgUrl || userData.imgUrl}
                       alt='Profile'
                       className='object-cover'
                     />
-                    <AvatarFallback className='text-5xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white'>
+                    <AvatarFallback className='text-4xl lg:text-5xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white'>
                       {userData.firstName[0]}
                     </AvatarFallback>
                   </Avatar>
@@ -262,7 +262,7 @@ const UserProfileUpdate = () => {
                     htmlFor='image'
                     className='absolute bottom-0 right-0 bg-primary_main text-white p-2 rounded-full cursor-pointer hover:bg-violet transition-colors duration-300'
                   >
-                    <Camera className='w-6 h-6' />
+                    <Camera className='w-5 h-5 lg:w-6 lg:h-6' />
                     <Input
                       type='file'
                       id='image'
@@ -273,7 +273,7 @@ const UserProfileUpdate = () => {
                   </Label>
                 </motion.div>
               </div>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div className='space-y-2'>
                   <Label
                     htmlFor='firstName'
@@ -414,9 +414,9 @@ const UserProfileUpdate = () => {
                 <Button
                   type='submit'
                   disabled={loading}
-                  className='w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md bg-primary_main hover:bg-violet transition-all duration-300 transform hover:scale-105'
+                  className='w-full sm:w-auto bg-gradient-to-r  from-primary_main to-purple text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105'
                 >
-                  {loading ? 'Updating...' : '  Update Profile'}
+                  {loading ? 'Updating...' : 'Update Profile'}
                 </Button>
               </div>
             </form>
@@ -428,3 +428,4 @@ const UserProfileUpdate = () => {
 };
 
 export default UserProfileUpdate;
+

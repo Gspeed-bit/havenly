@@ -4,9 +4,11 @@ import React from 'react';
 
 const page = () => {
   return (
-    <div>
-      <UserProfileUpdate />
-      <ChangePassword />
+    <div className='container mx-auto px-4 py-8'>
+      <div className='w-full lg:w-3/4 space-y-8'>
+        <UserProfileUpdate />
+        <ChangePassword />
+      </div>
     </div>
   );
 };

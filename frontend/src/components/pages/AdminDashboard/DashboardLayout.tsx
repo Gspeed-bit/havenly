@@ -34,7 +34,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuthStore } from '@store/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +45,7 @@ import {
 import { motion } from 'framer-motion';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { logOutUser } from '@/services/auth/auth';
+import { useUser } from '@/components/hooks/api/useUser';
 
 export default function DashboardLayout({
   children,
@@ -54,11 +54,10 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const { user } = useUser();
   const [pageTitle, setPageTitle] = useState('Dashboard');
 
   useEffect(() => {
-    // Update page title based on current path
     const title = pathname.split('/').pop();
     if (pathname.includes('/update-profile')) {
       setPageTitle('Profile');
@@ -71,22 +70,20 @@ export default function DashboardLayout({
 
   const menuItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    {
-      href: '/dashboard/update-profile',
-      icon: UserCog,
-      label: 'Profile',
-    },
+    { href: '/dashboard/update-profile', icon: UserCog, label: 'Profile' },
     { href: '/dashboard/users', icon: Users, label: 'Users' },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
   ];
 
   const sidebarContent = (
     <>
-      <SidebarHeader className='p-4'>
+      <SidebarHeader className='p-6'>
         <Sheet>
-          <SheetHeader className='flex items-center space-x-2'>
-            <SheetTitle className='text-sm md:text-lg font-bold'>{`${user?.lastName}'s Dashboard`}</SheetTitle>
-            <SheetDescription className='text-center'>
+          <SheetHeader className='flex flex-col items-start space-y-2'>
+            <SheetTitle className='text-2xl font-bold text-primary'>
+              {`${user?.lastName}'s Dashboard`}
+            </SheetTitle>
+            <SheetDescription className='text-sm text-muted-foreground'>
               Navigate through the admin dashboard
             </SheetDescription>
           </SheetHeader>
@@ -99,29 +96,29 @@ export default function DashboardLayout({
               <SidebarMenuButton asChild isActive={pathname === item.href}>
                 <Link
                   href={item.href}
-                  className='flex items-center p-2 rounded-lg transition-colors hover:bg-gray-100'
+                  className='flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground'
                   onClick={() => setOpen(false)}
                 >
                   <item.icon className='mr-3 h-5 w-5' />
-                  <span>{item.label}</span>
+                  <span className='font-medium'>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className='pt-10 px-1'>
-        <div className='flex items-center space-x-3'>
-          <Avatar>
+      <SidebarFooter className='p-6'>
+        <div className='flex items-center space-x-4 bg-muted p-4 rounded-lg'>
+          <Avatar className='h-10 w-10 border-2 border-primary'>
             <AvatarImage src={user?.imgUrl} />
-            <AvatarFallback>
+            <AvatarFallback className='bg-primary text-primary-foreground'>
               {user?.firstName?.[0]}
               {user?.lastName?.[0]}
             </AvatarFallback>
           </Avatar>
           <div>
             <p className='text-sm font-medium'>{user?.firstName}</p>
-            <p className='text-xs text-gray-500'>{user?.email}</p>
+            <p className='text-xs text-muted-foreground'>{user?.email}</p>
           </div>
         </div>
       </SidebarFooter>
@@ -130,16 +127,16 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className='container mx-auto flex h-screen overflow-hidden bg-gray-50'>
-        <Sidebar className='hidden lg:flex bg-white border-r'>
+      <div className='flex h-screen overflow-hidden bg-background'>
+        <Sidebar className='hidden lg:flex border-r border-border'>
           {sidebarContent}
         </Sidebar>
 
         <div className='flex-1 flex flex-col overflow-hidden'>
-          <header className='sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6 shadow-sm'>
+          <header className='sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-border bg-background px-6'>
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTitle className='hidden'>
-                <VisuallyHidden.Root>x</VisuallyHidden.Root>
+                <VisuallyHidden.Root>Menu</VisuallyHidden.Root>
               </SheetTitle>
               <SheetTrigger asChild>
                 <Button variant='ghost' size='icon' className='lg:hidden'>
@@ -149,65 +146,74 @@ export default function DashboardLayout({
               </SheetTrigger>
               <SheetContent
                 side='left'
-                className='w-[250px] sm:w-[300px] bg-white'
+                className='w-[280px] sm:w-[350px] bg-background'
               >
                 {sidebarContent}
               </SheetContent>
             </Sheet>
             <SidebarTrigger className='hidden lg:flex' />
-            <h1 className='font-semibold text-xl'>{pageTitle}</h1>
+            <h1 className='font-semibold text-xl text-foreground'>
+              {pageTitle}
+            </h1>
 
             <div className='ml-auto flex items-center space-x-4'>
               <div className='relative hidden md:block'>
-                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-500' />
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                 <Input
                   type='search'
                   placeholder='Search...'
-                  className='pl-8 w-[200px] lg:w-[300px]'
+                  className='pl-10 w-[200px] lg:w-[300px] bg-muted'
                 />
               </div>
-              <Button variant='ghost' size='icon'>
+              <Button variant='ghost' size='icon' className='relative'>
                 <Bell className='h-5 w-5' />
+                <span className='absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full'></span>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant='ghost'
-                    className='flex items-center space-x-2'
+                    className='flex items-center space-x-2 hover:bg-accent hover:text-accent-foreground'
                   >
-                    <Avatar className='h-8 w-8'>
+                    <Avatar className='h-8 w-8 border border-border'>
                       <AvatarImage src={user?.imgUrl} />
-                      <AvatarFallback>
+                      <AvatarFallback className='bg-primary text-primary-foreground'>
                         {user?.firstName?.[0]}
                         {user?.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span className='hidden md:inline-block'>
+                    <span className='hidden md:inline-block font-medium'>
                       {user?.firstName}
                     </span>
                     <ChevronDown className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
+                <DropdownMenuContent align='end' className='w-56'>
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <Link href='/'>Home</Link>
+                    <Link href='/' className='flex w-full'>
+                      Home
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logOutUser}>
+                  <DropdownMenuItem
+                    onClick={logOutUser}
+                    className='text-destructive'
+                  >
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </header>
-          <main className='flex-1 overflow-auto p-6'>
+          <main className='flex-1 overflow-auto p-6 bg-accent/5'>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className='max-w-7xl mx-auto'
             >
               {children}
             </motion.div>
