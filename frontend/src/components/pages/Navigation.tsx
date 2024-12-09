@@ -36,9 +36,10 @@ const Navigation: React.FC<NavigationProps> = ({
   ];
 
   const adminNavItems = [
-    { label: 'Admin Dashboard', path: '/admin/dashboard' },
-    { label: 'Manage Users', path: '/admin/users' },
-    { label: 'Analytics', path: '/admin/analytics' },
+    { label: 'Dashboard', path: '/dashboard/admins' },
+    { label: 'Manage Admins', path: '/dashboard/admins' },
+    { label: 'Manage Users', path: '/dashboard/users' },
+    { label: 'Profile', path: '/dashboard/update-profile' },
   ];
 
   const navItems = isAdmin ? adminNavItems : userNavItems;

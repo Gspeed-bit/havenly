@@ -20,7 +20,6 @@ import {
 import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
 import upload from '@middleware/fileUpload/multer';
 
-
 const router = express.Router();
 
 /**
@@ -172,8 +171,6 @@ router.get(
   })
 );
 
-
-
 /**
  * @swagger
  * /user/update:
@@ -286,7 +283,6 @@ router.put(
   upload.single('image'),
   updateUserProfile
 );
-
 
 /**
  * @swagger
@@ -438,6 +434,6 @@ router.post('/confirm-update', adminMiddleware, confirmAdminUpdate);
  *                   type: string
  *                   example: An error occurred
  */
-router.post('/confirm-password', userMiddleware, adminMiddleware, changePassword);
+router.post('/confirm-password', changePassword);
 
 export default router;
