@@ -434,6 +434,6 @@ router.post('/confirm-update', adminMiddleware, confirmAdminUpdate);
  *                   type: string
  *                   example: An error occurred
  */
-router.post('/confirm-password', changePassword);
+router.post('/confirm-password',userMiddleware, changePassword);
 
 export default router;
