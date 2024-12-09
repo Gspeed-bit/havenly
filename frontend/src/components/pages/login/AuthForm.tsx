@@ -170,7 +170,7 @@ export default function AuthPage() {
         email,
         password,
         adminCode,
-        confirmPassword: ''
+        confirmPassword: '',
       });
       if (result.status === 'success') {
         setAlertState({

@@ -1,10 +1,10 @@
-import AdminsList from '@/components/pages/AdminDashboard/AdminsList';
+import CreateCompanyForm from '@/components/pages/Company/CreateCompanyForm';
 import React from 'react';
 
 const page = () => {
   return (
     <div>
-      <AdminsList />
+      <CreateCompanyForm />
     </div>
   );
 };

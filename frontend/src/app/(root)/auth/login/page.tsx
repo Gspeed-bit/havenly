@@ -22,7 +22,7 @@ export default function AuthPage() {
   }, [pathname]);
 
   return (
-   <NotAuthenticated>
+    <NotAuthenticated>
       <AuthLayout
         title='Welcome to Havenly'
         description='Enter your email below to create your account or log in'
@@ -47,6 +47,6 @@ export default function AuthPage() {
           </TabsContent>
         </Tabs>
       </AuthLayout>
-   </NotAuthenticated>
+    </NotAuthenticated>
   );
 }

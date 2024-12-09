@@ -196,7 +196,9 @@ export default function Login() {
       </CardContent>
       <CardFooter className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-sm text-muted-foreground'>
-          <span className='mr-1 sm:inline-block'>Don't have an account?</span>
+          <span className='mr-1 sm:inline-block'>
+            Don&rsquo;t have an account?
+          </span>
           <Link
             aria-label='Sign up'
             href='/auth/register'
