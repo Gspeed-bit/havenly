@@ -60,7 +60,7 @@ const CreateCompanyForm = () => {
       formData.append('entityId', companyId);
 
       const uploadResponse = await apiHandler<{ url: string }>(
-        '/upload',
+        '/image/upload',
         'POST',
         formData
       );
