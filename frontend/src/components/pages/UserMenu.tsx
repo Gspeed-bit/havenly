@@ -15,7 +15,7 @@ import { useUser } from '../hooks/api/useUser';
 
 const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
-  const { user } = useUser(); // Fetch the user data
+  const { user, loading } = useUser(); // Fetch the user data
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.isAdmin); // Check if the user is an admin
 
@@ -24,6 +24,15 @@ const UserMenu: React.FC = () => {
   }, []);
 
   if (!hydrated) return null;
+
+  if (loading) {
+    return (
+      <div className='flex items-center space-x-2'>
+        <div className='w-8 h-8 bg-gray-300 rounded-full animate-pulse' />
+        <div className='w-20 h-4 bg-gray-300 rounded animate-pulse' />
+      </div>
+    );
+  }
 
   return (
     <div className='relative'>

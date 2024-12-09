@@ -18,20 +18,30 @@ const Navigation: React.FC<NavigationProps> = ({
   const [activeNav, setActiveNav] = useState('Home'); // Active navigation state
   const [hydrated, setHydrated] = useState(false); // Hydration state
 
-  const navItems = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about' },
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Profile', path: '/profile' },
-    { label: 'Listings', path: '/listings' },
-    { label: 'Services', path: '/services' },
-  ];
-
+  // Get authentication and admin status from store
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAdmin = useAuthStore((state) => state.isAdmin); // Assuming `isAdmin` is part of the auth state
 
   useEffect(() => {
     setHydrated(true); // Set hydration state to true after mounting
   }, []);
+  if (!hydrated) return null;
+  // Define navigation items for regular users and admins
+  const userNavItems = [
+    { label: 'Home', path: '/' },
+    { label: 'About', path: '/about' },
+    { label: 'Profile', path: '/user-profile' },
+    { label: 'Listings', path: '/listings' },
+    { label: 'Services', path: '/services' },
+  ];
+
+  const adminNavItems = [
+    { label: 'Admin Dashboard', path: '/admin/dashboard' },
+    { label: 'Manage Users', path: '/admin/users' },
+    { label: 'Analytics', path: '/admin/analytics' },
+  ];
+
+  const navItems = isAdmin ? adminNavItems : userNavItems;
 
   return (
     <nav className='bg-white'>
@@ -41,7 +51,7 @@ const Navigation: React.FC<NavigationProps> = ({
           <div className='flex items-center space-x-2'>
             <div className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'>
               <picture>
-                <img src='/home.png' alt='Rezilla Logo' className='w-5 h-5' />
+                <img src='/home.png' alt='Havenly Logo' className='w-5 h-5' />
               </picture>
             </div>
             <span className='text-xl font-semibold'>Havenly</span>

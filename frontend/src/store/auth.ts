@@ -33,7 +33,12 @@ export const useAuthStore = create<AuthStore>((set) => {
         localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
         localStorage.setItem('token', token); // Persist token to localStorage
       }
-      set({ isAuthenticated: true, isAdmin: user.isAdmin, user, token });
+      set({
+        isAuthenticated: true,
+        isAdmin: user?.isAdmin || false,
+        user,
+        token,
+      });
     },
     clearAuth: () => {
       if (isClient) {

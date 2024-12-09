@@ -1,13 +1,13 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuthToken, isBrowser } from '@/config/helpers';
+import { getAuthToken } from '@/config/helpers';
 import { useAuthStore } from '@/store/auth';
 import { getLoggedInUser } from '@/services/user/userApi';
 
 interface AuthenticatedProps {
   children: React.ReactNode;
-  accessLevel?: 'user' | 'admin' | 'non-admin'; // Added "non-admin" as an option
+  accessLevel?: 'user' | 'admin' | 'non-admin';
 }
 
 const Authenticated: React.FC<AuthenticatedProps> = ({
@@ -16,47 +16,43 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
 }) => {
   const router = useRouter();
   const { isAuthenticated, user, isAdmin } = useAuthStore();
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isBrowser()) {
-      const tokenFromStorage = getAuthToken();
-      setToken(tokenFromStorage);
-    }
-  }, []);
-
-  useEffect(() => {
-    // If no token, immediately redirect to login
-    if (!token) {
-      setLoading(false);
-      router.push('/auth/login'); // Redirect if not authenticated
-      return;
-    }
-
-    // Fetch user data if token exists
     const fetchUser = async () => {
-      if (!user && token) {
-        await getLoggedInUser(); // Fetch user data from API
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          // If no token, redirect to login
+          router.push('/auth/login');
+          return;
+        }
+
+        // If user data is not yet loaded, fetch it
+        if (!user) {
+          await getLoggedInUser();
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        router.push('/auth/login'); // Redirect to login on failure
+      } finally {
+        setLoading(false); // End loading state
       }
-      setLoading(false); // End loading state
     };
 
     fetchUser();
-  }, [user, token, router]);
+  }, [user, router]);
 
   useEffect(() => {
-    // Handle role-based redirection after user data is loaded
     if (!loading && isAuthenticated && user) {
-      if (accessLevel === 'non-admin' && isAdmin) {
-        router.push('/'); // Redirect admins if they try to access non-admin pages
-      } else if (accessLevel === 'admin' && !isAdmin) {
-        router.push('/'); // Redirect users from admin-only pages
+      if (accessLevel === 'admin' && !isAdmin) {
+        router.push('/'); // Redirect non-admins from admin-only pages
+      } else if (accessLevel === 'non-admin' && isAdmin) {
+        router.push('/'); // Redirect admins from non-admin pages
       }
     }
   }, [loading, isAuthenticated, user, isAdmin, accessLevel, router]);
 
-  // Show a loading state until checks are complete
   if (loading || isAuthenticated === null) {
     return (
       <div className='flex justify-center items-center h-screen'>
@@ -65,12 +61,11 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
     );
   }
 
-  // Render children if the user is authenticated
   if (isAuthenticated && user) {
-    return <div className='flex-1'>{children}</div>;
+    return <>{children}</>;
   }
 
-  return null; // Render nothing if not authenticated
+  return null;
 };
 
 export default Authenticated;

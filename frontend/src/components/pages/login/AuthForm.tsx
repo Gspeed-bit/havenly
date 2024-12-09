@@ -22,6 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ThreeDots } from 'react-loader-spinner';
 import useLoading from '../../hooks/useLoading';
+import Page from '@/components/common/links/page';
 
 export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -229,7 +230,15 @@ export default function AuthPage() {
 
       <div className='w-full lg:w-1/2 flex items-center justify-center p-8'>
         <Card className='border-none shadow-lg w-full max-w-md'>
-          <CardHeader className='space-y-1'>
+          <CardHeader className='flex justify-center items-center'>
+            <div className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'>
+             <Link href={Page.getHome()}>
+                <picture>
+                  <img src='/home.png' alt='Rezilla Logo' className='w-5 h-5' />
+                </picture>
+             </Link>
+            </div>
+
             <CardTitle className='text-2xl font-bold text-center'>
               Welcome to Havenly
             </CardTitle>
