@@ -8,6 +8,7 @@ import {
 } from 'utils/emailUtils';
 import { uploadImageToCloudinary } from 'utils/cloudinary';
 import bcrypt from 'bcrypt';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -117,18 +118,31 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 
   try {
-    // Handle image upload if a file is provided
-    if (req.file) {
-      const { secure_url } = await uploadImageToCloudinary(
-        req.file.buffer,
-        `user_images/${userId}`
-      );
-      updates.imgUrl = secure_url;
-    }
-
     // Update user profile in the database
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    // Handle image upload if a file is provided
+
+    // Check if there's a new profile image uploaded
+    if (req.file) {
+      // Upload new image to Cloudinary
+      const { secure_url, public_id } = await uploadImageToCloudinary(
+        req.file.buffer,
+        `user_image/${userId}`
+      );
+
+      // If the user already has a profile image, delete the previous one
+      if (user.imgPublicId) {
+        await cloudinary.uploader.destroy(user.imgPublicId);
+      }
+
+      // Update user image fields
+      user.imgUrl = secure_url;
+      user.imgPublicId = public_id;
+    }
+
+    // Save the updated user profile
+    await user.save();
 
     // Sanitize the user data before returning
     const sanitizedUser = sanitizeUser(
