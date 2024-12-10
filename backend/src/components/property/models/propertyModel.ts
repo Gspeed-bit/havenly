@@ -4,7 +4,7 @@ import { ICompany } from './companyModel';
 export interface IProperty extends Document {
   title: string;
   description: string;
-  images: string[];
+  images: { url: string; public_id: string }[];
   price: number;
   location: string;
   propertyType: string;
@@ -24,7 +24,12 @@ const propertySchema = new Schema<IProperty>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    images: { type: [String], required: true },
+    images: [
+      {
+        url: { type: String, required: true }, // Cloudinary URL
+        public_id: { type: String, required: true }, // Cloudinary public_id
+      },
+    ],
     price: { type: Number, required: true },
     location: { type: String, required: true },
     propertyType: { type: String, required: true },

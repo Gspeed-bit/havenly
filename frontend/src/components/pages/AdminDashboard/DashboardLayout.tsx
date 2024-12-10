@@ -11,6 +11,7 @@ import {
   Bell,
   Search,
   ChevronDown,
+  Building2,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -73,7 +74,13 @@ export default function DashboardLayout({
     { href: '/dashboard/update-profile', icon: UserCog, label: 'Profile' },
     { href: '/dashboard/users', icon: Users, label: 'Users' },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
+    { href: '/dashboard/companies', icon: Building2, label: 'Companies' },
   ];
+
+  // Loading State for User
+  if (!user) {
+    return <p className='p-6 text-center'>Loading...</p>;
+  }
 
   const sidebarContent = (
     <>
@@ -93,14 +100,18 @@ export default function DashboardLayout({
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton asChild isActive={pathname === item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                className='mx-4 '
+              >
                 <Link
                   href={item.href}
-                  className='flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground'
+                  className='flex items-center px-4 rounded-lg transition-all duration-200 hover:bg-primary_main hover:text-white'
                   onClick={() => setOpen(false)}
                 >
                   <item.icon className='mr-3 h-5 w-5' />
-                  <span className='font-medium'>{item.label}</span>
+                  <span className='font-medium '>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -108,7 +119,7 @@ export default function DashboardLayout({
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className='p-6'>
-        <div className='flex items-center space-x-4 bg-muted p-4 rounded-lg'>
+        <div className='flex items-center space-x-4 rounded-lg'>
           <Avatar className='h-10 w-10 border-2 border-primary'>
             <AvatarImage src={user?.imgUrl} />
             <AvatarFallback className='bg-primary text-primary-foreground'>
