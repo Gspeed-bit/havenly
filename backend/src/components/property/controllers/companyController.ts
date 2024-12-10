@@ -3,7 +3,6 @@ import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
 import { v2 as cloudinary } from 'cloudinary';
 
-
 export const createCompany = async (req: Request, res: Response) => {
   try {
     const { name, email, phoneNumber, address, logo, website, description } =
@@ -92,8 +91,7 @@ export const updateCompany = async (req: Request, res: Response) => {
 export const deleteCompany = async (req: Request, res: Response) => {
   try {
     const companyId = req.params.id;
-
-    // Find the company
+    // Find the company in the database
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
@@ -104,16 +102,18 @@ export const deleteCompany = async (req: Request, res: Response) => {
     if (propertyCount > 0) {
       return res.status(400).json({
         message: `Cannot delete company. It has ${propertyCount} associated properties.`,
-        details: `Please delete or reassign the properties before deleting the company.`,
+        details:
+          'Please delete or reassign the properties before deleting the company.',
       });
     }
 
-    // Delete the company's logo from Cloudinary
+    // Delete the company's logo from Cloudinary if it exists
     if (company.logoPublicId) {
+      console.log(`Deleting logo with public ID: ${company.logoPublicId}`);
       await cloudinary.uploader.destroy(company.logoPublicId);
     }
 
-    // Check and delete the folder if it's empty
+    // Check folder contents and delete folder if empty
     const folderName = `company/${companyId}`;
     const folderResources = await cloudinary.api.resources({
       type: 'upload',
@@ -121,18 +121,22 @@ export const deleteCompany = async (req: Request, res: Response) => {
     });
 
     if (folderResources.resources.length === 0) {
+      console.log(`Folder is empty, deleting folder: ${folderName}`);
       await cloudinary.api.delete_folder(folderName);
+    } else {
+      console.log(`Folder is not empty. Resources:`, folderResources.resources);
+      // You can add further checks or a delay if you suspect resources are being asynchronously deleted
     }
 
     // Delete the company from the database
     await company.deleteOne();
 
-    res
-      .status(200)
-      .json({ message: 'Company and its assets deleted successfully' });
+    return res.status(200).json({
+      message: 'Company and its assets deleted successfully',
+    });
   } catch (error) {
-    console.error('Error deleting company:', error);
-    res.status(500).json({
+    console.error('Error during company deletion:', error);
+    return res.status(500).json({
       message: 'Failed to delete company',
       error: (error as Error).message,
     });
