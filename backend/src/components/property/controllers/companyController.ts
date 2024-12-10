@@ -46,7 +46,9 @@ export const createCompany = async (req: Request, res: Response) => {
 export const getAllCompanies = async (req: Request, res: Response) => {
   try {
     const companies = await Company.find().exec();
-    res.status(200).json({ companies });
+
+    // Ensure companies is always an array
+    res.status(200).json({ companies: Array.isArray(companies) ? companies : [] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to fetch companies', error });

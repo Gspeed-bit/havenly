@@ -49,15 +49,18 @@ const CompaniesPage = () => {
         <p>No companies found.</p>
       )}
       <ul>
-        {companies.map((company) => (
-          <li key={company._id}>
-            <span>{company.name}</span>
-            <button onClick={() => company._id && handleDelete(company._id)}>
-              Delete
-            </button>
-            <a href={`/companies/${company._id}`}>View</a>
-          </li>
-        ))}
+        {companies.length > 0 ? (
+          companies.map((company) => (
+            <li key={company._id}>
+              <span>{company.name}</span>
+              <button onClick={() => company._id && handleDelete(company._id)}>
+                Delete
+              </button>
+            </li>
+          ))
+        ) : (
+          <li>No companies found.</li>
+        )}
       </ul>
     </div>
   );
