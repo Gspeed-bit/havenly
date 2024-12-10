@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
-import { StatusCodes } from 'utils/apiResponse';
+import { v2 as cloudinary } from 'cloudinary';
+
 
 export const createCompany = async (req: Request, res: Response) => {
   try {
@@ -46,9 +47,7 @@ export const createCompany = async (req: Request, res: Response) => {
 export const getAllCompanies = async (req: Request, res: Response) => {
   try {
     const companies = await Company.find().exec();
-
-    // Ensure companies is always an array
-    res.status(200).json({ companies: Array.isArray(companies) ? companies : [] });
+    res.status(200).json({ companies });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to fetch companies', error });
@@ -94,7 +93,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
   try {
     const companyId = req.params.id;
 
-    // Check if the company exists
+    // Find the company
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
@@ -109,15 +108,33 @@ export const deleteCompany = async (req: Request, res: Response) => {
       });
     }
 
-    // If no associated properties, delete the company
+    // Delete the company's logo from Cloudinary
+    if (company.logoPublicId) {
+      await cloudinary.uploader.destroy(company.logoPublicId);
+    }
+
+    // Check and delete the folder if it's empty
+    const folderName = `company/${companyId}`;
+    const folderResources = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: folderName,
+    });
+
+    if (folderResources.resources.length === 0) {
+      await cloudinary.api.delete_folder(folderName);
+    }
+
+    // Delete the company from the database
     await company.deleteOne();
+
     res
-      .status(StatusCodes.SUCCESS)
-      .json({ message: 'Company deleted successfully' });
+      .status(200)
+      .json({ message: 'Company and its assets deleted successfully' });
   } catch (error) {
-    console.error(error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Failed to delete company', error });
+    console.error('Error deleting company:', error);
+    res.status(500).json({
+      message: 'Failed to delete company',
+      error: (error as Error).message,
+    });
   }
 };

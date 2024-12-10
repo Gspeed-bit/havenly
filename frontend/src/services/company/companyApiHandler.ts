@@ -8,6 +8,11 @@ export interface CompanyData {
   address: string;
   website?: string;
   description?: string;
+  logo?: string;
+  logoPublicId?: string;
+}
+export interface CompaniesResponse {
+  companies: CompanyData[];
 }
 
 export const createCompany = async (
@@ -28,8 +33,10 @@ export const uploadCompanyLogo = async (
   return apiHandler('/image/upload', 'POST', formData);
 };
 
-export const fetchCompanies = async (): Promise<ApiResponse<CompanyData[]>> => {
-  return apiHandler<CompanyData[]>('/companies', 'GET');
+export const fetchCompanies = async (): Promise<
+  ApiResponse<CompaniesResponse>
+> => {
+  return await apiHandler<CompaniesResponse>('/companies', 'GET');
 };
 
 export const fetchCompanyById = async (

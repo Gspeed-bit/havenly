@@ -31,4 +31,5 @@ export const uploadImageToCloudinary = async (
       })
       .end(fileBuffer);
   });
+
 };

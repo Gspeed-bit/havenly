@@ -1,4 +1,3 @@
-// pages/companies/index.tsx
 'use client';
 import {
   deleteCompany,
@@ -16,8 +15,10 @@ const CompaniesPage = () => {
     setLoading(true);
     setError(null);
     const response = await fetchCompanies();
-    if (response.status === 'success') {
-      setCompanies(response.data);
+
+    if (response.status === 'success' && response.data) {
+      setCompanies(response.data.companies); // Make sure to access companies from response.data
+      console.log('Fetched companies:', response.data.companies);
     } else {
       setError(response.message);
     }
@@ -45,21 +46,30 @@ const CompaniesPage = () => {
       <h1>Companies</h1>
       {loading && <p>Loading...</p>}
       {error && <p className='text-red-500'>{error}</p>}
-      {!loading && !error && companies.length === 0 && (
-        <p>No companies found.</p>
-      )}
       <ul>
-        {companies.length > 0 ? (
+        {companies.length === 0 ? (
+          <li>No companies found.</li>
+        ) : (
           companies.map((company) => (
-            <li key={company._id}>
-              <span>{company.name}</span>
-              <button onClick={() => company._id && handleDelete(company._id)}>
+            <li key={company._id} className='flex items-center space-x-4'>
+              {company.logo && (
+                <picture>
+                  <img
+                    src={company.logo}
+                    alt={`${company.name} logo`}
+                    className='w-12 h-12 rounded-full object-cover'
+                  />
+                </picture>
+              )}
+              <span className='flex-1'>{company.name}</span>
+              <button
+                onClick={() => company._id && handleDelete(company._id)}
+                className='text-red-500'
+              >
                 Delete
               </button>
             </li>
           ))
-        ) : (
-          <li>No companies found.</li>
         )}
       </ul>
     </div>
