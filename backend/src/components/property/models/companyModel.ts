@@ -5,9 +5,8 @@ export interface ICompany extends Document {
   email: string;
   phoneNumber: string;
   address: string;
-  logo: { type: string; required: false };
-  logoPublicId: { type: string; required: false };
-
+  logo: string;
+  logoPublicId: string;
   website?: string; // Optional website URL
   description?: string; // Brief description about the company
   properties: mongoose.Schema.Types.ObjectId[]; // List of properties added by the company
@@ -26,7 +25,7 @@ const companySchema = new Schema<ICompany>(
     }, // Simple email validation
     phoneNumber: { type: String, required: true },
     address: { type: String, required: true },
-    logo: { type: String, required: false },
+    logo: { type: String, required: false }, // Logo as string
     logoPublicId: { type: String, required: false },
     website: { type: String },
     description: { type: String },

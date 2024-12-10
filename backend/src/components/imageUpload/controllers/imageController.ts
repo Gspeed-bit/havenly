@@ -5,6 +5,8 @@ import User from '@components/user/models/userModel';
 import Property from '@components/property/models/propertyModel';
 import Company from '@components/property/models/companyModel';
 
+
+
 export const imageUpload = async (req: Request, res: Response) => {
   const { type, entityId } = req.body;
 
@@ -46,12 +48,12 @@ export const imageUpload = async (req: Request, res: Response) => {
 
       // Delete the previous logo if it exists
       if (company.logoPublicId) {
-        await cloudinary.uploader.destroy(company.logoPublicId.type);
+        await cloudinary.uploader.destroy(company.logoPublicId);
       }
 
-      // Save the new logo
-      company.logo = { type: secure_url, required: false };
-      company.logoPublicId = { type: public_id, required: false };
+      // Save the new logo directly as a string (remove object wrapping)
+      company.logo = secure_url; // Store the URL as a string
+      company.logoPublicId = public_id; // Store the public_id as a string
       await company.save();
     } else {
       return res.status(400).json({ message: 'Invalid type specified.' });
@@ -71,8 +73,6 @@ export const imageUpload = async (req: Request, res: Response) => {
     });
   }
 };
-
-
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
 
