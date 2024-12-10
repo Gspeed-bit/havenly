@@ -114,7 +114,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
     }
 
     // Check folder contents and delete folder if empty
-    const folderName = `company/${companyId}`;
+    const folderName = `company_image/${companyId}`;
     const folderResources = await cloudinary.api.resources({
       type: 'upload',
       prefix: folderName,
