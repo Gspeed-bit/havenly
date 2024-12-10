@@ -41,12 +41,18 @@ const userSchema: Schema = new Schema(
     },
     imgUrl: {
       type: String,
+      default: null, // Optional, default to null
       validate: {
-        validator: function (value: string) {
+        validator: function (value: string | null) {
+          if (value === null) return true; // Allow null value
           return /^https?:\/\/[^\s]+$/.test(value); // Basic URL validation
         },
         message: 'Please provide a valid URL.',
       },
+    },
+    imgPublicId: {
+      type: String,
+      default: null, // Optional, default to null
     },
     password: { type: String, required: true },
     confirmPassword: { type: String },
