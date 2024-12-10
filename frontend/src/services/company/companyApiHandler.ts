@@ -1,7 +1,7 @@
 import { apiHandler, ApiResponse } from '@/config/server';
 
-interface CompanyData {
-  _id: string;
+export interface CompanyData {
+  _id?: string;
   name: string;
   email: string;
   phoneNumber: string;
@@ -9,7 +9,6 @@ interface CompanyData {
   website?: string;
   description?: string;
 }
-
 
 export const createCompany = async (
   companyData: CompanyData
