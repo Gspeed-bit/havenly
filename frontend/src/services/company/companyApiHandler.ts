@@ -8,7 +8,7 @@ export interface CompanyData {
   email: string;
   phoneNumber: string;
   address: string;
-  properties?: any[];
+  properties?: string[];
   website?: string;
   description?: string;
   logo?: string;

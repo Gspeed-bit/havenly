@@ -211,7 +211,10 @@ export default function AuthPage() {
               href={Page.getHome()}
               className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'
             >
-              <img src='/home.png' alt='Home' className='w-5 h-5' />
+              <picture>
+                {' '}
+                <img src='/home.png' alt='Home' className='w-5 h-5' />
+              </picture>
             </Link>
             <CardTitle className='text-2xl font-bold text-center'>
               Welcome to Havenly

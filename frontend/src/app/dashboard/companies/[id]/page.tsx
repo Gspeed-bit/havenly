@@ -1,13 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  CompaniesSingleResponse,
+
   CompanyData,
   fetchCompanyById,
   updateCompany,
 } from '@/services/company/companyApiHandler';
 import Alert from '@/components/ui/alerts/Alert';
+
 
 const CompanyDetailsPage = () => {
   const { id } = useParams();
@@ -22,7 +23,8 @@ const CompanyDetailsPage = () => {
     message: string;
   }>({ type: null, message: '' });
 
-  const loadCompany = async () => {
+  // Memoize loadCompany with useCallback
+  const loadCompany = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     setError(null);
@@ -35,9 +37,8 @@ const CompanyDetailsPage = () => {
       setError(response.message);
     }
     setLoading(false);
-  };
+  }, [id]);
 
-  // Define the handleSave function
   const handleSave = async () => {
     if (!id) return;
     setLoading(true);
@@ -64,17 +65,14 @@ const CompanyDetailsPage = () => {
     }
   };
 
+  // useEffect with loadCompany as a dependency
   useEffect(() => {
-    if (id) {
-      loadCompany();
-    }
-  }, [id]);
+    loadCompany();
+  }, [loadCompany]);
 
-  // Handle loading state for company data and form data
   if (loading) return <p>Loading company details...</p>;
   if (error) return <p className='text-red-500'>{error}</p>;
   if (!company) return <p>Company not found.</p>;
-
   return (
     <div>
       <Alert type={alertState.type} message={alertState.message} />
