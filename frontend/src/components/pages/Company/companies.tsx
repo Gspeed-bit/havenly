@@ -1,10 +1,11 @@
-'use client';
+'use client'; // app/companies/page.tsx or wherever your companies list is
+import { useEffect, useState } from 'react';
+import Link from 'next/link'; // Import Link for navigation
 import {
   deleteCompany,
   fetchCompanies,
   CompanyData,
 } from '@/services/company/companyApiHandler';
-import { useEffect, useState } from 'react';
 
 const CompaniesPage = () => {
   const [companies, setCompanies] = useState<CompanyData[]>([]);
@@ -17,7 +18,7 @@ const CompaniesPage = () => {
     const response = await fetchCompanies();
 
     if (response.status === 'success' && response.data) {
-      setCompanies(response.data.companies); // Make sure to access companies from response.data
+      setCompanies(response.data.companies);
       console.log('Fetched companies:', response.data.companies);
     } else {
       setError(response.message);
@@ -61,7 +62,12 @@ const CompaniesPage = () => {
                   />
                 </picture>
               )}
-              <span className='flex-1'>{company.name}</span>
+              <span className='flex-1'>
+                {/* Add Link to CompanyDetailsPage */}
+                <Link href={`/dashboard/companies/${company._id}`}>
+                  <p className='text-primary_main'>{company.name}</p>
+                </Link>
+              </span>
               <button
                 onClick={() => company._id && handleDelete(company._id)}
                 className='text-red-500'

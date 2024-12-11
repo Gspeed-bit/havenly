@@ -176,20 +176,22 @@
 // export default CreateCompanyForm;
 'use client';
 import Alert from '@/components/ui/alerts/Alert';
-import { createCompany, uploadCompanyLogo } from '@/services/company/companyApiHandler';
+import {
+  createCompany,
+  uploadCompanyLogo,
+} from '@/services/company/companyApiHandler';
 import { useState } from 'react';
 
-
 const CreateCompanyForm = () => {
-const [companyData, setCompanyData] = useState({
-  name: '',
-  email: '',
-  phoneNumber: '',
-  address: '',
-  logo: null as File | null,
-  website: '',
-  description: '',
-});
+  const [companyData, setCompanyData] = useState({
+    name: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    logo: null as File | null,
+    website: '',
+    description: '',
+  });
 
   const [alertState, setAlertState] = useState<{
     type: 'success' | 'error' | null;
@@ -210,55 +212,55 @@ const [companyData, setCompanyData] = useState({
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  try {
-    const response = await createCompany({
-      name: companyData.name,
-      email: companyData.email,
-      phoneNumber: companyData.phoneNumber,
-      address: companyData.address,
-      website: companyData.website,
-      description: companyData.description,
-    });
+    try {
+      const response = await createCompany({
+        name: companyData.name,
+        email: companyData.email,
+        phoneNumber: companyData.phoneNumber,
+        address: companyData.address,
+        website: companyData.website,
+        description: companyData.description,
+      });
 
-    if (response.status === 'success') {
-      const companyId = response.data.company._id as string; // _id will be returned by the server after creation
+      if (response.status === 'success') {
+        const companyId = response.data.company._id as string; // _id will be returned by the server after creation
 
-      if (companyData.logo) {
-        const uploadResponse = await uploadCompanyLogo(
-          companyData.logo,
-          companyId
-        );
+        if (companyData.logo) {
+          const uploadResponse = await uploadCompanyLogo(
+            companyData.logo,
+            companyId
+          );
 
-        if (uploadResponse.status === 'success') {
-          setAlertState({
-            type: 'success',
-            message: 'Company created and logo uploaded successfully.',
-          });
+          if (uploadResponse.status === 'success') {
+            setAlertState({
+              type: 'success',
+              message: 'Company created and logo uploaded successfully.',
+            });
+          } else {
+            setAlertState({
+              type: 'error',
+              message: uploadResponse.message,
+            });
+          }
         } else {
           setAlertState({
-            type: 'error',
-            message: uploadResponse.message,
+            type: 'success',
+            message: 'Company created successfully.',
           });
         }
       } else {
-        setAlertState({
-          type: 'success',
-          message: 'Company created successfully.',
-        });
+        setAlertState({ type: 'error', message: response.message });
       }
-    } else {
-      setAlertState({ type: 'error', message: response.message });
+    } catch (error) {
+      setAlertState({
+        type: 'error',
+        message: 'An error occurred while creating the company.',
+      });
     }
-  } catch {
-    setAlertState({
-      type: 'error',
-      message: 'An error occurred while creating the company.',
-    });
-  }
-};
+  };
 
   return (
     <div className='container mx-auto p-4'>

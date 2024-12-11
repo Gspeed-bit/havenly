@@ -1,11 +1,14 @@
 import { apiHandler, ApiResponse } from '@/config/server';
 
+// Assuming this is your current CompanyData type
+
 export interface CompanyData {
   _id?: string;
   name: string;
   email: string;
   phoneNumber: string;
   address: string;
+  properties?: any[];
   website?: string;
   description?: string;
   logo?: string;
@@ -13,6 +16,12 @@ export interface CompanyData {
 }
 export interface CompaniesResponse {
   companies: CompanyData[];
+}
+
+export interface CompaniesSingleResponse {
+  status: string;
+  message: string;
+  company: CompanyData; // This is the nested company object
 }
 
 export const createCompany = async (
@@ -41,8 +50,8 @@ export const fetchCompanies = async (): Promise<
 
 export const fetchCompanyById = async (
   id: string
-): Promise<ApiResponse<CompanyData>> => {
-  return apiHandler<CompanyData>(`/companies/${id}`, 'GET');
+): Promise<ApiResponse<CompaniesSingleResponse>> => {
+  return await apiHandler<CompaniesSingleResponse>(`/companies/${id}`, 'GET');
 };
 
 export const updateCompany = async (
