@@ -5,26 +5,6 @@ import User from '@components/user/models/userModel';
 import Property from '@components/property/models/propertyModel';
 import Company from '@components/property/models/companyModel';
 
-const deletePreviousImage = async (publicId: string) => {
-  if (publicId) {
-    await cloudinary.uploader.destroy(publicId);
-  }
-};
-
-const removeImageFolderIfEmpty = async (
-  folderPath: string,
-  entityId: string
-) => {
-  const images = await cloudinary.api.resources({
-    type: 'upload',
-    prefix: folderPath,
-  });
-
-  if (images.resources.length === 0) {
-    await cloudinary.api.delete_folder(folderPath);
-  }
-};
-
 export const imageUpload = async (req: Request, res: Response) => {
   const { type, entityId } = req.body;
 
@@ -42,12 +22,12 @@ export const imageUpload = async (req: Request, res: Response) => {
       const user = await User.findById(entityId);
       if (!user) return res.status(404).json({ message: 'User not found.' });
 
-      // Delete previous image if it exists
+      // Delete the previous image if it exists
       if (user.imgPublicId) {
-        await deletePreviousImage(user.imgPublicId);
+        await cloudinary.uploader.destroy(user.imgPublicId);
       }
 
-      // Save new image
+      // Save the new image
       user.imgUrl = secure_url;
       user.imgPublicId = public_id;
       await user.save();
@@ -56,26 +36,23 @@ export const imageUpload = async (req: Request, res: Response) => {
       if (!property)
         return res.status(404).json({ message: 'Property not found.' });
 
-      // Save new image
+      // Save the new image
       property.images.push({ url: secure_url, public_id });
       await property.save();
     } else if (type === 'company_image') {
       const company = await Company.findById(entityId);
       if (!company)
         return res.status(404).json({ message: 'Company not found.' });
+
+      // Delete the previous logo if it exists
       if (company.logoPublicId) {
-        await deletePreviousImage(company.logoPublicId);
+        await cloudinary.uploader.destroy(company.logoPublicId);
       }
-      // Delete previous logo if it exists
-      await deletePreviousImage(company.logoPublicId);
 
-      // Save new logo
-      company.logo = secure_url;
-      company.logoPublicId = public_id;
+      // Save the new logo directly as a string (remove object wrapping)
+      company.logo = secure_url; // Store the URL as a string
+      company.logoPublicId = public_id; // Store the public_id as a string
       await company.save();
-
-      // Clean up Cloudinary folder if no other company images exist
-      await removeImageFolderIfEmpty(`company_image/${entityId}`, entityId);
     } else {
       return res.status(400).json({ message: 'Invalid type specified.' });
     }
@@ -94,7 +71,6 @@ export const imageUpload = async (req: Request, res: Response) => {
     });
   }
 };
-
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
 
@@ -113,17 +89,11 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Image not found.' });
     }
 
-    // Delete image from Cloudinary
+    // Delete the image from Cloudinary
     await cloudinary.uploader.destroy(publicId);
 
-    // Remove image from property object
+    // Remove the image from the database
     property.images.splice(imageIndex, 1);
-
-    // If no images left for property, delete the folder
-    if (property.images.length === 0) {
-      await removeImageFolderIfEmpty(`property_images/${id}`, id);
-    }
-
     await property.save();
 
     return res.status(200).json({
