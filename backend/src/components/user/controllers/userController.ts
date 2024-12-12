@@ -126,10 +126,11 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Check if there's a new profile image uploaded
     if (req.file) {
       // Upload new image to Cloudinary
-      const { secure_url, public_id } = await uploadImageToCloudinary(
+      const uploadResult = await uploadImageToCloudinary(
         req.file.buffer,
         `user_image/${userId}`
       );
+      const { secure_url, public_id } = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
 
       // If the user already has a profile image, delete the previous one
       if (user.imgPublicId) {
