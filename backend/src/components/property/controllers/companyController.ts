@@ -139,12 +139,14 @@ export const deleteCompany = async (req: Request, res: Response) => {
       _id: companyId,
       adminId: req.user._id,
     }).exec();
+
     if (!company) {
       return res
         .status(404)
         .json({ message: 'Company not found or access denied' });
     }
 
+    // Check if the company has associated properties
     const propertyCount = await Property.countDocuments({ company: companyId });
     if (propertyCount > 0) {
       return res.status(400).json({
@@ -152,35 +154,53 @@ export const deleteCompany = async (req: Request, res: Response) => {
       });
     }
 
+    // If company has a logo, delete it and associated resources from Cloudinary
     if (company.logoPublicId) {
-      await cloudinary.uploader.destroy(company.logoPublicId);
-
-      const folderPath = `company_image/${companyId}`;
-
-      // Adding the type parameter to ensure Cloudinary correctly identifies resources
-      const resources = await cloudinary.api.resources({
-        prefix: folderPath,
-        type: 'upload', // This specifies the resource type to be uploaded images
-      });
-
-      if (resources.total_count > 0) {
-        await cloudinary.api.delete_resources_by_prefix(folderPath);
-      }
-
       try {
-        await cloudinary.api.delete_folder(folderPath);
+        // Delete the logo from Cloudinary
+        await cloudinary.uploader.destroy(company.logoPublicId);
+
+        const folderPath = `company_image/${companyId}`;
+
+        // Fetch resources from Cloudinary associated with the company folder
+        const resources = await cloudinary.api.resources({
+          prefix: folderPath,
+          type: 'upload', // Ensures that only uploaded image resources are considered
+        });
+
+        if (resources.total_count > 0) {
+          // Delete resources by prefix
+          await cloudinary.api.delete_resources_by_prefix(folderPath);
+        }
+
+        // Attempt to delete the folder itself
+        try {
+          await cloudinary.api.delete_folder(folderPath);
+        } catch (cloudinaryError) {
+          console.error(
+            `Failed to delete Cloudinary folder: ${folderPath}`,
+            cloudinaryError
+          );
+          return res.status(500).json({
+            message: 'Failed to delete Cloudinary folder',
+            error: cloudinaryError,
+          });
+        }
       } catch (cloudinaryError) {
+        console.error('Error deleting logo from Cloudinary', cloudinaryError);
         return res.status(500).json({
-          message: 'Failed to delete Cloudinary folder',
+          message: 'Failed to delete logo from Cloudinary',
           error: cloudinaryError,
         });
       }
     }
 
+    // Delete the company from the database
     await company.deleteOne();
     res.status(200).json({ message: 'Company deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.error('Error deleting company', error);
     res.status(500).json({ message: 'Failed to delete company', error });
   }
 };
+
