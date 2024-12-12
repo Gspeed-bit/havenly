@@ -33,15 +33,7 @@ export const imageUpload = async (req: Request, res: Response) => {
       user.imgPublicId = public_id;
       await user.save();
 
-    } else if (type === 'property_image') {
-      const property = await Property.findById(entityId);
-      if (!property)
-        return res.status(404).json({ message: 'Property not found.' });
-
-      // Save the new image
-      property.images.push({ url: secure_url, public_id });
-      await property.save();
-    } else if (type === 'company_image') {
+    }  if (type === 'company_image') {
       const company = await Company.findById(entityId);
       if (!company) {
         return res.status(404).json({ message: 'Company not found.' });
@@ -74,6 +66,57 @@ export const imageUpload = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+export const uploadMultiplePropertyImages = async (
+  req: Request,
+  res: Response
+) => {
+  const { entityId } = req.body; // Ensure entityId is passed for the property
+
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: 'No images uploaded' });
+  }
+
+  try {
+    const property = await Property.findById(entityId);
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found.' });
+    }
+
+    const uploadedImages = [];
+
+    for (const file of req.files as Express.Multer.File[]) {
+      const folderPath = `property_images/${entityId}`;
+      const { secure_url, public_id } = await uploadImageToCloudinary(
+        file.buffer,
+        folderPath
+      );
+
+      uploadedImages.push({ url: secure_url, public_id });
+    }
+
+    // Add images to the property
+    property.images.push(...uploadedImages);
+    await property.save();
+
+    return res.status(200).json({
+      status: 'success',
+      data: uploadedImages,
+      message: 'Images uploaded successfully.',
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Image upload failed.',
+      error: (error as Error).message,
+    });
+  }
+};
+
+
+
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
 

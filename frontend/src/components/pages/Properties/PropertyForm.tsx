@@ -58,23 +58,22 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     setFormData({ ...formData, [name]: value });
   };
 
-const handleImageUpload = async (files: File[]) => {
-  const uploadedImages = [];
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append('file', file);
+  const handleImageUpload = async (files: File[]) => {
+    const uploadedImages = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    // Assuming uploadImage accepts single file upload, we need to modify this to handle multiple images
-    const response = await uploadImage(formData);
-    if (response.status === 'success') {
-      uploadedImages.push(response.data);
-    } else {
-      setError(`Failed to upload image: ${response.message}`);
-      return; // Exit early if an upload fails
+      const response = await uploadImage(formData);
+      if (response.status === 'success') {
+        uploadedImages.push(response.data);
+      } else {
+        setError(`Failed to upload image: ${response.message}`);
+        return; // Exit early if an upload fails
+      }
     }
-  }
-  setImages([...images, ...uploadedImages]);
-};
+    setImages([...images, ...uploadedImages]);
+  };
 
   const handleImageDelete = async (publicId: string) => {
     const response = await deleteImage(initialData?._id || '', publicId);
@@ -221,7 +220,7 @@ const handleImageUpload = async (files: File[]) => {
       <button
         type='submit'
         disabled={loading}
-        className='bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50'
+        className='bg-primary_main text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50'
       >
         {loading
           ? 'Saving...'

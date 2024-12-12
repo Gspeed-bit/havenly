@@ -68,6 +68,7 @@ export const getCompanyById = async (req: Request, res: Response) => {
 };
 
 // Update a company
+
 export const updateCompany = async (req: Request, res: Response) => {
   try {
     const companyId = req.params.id;
@@ -81,9 +82,7 @@ export const updateCompany = async (req: Request, res: Response) => {
     ).exec();
 
     if (!company) {
-      return res
-        .status(404)
-        .json({ message: 'Company not found or access denied' });
+      return res.status(404).json({ message: 'Company not found or access denied' });
     }
 
     // Check if there's a new profile image uploaded
@@ -96,22 +95,12 @@ export const updateCompany = async (req: Request, res: Response) => {
 
       // If the company already has a logo, delete the previous one
       if (company.logoPublicId) {
-        await cloudinary.uploader.destroy(company.logoPublicId);
-
-        // Optionally delete the folder and associated resources
-        const folderPath = `company_image/${companyId}`;
-        const resources = await cloudinary.api.resources({
-          prefix: folderPath,
-        });
-        if (resources.total_count > 0) {
-          await cloudinary.api.delete_resources_by_prefix(folderPath);
-        }
-
-        // Attempt to delete the folder itself
         try {
-          await cloudinary.api.delete_folder(folderPath);
+          // Delete the old image from Cloudinary
+          await cloudinary.uploader.destroy(company.logoPublicId);
+          console.log(`Deleted old logo with public ID ${company.logoPublicId}`);
         } catch (cloudinaryError) {
-          console.error('Failed to delete Cloudinary folder:', cloudinaryError);
+          console.error('Error deleting old logo from Cloudinary', cloudinaryError);
         }
       }
 
@@ -122,13 +111,13 @@ export const updateCompany = async (req: Request, res: Response) => {
 
     // Save the updated company data
     await company.save();
-
     res.status(200).json({ message: 'Company updated successfully', company });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to update company', error });
   }
 };
+
 
 
 // Delete a company
