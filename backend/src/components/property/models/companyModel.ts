@@ -10,6 +10,7 @@ export interface ICompany extends Document {
   website?: string; // Optional website URL
   description?: string; // Brief description about the company
   properties: mongoose.Schema.Types.ObjectId[]; // List of properties added by the company
+  adminId: mongoose.Schema.Types.ObjectId[]; // List of properties added by the company
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,9 +24,13 @@ const companySchema = new Schema<ICompany>(
       unique: true,
       match: /\S+@\S+\.\S+/,
     }, // Simple email validation
-    phoneNumber: { type: String, required: true },
+    phoneNumber: {
+      type: String,
+      required: true,
+      match: /^[0-9]{10}$/, // 10-digit phone number
+    },
     address: { type: String, required: true },
-    logo: { type: String, required: false }, // Logo as string
+    logo: { type: String, required: false },
     logoPublicId: { type: String, required: false },
     website: { type: String },
     description: { type: String },
@@ -33,6 +38,13 @@ const companySchema = new Schema<ICompany>(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Property', // Links to the Property model
+      },
+    ],
+    adminId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Assuming you have a User model
+        required: true,
       },
     ],
   },

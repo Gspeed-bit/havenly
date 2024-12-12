@@ -356,4 +356,5 @@ router.get('/properties/:id', getPropertyById);
 router.put('/properties/:id', adminMiddleware, updateProperty);
 router.delete('/properties/:id', adminMiddleware, deleteProperty);
 
+
 export default router;
