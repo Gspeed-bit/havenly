@@ -49,10 +49,6 @@ const CompanyDetailsPage = () => {
 
     // If there's a new logo, upload it
     if (logoFile) {
-      const formData = new FormData();
-      formData.append('logo', logoFile);
-
-      // Upload logo
       const uploadResponse = await uploadCompanyLogo(logoFile, id as string);
       if (uploadResponse.status === 'success') {
         updatedData.logo = uploadResponse.data.url; // Update logo URL after upload
@@ -73,6 +69,8 @@ const CompanyDetailsPage = () => {
       });
       setCompany(response.data);
       setEditMode(false);
+      // Reset the alert after 5 seconds
+      setTimeout(() => setAlertState({ type: null, message: '' }), 5000);
     } else {
       setAlertState({
         type: 'error',

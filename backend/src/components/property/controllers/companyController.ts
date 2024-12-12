@@ -73,6 +73,7 @@ export const updateCompany = async (req: Request, res: Response) => {
     const companyId = req.params.id;
     const updateData = req.body;
 
+    // Find and update the company
     const company = await Company.findOneAndUpdate(
       { _id: companyId, adminId: req.user._id }, // Ensure the company belongs to the admin
       updateData,
@@ -84,6 +85,7 @@ export const updateCompany = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: 'Company not found or access denied' });
     }
+
     // Check if there's a new profile image uploaded
     if (req.file) {
       // Upload new image to Cloudinary
@@ -92,15 +94,34 @@ export const updateCompany = async (req: Request, res: Response) => {
         `company_image/${companyId}`
       );
 
-      // If the user already has a profile image, delete the previous one
+      // If the company already has a logo, delete the previous one
       if (company.logoPublicId) {
         await cloudinary.uploader.destroy(company.logoPublicId);
+
+        // Optionally delete the folder and associated resources
+        const folderPath = `company_image/${companyId}`;
+        const resources = await cloudinary.api.resources({
+          prefix: folderPath,
+        });
+        if (resources.total_count > 0) {
+          await cloudinary.api.delete_resources_by_prefix(folderPath);
+        }
+
+        // Attempt to delete the folder itself
+        try {
+          await cloudinary.api.delete_folder(folderPath);
+        } catch (cloudinaryError) {
+          console.error('Failed to delete Cloudinary folder:', cloudinaryError);
+        }
       }
 
-      // Update user image fields
+      // Update company with the new logo
       company.logo = secure_url;
       company.logoPublicId = public_id;
     }
+
+    // Save the updated company data
+    await company.save();
 
     res.status(200).json({ message: 'Company updated successfully', company });
   } catch (error) {
@@ -135,11 +156,17 @@ export const deleteCompany = async (req: Request, res: Response) => {
       await cloudinary.uploader.destroy(company.logoPublicId);
 
       const folderPath = `company_image/${companyId}`;
-      const resources = await cloudinary.api.resources({ prefix: folderPath });
+
+      // Adding the type parameter to ensure Cloudinary correctly identifies resources
+      const resources = await cloudinary.api.resources({
+        prefix: folderPath,
+        type: 'upload', // This specifies the resource type to be uploaded images
+      });
 
       if (resources.total_count > 0) {
         await cloudinary.api.delete_resources_by_prefix(folderPath);
       }
+
       try {
         await cloudinary.api.delete_folder(folderPath);
       } catch (cloudinaryError) {
