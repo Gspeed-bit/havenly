@@ -13,9 +13,10 @@ export const imageUpload = async (req: Request, res: Response) => {
   }
 
   try {
+      const folderPath = `${type}/${entityId}`;
     const { secure_url, public_id } = await uploadImageToCloudinary(
       req.file.buffer,
-      `${type}/${entityId}`
+      folderPath
     );
 
     if (type === 'user_image') {
@@ -31,6 +32,7 @@ export const imageUpload = async (req: Request, res: Response) => {
       user.imgUrl = secure_url;
       user.imgPublicId = public_id;
       await user.save();
+
     } else if (type === 'property_image') {
       const property = await Property.findById(entityId);
       if (!property)
@@ -41,17 +43,18 @@ export const imageUpload = async (req: Request, res: Response) => {
       await property.save();
     } else if (type === 'company_image') {
       const company = await Company.findById(entityId);
-      if (!company)
+      if (!company) {
         return res.status(404).json({ message: 'Company not found.' });
+      }
 
       // Delete the previous logo if it exists
       if (company.logoPublicId) {
         await cloudinary.uploader.destroy(company.logoPublicId);
       }
 
-      // Save the new logo directly as a string (remove object wrapping)
-      company.logo = secure_url; // Store the URL as a string
-      company.logoPublicId = public_id; // Store the public_id as a string
+      // Save the new logo
+      company.logo = secure_url;
+      company.logoPublicId = public_id;
       await company.save();
     } else {
       return res.status(400).json({ message: 'Invalid type specified.' });

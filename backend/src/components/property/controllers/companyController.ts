@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
 import { v2 as cloudinary } from 'cloudinary';
+import { uploadImageToCloudinary } from 'utils/cloudinary';
 
 export const createCompany = async (req: Request, res: Response) => {
   try {
@@ -83,6 +84,24 @@ export const updateCompany = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: 'Company not found or access denied' });
     }
+    // Check if there's a new profile image uploaded
+    if (req.file) {
+      // Upload new image to Cloudinary
+      const { secure_url, public_id } = await uploadImageToCloudinary(
+        req.file.buffer,
+        `company_image/${companyId}`
+      );
+
+      // If the user already has a profile image, delete the previous one
+      if (company.logoPublicId) {
+        await cloudinary.uploader.destroy(company.logoPublicId);
+      }
+
+      // Update user image fields
+      company.logo = secure_url;
+      company.logoPublicId = public_id;
+    }
+
     res.status(200).json({ message: 'Company updated successfully', company });
   } catch (error) {
     console.error(error);
@@ -114,6 +133,21 @@ export const deleteCompany = async (req: Request, res: Response) => {
 
     if (company.logoPublicId) {
       await cloudinary.uploader.destroy(company.logoPublicId);
+
+      const folderPath = `company_image/${companyId}`;
+      const resources = await cloudinary.api.resources({ prefix: folderPath });
+
+      if (resources.total_count > 0) {
+        await cloudinary.api.delete_resources_by_prefix(folderPath);
+      }
+      try {
+        await cloudinary.api.delete_folder(folderPath);
+      } catch (cloudinaryError) {
+        return res.status(500).json({
+          message: 'Failed to delete Cloudinary folder',
+          error: cloudinaryError,
+        });
+      }
     }
 
     await company.deleteOne();

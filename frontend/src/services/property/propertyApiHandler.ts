@@ -60,7 +60,7 @@ export const uploadImage = async (
   formData: FormData
 ): Promise<ApiResponse<{ url: string; public_id: string }>> => {
   return apiHandler<{ url: string; public_id: string }>(
-    'image/uploads',
+    'image/upload',
     'POST',
     formData
   );
