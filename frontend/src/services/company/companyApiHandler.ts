@@ -45,13 +45,17 @@ export const uploadCompanyLogo = async (
 export const fetchCompanies = async (): Promise<
   ApiResponse<CompaniesResponse>
 > => {
-  return await apiHandler<CompaniesResponse>('/companies', 'GET');
+  return await apiHandler<CompaniesResponse>('/companies', 'GET', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, // Pass the token
+  });
 };
 
 export const fetchCompanyById = async (
   id: string
 ): Promise<ApiResponse<CompaniesSingleResponse>> => {
-  return await apiHandler<CompaniesSingleResponse>(`/companies/${id}`, 'GET');
+  return await apiHandler<CompaniesSingleResponse>(`/companies/${id}`, 'GET', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, // Pass the token
+  });
 };
 
 export const updateCompany = async (

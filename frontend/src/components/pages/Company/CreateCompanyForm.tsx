@@ -1,4 +1,3 @@
-
 'use client';
 import Alert from '@/components/ui/alerts/Alert';
 import {
@@ -23,6 +22,8 @@ const CreateCompanyForm = () => {
     message: string;
   }>({ type: null, message: '' });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -39,6 +40,7 @@ const CreateCompanyForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const response = await createCompany({
@@ -51,7 +53,7 @@ const CreateCompanyForm = () => {
       });
 
       if (response.status === 'success') {
-        const companyId = response.data.company._id as string; // _id will be returned by the server after creation
+        const companyId = response.data.company._id as string;
 
         if (companyData.logo) {
           const uploadResponse = await uploadCompanyLogo(
@@ -65,10 +67,7 @@ const CreateCompanyForm = () => {
               message: 'Company created and logo uploaded successfully.',
             });
           } else {
-            setAlertState({
-              type: 'error',
-              message: uploadResponse.message,
-            });
+            throw new Error(uploadResponse.message);
           }
         } else {
           setAlertState({
@@ -77,14 +76,17 @@ const CreateCompanyForm = () => {
           });
         }
       } else {
-        setAlertState({ type: 'error', message: response.message });
+        throw new Error(response.message);
       }
-    } catch (error) {
-      console.log(error)
+    } catch (error: any) {
+      console.error(error);
       setAlertState({
         type: 'error',
-        message: 'An error occurred while creating the company.',
+        message:
+          error.message || 'An error occurred while creating the company.',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -92,60 +94,30 @@ const CreateCompanyForm = () => {
     <div className='container mx-auto p-4'>
       <Alert type={alertState.type} message={alertState.message} />
       <form onSubmit={handleSubmit} className='space-y-4'>
-        <div>
-          <label className='block'>Company Name</label>
-          <input
-            type='text'
-            name='name'
-            value={companyData.name}
-            onChange={handleChange}
-            required
-            className='w-full p-2 border border-gray-300 rounded'
-          />
-        </div>
-        <div>
-          <label className='block'>Email</label>
-          <input
-            type='email'
-            name='email'
-            value={companyData.email}
-            onChange={handleChange}
-            required
-            className='w-full p-2 border border-gray-300 rounded'
-          />
-        </div>
-        <div>
-          <label className='block'>Phone Number</label>
-          <input
-            type='text'
-            name='phoneNumber'
-            value={companyData.phoneNumber}
-            onChange={handleChange}
-            required
-            className='w-full p-2 border border-gray-300 rounded'
-          />
-        </div>
-        <div>
-          <label className='block'>Address</label>
-          <input
-            type='text'
-            name='address'
-            value={companyData.address}
-            onChange={handleChange}
-            required
-            className='w-full p-2 border border-gray-300 rounded'
-          />
-        </div>
-        <div>
-          <label className='block'>Website (optional)</label>
-          <input
-            type='text'
-            name='website'
-            value={companyData.website}
-            onChange={handleChange}
-            className='w-full p-2 border border-gray-300 rounded'
-          />
-        </div>
+        {[
+          { label: 'Company Name', name: 'name', type: 'text', required: true },
+          { label: 'Email', name: 'email', type: 'email', required: true },
+          {
+            label: 'Phone Number',
+            name: 'phoneNumber',
+            type: 'text',
+            required: true,
+          },
+          { label: 'Address', name: 'address', type: 'text', required: true },
+          { label: 'Website (optional)', name: 'website', type: 'text' },
+        ].map((field) => (
+          <div key={field.name}>
+            <label className='block'>{field.label}</label>
+            <input
+              type={field.type}
+              name={field.name}
+              value={(companyData as any)[field.name]}
+              onChange={handleChange}
+              required={field.required}
+              className='w-full p-2 border border-gray-300 rounded'
+            />
+          </div>
+        ))}
         <div>
           <label className='block'>Description (optional)</label>
           <textarea
@@ -167,9 +139,14 @@ const CreateCompanyForm = () => {
         <div>
           <button
             type='submit'
-            className='w-full bg-primary_main text-white p-2 rounded'
+            disabled={isSubmitting}
+            className={`w-full ${
+              isSubmitting
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-primary_main text-white'
+            } p-2 rounded`}
           >
-            Create Company
+            {isSubmitting ? 'Submitting...' : 'Create Company'}
           </button>
         </div>
       </form>
