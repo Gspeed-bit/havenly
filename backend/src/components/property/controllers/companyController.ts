@@ -131,6 +131,7 @@ export const updateCompany = async (req: Request, res: Response) => {
 };
 
 // Delete a company
+// Delete a company
 export const deleteCompany = async (req: Request, res: Response) => {
   try {
     const companyId = req.params.id;
@@ -141,9 +142,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
     }).exec();
 
     if (!company) {
-      return res
-        .status(404)
-        .json({ message: 'Company not found or access denied' });
+      return res.status(404).json({ message: 'Company not found or access denied' });
     }
 
     // Check if the company has associated properties
@@ -157,33 +156,42 @@ export const deleteCompany = async (req: Request, res: Response) => {
     // If company has a logo, delete it and associated resources from Cloudinary
     if (company.logoPublicId) {
       try {
-        // Delete the logo from Cloudinary
+        // Step 1: Delete the logo from Cloudinary
         await cloudinary.uploader.destroy(company.logoPublicId);
+        console.log(`Logo with public ID ${company.logoPublicId} deleted from Cloudinary`);
 
         const folderPath = `company_image/${companyId}`;
 
-        // Fetch resources from Cloudinary associated with the company folder
+        // Step 2: Fetch resources associated with the company folder from Cloudinary
         const resources = await cloudinary.api.resources({
           prefix: folderPath,
-          type: 'upload', // Ensures that only uploaded image resources are considered
+          type: 'upload', // Ensures only uploaded image resources are considered
         });
 
+        console.log(`Found ${resources.total_count} resources in folder ${folderPath}`);
+
         if (resources.total_count > 0) {
-          // Delete resources by prefix
+          // Step 3: Delete resources by prefix
           await cloudinary.api.delete_resources_by_prefix(folderPath);
+          console.log(`Resources in folder ${folderPath} deleted from Cloudinary`);
         }
 
-        // Attempt to delete the folder itself
-        try {
+        // Step 4: Double-check if any resources remain after deletion
+        const remainingResources = await cloudinary.api.resources({
+          prefix: folderPath,
+          type: 'upload',
+        });
+
+        console.log(`Remaining resources after deletion: ${remainingResources.total_count}`);
+
+        // Step 5: Attempt to delete the folder itself
+        if (remainingResources.total_count === 0) {
           await cloudinary.api.delete_folder(folderPath);
-        } catch (cloudinaryError) {
-          console.error(
-            `Failed to delete Cloudinary folder: ${folderPath}`,
-            cloudinaryError
-          );
-          return res.status(500).json({
-            message: 'Failed to delete Cloudinary folder',
-            error: cloudinaryError,
+          console.log(`Cloudinary folder ${folderPath} deleted successfully`);
+        } else {
+          console.error(`Folder ${folderPath} is not empty, cannot delete it yet.`);
+          return res.status(400).json({
+            message: `Folder ${folderPath} is not empty. Please check the remaining resources.`,
           });
         }
       } catch (cloudinaryError) {
@@ -195,12 +203,15 @@ export const deleteCompany = async (req: Request, res: Response) => {
       }
     }
 
-    // Delete the company from the database
+    // Step 6: Delete the company from the database
     await company.deleteOne();
+    console.log(`Company with ID ${companyId} deleted from the database`);
+
     res.status(200).json({ message: 'Company deleted successfully' });
   } catch (error) {
     console.error('Error deleting company', error);
     res.status(500).json({ message: 'Failed to delete company', error });
   }
 };
+
 
