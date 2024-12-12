@@ -24,8 +24,11 @@ const companySchema = new Schema<ICompany>(
       unique: true,
       match: /\S+@\S+\.\S+/,
     }, // Simple email validation
-    phoneNumber: { type: String, required: true },
-
+    phoneNumber: {
+      type: String,
+      required: true,
+      match: /^[+]?([0-9]{10})$/, // Ensure the phone number has an optional '+' followed by exactly 10 digits
+    },
     address: { type: String, required: true },
     logo: { type: String, required: false },
     logoPublicId: { type: String, required: false },

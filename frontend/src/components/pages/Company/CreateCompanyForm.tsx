@@ -24,6 +24,7 @@ const CreateCompanyForm = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Handle form input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -31,6 +32,7 @@ const CreateCompanyForm = () => {
     setCompanyData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle logo image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -38,9 +40,28 @@ const CreateCompanyForm = () => {
     }
   };
 
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string) => {
+    // Regex to allow 10 digits or a '+' followed by 10 digits
+    const phoneRegex = /^[+]?[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Validate phone number
+    if (!validatePhoneNumber(companyData.phoneNumber)) {
+      setAlertState({
+        type: 'error',
+        message:
+          'Invalid phone number format. It should be 10 digits or start with a + followed by 10 digits.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await createCompany({
@@ -55,6 +76,7 @@ const CreateCompanyForm = () => {
       if (response.status === 'success') {
         const companyId = response.data.company._id as string;
 
+        // Upload logo if provided
         if (companyData.logo) {
           const uploadResponse = await uploadCompanyLogo(
             companyData.logo,
