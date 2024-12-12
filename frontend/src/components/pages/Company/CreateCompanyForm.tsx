@@ -39,10 +39,11 @@ const CreateCompanyForm = () => {
     }
   };
 
-  const validatePhoneNumber = (phone: string) => {
-    const phoneRegex = /^[+]?[0-9]{10}$/;
-    return phoneRegex.test(phone);
-  };
+ const validatePhoneNumber = (phone: string) => {
+   const phoneRegex = /^[+]?[0-9]{10,15}$/; // Optional '+' followed by 10–15 digits
+   return phoneRegex.test(phone);
+ };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

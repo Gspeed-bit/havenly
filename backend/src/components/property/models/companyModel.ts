@@ -27,8 +27,10 @@ const companySchema = new Schema<ICompany>(
     phoneNumber: {
       type: String,
       required: true,
-      match: /^[0-9]{6,15}$/,
-      // Ensure the phone number has an optional '+' followed by exactly 10 digits
+      match: [
+        /^[+]?[0-9]{10,15}$/,
+        'Phone number must be 10–15 digits and can optionally start with a "+".',
+      ],
     },
     address: { type: String, required: true },
     logo: { type: String, required: false },

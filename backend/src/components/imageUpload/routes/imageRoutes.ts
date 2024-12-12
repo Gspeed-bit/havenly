@@ -11,7 +11,6 @@ const router = express.Router();
 
 // POST endpoint for image upload
 router.post('/upload', userMiddleware, upload.single('image'), imageUpload);
-router.post('/uploads', userMiddleware, upload.array('images'), imageUpload);
 router.delete('/properties/:id/images/:publicId', deletePropertyImage);
- 
+
 export default router;

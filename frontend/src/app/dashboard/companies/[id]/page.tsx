@@ -1,7 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { CompanyData, fetchCompanyById, updateCompany, uploadCompanyLogo } from '@/services/company/companyApiHandler';
+import {
+  CompanyData,
+  fetchCompanyById,
+  updateCompany,
+  uploadCompanyLogo,
+} from '@/services/company/companyApiHandler';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -46,7 +51,7 @@ const CompanyDetailsPage = () => {
     if (logoFile) {
       const formData = new FormData();
       formData.append('logo', logoFile);
-      
+
       // Upload logo
       const uploadResponse = await uploadCompanyLogo(logoFile, id as string);
       if (uploadResponse.status === 'success') {

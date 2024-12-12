@@ -126,11 +126,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Check if there's a new profile image uploaded
     if (req.file) {
       // Upload new image to Cloudinary
-      const uploadResult = await uploadImageToCloudinary(
+      const { secure_url, public_id } = await uploadImageToCloudinary(
         req.file.buffer,
         `user_image/${userId}`
       );
-      const { secure_url, public_id } = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
 
       // If the user already has a profile image, delete the previous one
       if (user.imgPublicId) {
@@ -226,7 +225,6 @@ export const confirmAdminUpdate = async (req: Request, res: Response) => {
       .json({ message: 'An error occurred.', error: errorMessage });
   }
 };
-
 
 export const changePassword = async (req: Request, res: Response) => {
   try {
