@@ -1,3 +1,5 @@
+// controllers/imageController.ts
+
 import { Request, Response } from 'express';
 import { uploadImageToCloudinary } from 'utils/cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
@@ -5,19 +7,22 @@ import User from '@components/user/models/userModel';
 import Property from '@components/property/models/propertyModel';
 import Company from '@components/property/models/companyModel';
 
-
-
 export const imageUpload = async (req: Request, res: Response) => {
   const { type, entityId } = req.body;
 
-  if (!req.file) {
-    return res.status(400).json({ message: 'No image file uploaded' });
+  if (!req.files || !Array.isArray(req.files)) {
+    return res.status(400).json({ message: 'No image files uploaded' });
   }
 
   try {
-    const { secure_url, public_id } = await uploadImageToCloudinary(
-      req.file.buffer,
-      `${type}/${entityId}`
+    const uploadedImages = await Promise.all(
+      (req.files as Express.Multer.File[]).map(async (file) => {
+        const { secure_url, public_id } = await uploadImageToCloudinary(
+          file.buffer,
+          `${type}/${entityId}`
+        );
+        return { url: secure_url, public_id };
+      })
     );
 
     if (type === 'user_image') {
@@ -30,7 +35,8 @@ export const imageUpload = async (req: Request, res: Response) => {
       }
 
       // Save the new image
-      user.imgUrl = secure_url;
+      const { url, public_id } = uploadedImages[0]; // Only one user image is allowed
+      user.imgUrl = url;
       user.imgPublicId = public_id;
       await user.save();
     } else if (type === 'property_image') {
@@ -38,8 +44,8 @@ export const imageUpload = async (req: Request, res: Response) => {
       if (!property)
         return res.status(404).json({ message: 'Property not found.' });
 
-      // Save the new image
-      property.images.push({ url: secure_url, public_id });
+      // Save the new images
+      property.images.push(...uploadedImages);
       await property.save();
     } else if (type === 'company_image') {
       const company = await Company.findById(entityId);
@@ -52,7 +58,8 @@ export const imageUpload = async (req: Request, res: Response) => {
       }
 
       // Save the new logo directly as a string (remove object wrapping)
-      company.logo = secure_url; // Store the URL as a string
+      const { url, public_id } = uploadedImages[0]; // Only one company logo is allowed
+      company.logo = url; // Store the URL as a string
       company.logoPublicId = public_id; // Store the public_id as a string
       await company.save();
     } else {
@@ -61,8 +68,8 @@ export const imageUpload = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: 'success',
-      data: { url: secure_url },
-      message: 'Image uploaded successfully.',
+      data: uploadedImages,
+      message: 'Images uploaded successfully.',
     });
   } catch (error) {
     console.error(error);
@@ -73,6 +80,7 @@ export const imageUpload = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
 
@@ -109,3 +117,4 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
     });
   }
 };
+

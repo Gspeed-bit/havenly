@@ -3,7 +3,7 @@
 import {
   fetchProperties,
   deleteProperty,
-} from '@/services/property/properties';
+} from '@/services/property/propertyApiHandler';
 import { useRouter } from 'next/navigation';
 
 const PropertiesPage = async () => {

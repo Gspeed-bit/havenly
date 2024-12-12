@@ -4,7 +4,7 @@ import {
   fetchPropertyById,
   deleteProperty,
   Property,
-} from '@/services/property/properties';
+} from '@/services/property/propertyApiHandler';
 import { useRouter } from 'next/navigation';
 
 interface PropertyDetailsProps {
