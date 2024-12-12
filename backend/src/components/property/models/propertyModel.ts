@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ICompany } from './companyModel'; 
+import { ICompany } from './companyModel';
 
 export interface IProperty extends Document {
   title: string;
@@ -10,7 +10,7 @@ export interface IProperty extends Document {
   propertyType: string;
   rooms: number;
   company: ICompany;
-  status: 'listed' | 'sold' | 'under review'; // Enum for property status
+  status: 'listed' | 'under review' | 'sold'; // Enum for property status
   amenities: string[]; // List of amenities
   coordinates?: { lat: number; lng: number }; // Geolocation coordinates
   isPublished: boolean; // Indicates if the property is published

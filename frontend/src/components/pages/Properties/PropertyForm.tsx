@@ -18,7 +18,7 @@ interface PropertyFormProps {
   onSuccess: () => void;
 }
 
-const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
+const PropertyForm = ({ initialData }: PropertyFormProps) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
@@ -26,8 +26,14 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     location: initialData?.location || '',
     propertyType: initialData?.propertyType || '',
     rooms: initialData?.rooms || '',
-    companyId: initialData?.company || '',
+    companyId: initialData?.company|| '', // Update for company reference
+    status: initialData?.status || 'listed', // Default to 'listed'
+    amenities: initialData?.amenities.join(', ') || '', // Join array as string for easy input
+    coordinates: initialData?.coordinates || { lat: 0, lng: 0 },
     isPublished: initialData?.isPublished || false,
+    agentName: initialData?.agent?.name || '',
+    agentContact: initialData?.agent?.contact || '',
+    sold: initialData?.sold || false,
   });
 
   const [images, setImages] = useState(initialData?.images || []);
@@ -39,7 +45,6 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
   useEffect(() => {
     const loadCompanies = async () => {
       const response = await fetchCompanies();
-      console.log('Fetched companies:', response); // Debugging
       if (response.status === 'success') {
         setCompanies(response.data.companies);
       } else {
@@ -114,16 +119,14 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
       images: [...images, ...uploadedImages],
       _id: '',
       company: formData.companyId,
-      status: '',
-      amenities: [],
-      coordinates: {
-        lat: 0,
-        lng: 0,
-      },
+      status: formData.status,
+      amenities: formData.amenities.split(',').map((amenity) => amenity.trim()), // Parse amenities back to array
+      coordinates: formData.coordinates,
       agent: {
-        name: '',
-        contact: '',
+        name: formData.agentName,
+        contact: formData.agentContact,
       },
+      sold: formData.sold,
     };
 
     const response = initialData
@@ -133,7 +136,25 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     setLoading(false);
 
     if (response.status === 'success') {
-      onSuccess();
+      setFormData({
+        title: '',
+        description: '',
+        price: '',
+        location: '',
+        propertyType: '',
+        rooms: '',
+        companyId: '',
+        status: 'listed',
+        amenities: '',
+        coordinates: { lat: 0, lng: 0 },
+        isPublished: false,
+        agentName: '',
+        agentContact: '',
+        sold: false,
+      });
+      setImages([]);
+      setNewImages([]);
+      setError(null);
     } else {
       setError(response.message);
     }
@@ -141,6 +162,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
+      {/* Title, Description, Price, and Location fields */}
       <input
         type='text'
         name='title'
@@ -172,24 +194,106 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         placeholder='Location'
         className='w-full border p-2 rounded'
       />
+
+      {/* Property Type */}
       <select
-        name='companyId'
-        value={formData.companyId}
+        name='propertyType'
+        value={formData.propertyType}
         onChange={handleInputChange}
         className='w-full border p-2 rounded'
         required
       >
-        <option value=''>Select a Company</option>
-        {companies.length > 0 ? (
-          companies.map((company) => (
-            <option key={company._id} value={company._id}>
-              {company.name}
-            </option>
-          ))
-        ) : (
-          <option disabled>No companies available</option>
-        )}
+        <option value=''>Select Property Type</option>
+        <option value='house'>House</option>
+        <option value='apartment'>Apartment</option>
       </select>
+
+      {/* Rooms */}
+      <input
+        type='number'
+        name='rooms'
+        value={formData.rooms}
+        onChange={handleInputChange}
+        placeholder='Number of Rooms'
+        className='w-full border p-2 rounded'
+      />
+
+      {/* Status */}
+      <select
+        name='status'
+        value={formData.status}
+        onChange={handleInputChange}
+        className='w-full border p-2 rounded'
+        required
+      >
+        <option value=''>Select Status</option>
+        <option value='listed'>Listed</option>
+        <option value='sold'>Sold</option>
+        <option value='under review'>Under Review</option>
+      </select>
+
+      {/* Amenities */}
+      <textarea
+        name='amenities'
+        value={formData.amenities}
+        onChange={handleInputChange}
+        placeholder='Amenities (comma separated)'
+        className='w-full border p-2 rounded'
+      />
+
+      {/* Coordinates */}
+      <div className='flex space-x-2'>
+        <input
+          type='number'
+          name='lat'
+          value={formData.coordinates.lat}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              coordinates: {
+                ...formData.coordinates,
+                lat: parseFloat(e.target.value),
+              },
+            })
+          }
+          placeholder='Latitude'
+          className='w-full border p-2 rounded'
+        />
+        <input
+          type='number'
+          name='lng'
+          value={formData.coordinates.lng}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              coordinates: {
+                ...formData.coordinates,
+                lng: parseFloat(e.target.value),
+              },
+            })
+          }
+          placeholder='Longitude'
+          className='w-full border p-2 rounded'
+        />
+      </div>
+
+      {/* Agent Information */}
+      <input
+        type='text'
+        name='agentName'
+        value={formData.agentName}
+        onChange={handleInputChange}
+        placeholder='Agent Name'
+        className='w-full border p-2 rounded'
+      />
+      <input
+        type='text'
+        name='agentContact'
+        value={formData.agentContact}
+        onChange={handleInputChange}
+        placeholder='Agent Contact'
+        className='w-full border p-2 rounded'
+      />
 
       {/* Image Upload Section */}
       <div>
@@ -206,28 +310,48 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
             <div key={image.public_id} className='relative'>
               <img src={image.url} alt='Property' className='w-full h-auto' />
               <button
-                type='button'
                 onClick={() => handleImageDelete(image.public_id)}
-                className='absolute top-0 right-0 bg-red-500 text-white p-1 rounded'
+                className='absolute top-2 right-2 bg-red-500 text-white rounded p-1'
               >
-                Delete
+                X
               </button>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Sold Status */}
+      <label>
+        <input
+          type='checkbox'
+          name='sold'
+          checked={formData.sold}
+          onChange={(e) => setFormData({ ...formData, sold: e.target.checked })}
+        />
+        Sold
+      </label>
+
+      {/* Published Status */}
+      <label>
+        <input
+          type='checkbox'
+          name='isPublished'
+          checked={formData.isPublished}
+          onChange={(e) =>
+            setFormData({ ...formData, isPublished: e.target.checked })
+          }
+        />
+        Published
+      </label>
+
       <button
         type='submit'
+        className='bg-primary_main  text-white py-2 px-4 rounded'
         disabled={loading}
-        className='bg-primary_main text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50'
       >
-        {loading
-          ? 'Saving...'
-          : initialData
-            ? 'Update Property'
-            : 'Create Property'}
+        {loading ? 'Saving...' : 'Save Property'}
       </button>
+
       {error && <p className='text-red-500'>{error}</p>}
     </form>
   );

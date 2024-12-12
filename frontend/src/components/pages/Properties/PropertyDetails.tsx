@@ -1,69 +1,96 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import {
   fetchPropertyById,
   deleteProperty,
   Property,
 } from '@/services/property/propertyApiHandler';
-import { useRouter } from 'next/navigation';
 
-interface PropertyDetailsProps {
-  params: { id: string };
-}
-
-const PropertyDetails = async ({ params }: PropertyDetailsProps) => {
-  const { id } = params;
-  const response = await fetchPropertyById(id);
-
-  if (response.status === 'error') {
-    return <p>Error: {response.message}</p>;
-  }
-
-  const property = response.data;
-
+const PropertyPage = () => {
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { id } = useParams(); // Assume the property ID is passed via the URL
+
+  useEffect(() => {
+    const fetchSingleProperty = async () => {
+      if (!id) return; // Ensure ID is present
+      try {
+        const response = await fetchPropertyById(id as string); // Fetch property by ID
+
+        if (response.status === 'success' && response.data) {
+          setProperty(response.data);
+        } else {
+          setError(response.message);
+        }
+      } catch (err) {
+        setError('Failed to fetch property');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSingleProperty();
+  }, [id]);
 
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this property?')) {
-      const deleteResponse = await deleteProperty(property._id);
+      const deleteResponse = await deleteProperty(id as string);
       if (deleteResponse.status === 'success') {
-        router.push('/properties');
+        router.push('/properties'); // Redirect back to properties list
       } else {
-        alert(deleteResponse.message);
+        setError(deleteResponse.message);
       }
     }
   };
 
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
+
+  if (!property) {
+    return <p>Property not found</p>;
+  }
+
   return (
-    <div>
+    <div className='property-detail'>
       <h1>{property.title}</h1>
       <p>{property.description}</p>
       <p>Price: ${property.price}</p>
       <p>Location: {property.location}</p>
       <p>Type: {property.propertyType}</p>
       <p>Rooms: {property.rooms}</p>
-      <p>Company ID: {property.company}</p>
-      <h3>Images:</h3>
-      <ul>
-        {property.images.map((image) => (
-          <li key={image.public_id}>
-            <img
-              src={image.url}
-              alt={property.title}
-              className='w-full h-auto'
-            />
-          </li>
+      <p>Amenities: {property.amenities.join(', ')}</p>
+      <p>Status: {property.status}</p>
+      <p>
+        Agent: {property.agent.name} ({property.agent.contact})
+      </p>
+      <p>Sold: {property.sold ? 'Yes' : 'No'}</p>
+      <p>Published: {property.isPublished ? 'Yes' : 'No'}</p>
+
+      {/* <div className='image-gallery'>
+        {property.images?.map((image) => (
+          <img key={image.public_id} src={image.url} alt={property.title} />
         ))}
-      </ul>
+      </div> */}
+
       <button
-        onClick={() => router.push(`/property/edit/${property._id}`)}
-        className='bg-blue-500 text-white py-2 px-4 rounded'
+        onClick={() => router.push(`/dashboard/property/edit/${property._id}`)}
+        className='bg-primary_main text-white py-1 px-2 rounded'
       >
         Edit Property
       </button>
+
       <button
         onClick={handleDelete}
-        className='bg-red-500 text-white py-2 px-4 rounded ml-2'
+        className='bg-red-500 text-white py-1 px-2 rounded ml-2'
       >
         Delete Property
       </button>
@@ -71,4 +98,4 @@ const PropertyDetails = async ({ params }: PropertyDetailsProps) => {
   );
 };
 
-export default PropertyDetails;
+export default PropertyPage;

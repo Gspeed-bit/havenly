@@ -1,5 +1,6 @@
 'use client';
 import PropertyForm from '@/components/pages/Properties/PropertyForm';
+import PropertiesPage from '@/components/pages/Properties/PropertyList';
 import React from 'react';
 
 const page = () => {
@@ -10,6 +11,7 @@ const page = () => {
           throw new Error('Function not implemented.');
         }}
       />
+      <PropertiesPage />
     </div>
   );
 };

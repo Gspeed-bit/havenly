@@ -1,15 +1,12 @@
-import PropertyDetails from '@/components/pages/Properties/PropertyDetails'
-import React from 'react'
+import PropertyDetails from '@/components/pages/Properties/PropertyDetails';
+import React from 'react';
 
 const page = () => {
   return (
     <div>
-      <PropertyDetails params={{
-        id: ''
-      }} />
-     
+      <PropertyDetails />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;

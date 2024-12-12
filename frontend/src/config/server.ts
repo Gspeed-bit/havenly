@@ -7,7 +7,6 @@ export interface SuccessResponse<T> {
   message: string;
   status: 'success';
   data: T;
-
 }
 
 export interface ErrorResponse {

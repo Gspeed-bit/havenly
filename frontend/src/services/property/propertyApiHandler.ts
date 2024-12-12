@@ -1,5 +1,4 @@
-import { apiHandler, ApiResponse } from "@/config/server";
-
+import { apiHandler, ApiResponse } from '@/config/server';
 
 // Define Property Types
 export interface Property {
@@ -17,13 +16,36 @@ export interface Property {
   coordinates: { lat: number; lng: number };
   isPublished: boolean;
   agent: { name: string; contact: string };
+  sold: boolean;
+}
+
+export interface PropertySingleResponse {
+  status: string;
+  message: string;
+  propertyData: Property; // This is the nested company object
+}
+export interface PropertyResponse {
+  data: Property[]; // Array of properties
+  pagination: {
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  };
 }
 
 // Fetch all properties
 export const fetchProperties = async (
-  filters = {}
-): Promise<ApiResponse<Property[]>> => {
-  return apiHandler<Property[]>('/properties', 'GET', undefined, filters);
+  filters: Record<string, any> = {},
+  page: number = 1,
+  limit: number = 10
+): Promise<ApiResponse<PropertyResponse>> => {
+  const queryParams = { ...filters, page, limit }; // Combine filters with pagination params
+  return apiHandler<PropertyResponse>(
+    '/properties',
+    'GET',
+    undefined,
+    queryParams
+  );
 };
 
 // Fetch a single property by ID
