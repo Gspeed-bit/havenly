@@ -36,10 +36,10 @@ export const uploadCompanyLogo = async (
 ): Promise<ApiResponse<{ url: string }>> => {
   const formData = new FormData();
   formData.append('image', logo);
-  formData.append('type', 'company_image');
+  formData.append('type', 'company_image'); // This type ensures the correct logic is triggered
   formData.append('entityId', companyId);
 
-  return apiHandler('/image/upload', 'POST', formData);
+  return apiHandler('/image/upload', 'POST', formData); // This should point to the backend route handling image uploads
 };
 
 export const fetchCompanies = async (): Promise<

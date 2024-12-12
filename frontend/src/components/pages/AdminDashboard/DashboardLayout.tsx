@@ -75,6 +75,11 @@ export default function DashboardLayout({
     { href: '/dashboard/users', icon: Users, label: 'Users' },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
     { href: '/dashboard/companies', icon: Building2, label: 'Companies' },
+    {
+      href: '/dashboard/property',
+      icon: Building2,
+      label: 'property',
+    },
   ];
 
   // Loading State for User

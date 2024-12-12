@@ -1,11 +1,12 @@
-'use client'; // app/companies/page.tsx or wherever your companies list is
+'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link'; // Import Link for navigation
+import Link from 'next/link';
 import {
   deleteCompany,
   fetchCompanies,
   CompanyData,
 } from '@/services/company/companyApiHandler';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; // Adjust the import path as needed
 
 const CompaniesPage = () => {
   const [companies, setCompanies] = useState<CompanyData[]>([]);
@@ -19,7 +20,6 @@ const CompaniesPage = () => {
 
     if (response.status === 'success' && response.data) {
       setCompanies(response.data.companies);
-      console.log('Fetched companies:', response.data.companies);
     } else {
       setError(response.message);
     }
@@ -31,7 +31,7 @@ const CompaniesPage = () => {
       const response = await deleteCompany(id);
       if (response.status === 'success') {
         alert('Company deleted successfully');
-        loadCompanies(); // Refresh the list
+        loadCompanies();
       } else {
         alert(response.message);
       }
@@ -53,17 +53,13 @@ const CompaniesPage = () => {
         ) : (
           companies.map((company) => (
             <li key={company._id} className='flex items-center space-x-4'>
-              {company.logo && (
-                <picture>
-                  <img
-                    src={company.logo}
-                    alt={`${company.name} logo`}
-                    className='w-12 h-12 rounded-full object-cover'
-                  />
-                </picture>
-              )}
+              <Avatar className='h-10 w-10 border-2 border-primary'>
+                <AvatarImage src={company.logo} />
+                <AvatarFallback className='bg-primary text-primary-foreground'>
+                  {company.name?.[0]?.toUpperCase() || 'C'}
+                </AvatarFallback>
+              </Avatar>
               <span className='flex-1'>
-                {/* Add Link to CompanyDetailsPage */}
                 <Link href={`/dashboard/companies/${company._id}`}>
                   <p className='text-primary_main'>{company.name}</p>
                 </Link>

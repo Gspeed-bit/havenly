@@ -1,5 +1,6 @@
 'use client';
-import Alert from '@/components/ui/alerts/Alert';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   createCompany,
   uploadCompanyLogo,
@@ -24,7 +25,6 @@ const CreateCompanyForm = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -32,7 +32,6 @@ const CreateCompanyForm = () => {
     setCompanyData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle logo image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -40,19 +39,15 @@ const CreateCompanyForm = () => {
     }
   };
 
-  // Phone number validation function
   const validatePhoneNumber = (phone: string) => {
-    // Regex to allow 10 digits or a '+' followed by 10 digits
     const phoneRegex = /^[+]?[0-9]{10}$/;
     return phoneRegex.test(phone);
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validate phone number
     if (!validatePhoneNumber(companyData.phoneNumber)) {
       setAlertState({
         type: 'error',
@@ -76,7 +71,6 @@ const CreateCompanyForm = () => {
       if (response.status === 'success') {
         const companyId = response.data.company._id as string;
 
-        // Upload logo if provided
         if (companyData.logo) {
           const uploadResponse = await uploadCompanyLogo(
             companyData.logo,
@@ -101,7 +95,6 @@ const CreateCompanyForm = () => {
         throw new Error(response.message);
       }
     } catch (error: any) {
-      console.error(error);
       setAlertState({
         type: 'error',
         message:
@@ -114,7 +107,17 @@ const CreateCompanyForm = () => {
 
   return (
     <div className='container mx-auto p-4'>
-      <Alert type={alertState.type} message={alertState.message} />
+      {alertState.type && (
+        <Alert
+          variant={alertState.type === 'success' ? 'default' : 'destructive'}
+          className='mb-4  transition-opacity duration-500 ease-in-out'
+        >
+          <AlertTitle>
+            {alertState.type === 'success' ? 'Success' : 'Error'}
+          </AlertTitle>
+          <AlertDescription>{alertState.message}</AlertDescription>
+        </Alert>
+      )}
       <form onSubmit={handleSubmit} className='space-y-4'>
         {[
           { label: 'Company Name', name: 'name', type: 'text', required: true },
