@@ -75,7 +75,7 @@ export const imageUpload = async (req: Request, res: Response) => {
       await company.save();
 
       // Clean up Cloudinary folder if no other company images exist
-      await removeImageFolderIfEmpty(`company/${entityId}`, entityId);
+      await removeImageFolderIfEmpty(`company_image/${entityId}`, entityId);
     } else {
       return res.status(400).json({ message: 'Invalid type specified.' });
     }
