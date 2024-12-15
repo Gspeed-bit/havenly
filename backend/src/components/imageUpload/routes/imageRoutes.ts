@@ -14,13 +14,14 @@ const router = express.Router();
 router.post('/upload', userMiddleware, upload.single('image'), imageUpload);
 router.post(
   '/properties/upload-multiple',
-  adminMiddleware,
+  userMiddleware,
   upload.array('images', 10), // Limit the number of images if needed
   uploadMultiplePropertyImages
 );
 router.delete(
   '/properties/:id/images/:publicId',
-  adminMiddleware,deletePropertyImage
+  userMiddleware,
+  deletePropertyImage
 );
 
 export default router;
