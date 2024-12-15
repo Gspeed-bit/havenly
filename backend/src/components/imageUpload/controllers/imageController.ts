@@ -13,7 +13,7 @@ export const imageUpload = async (req: Request, res: Response) => {
   }
 
   try {
-      const folderPath = `${type}/${entityId}`;
+    const folderPath = `${type}/${entityId}`;
     const { secure_url, public_id } = await uploadImageToCloudinary(
       req.file.buffer,
       folderPath
@@ -23,28 +23,22 @@ export const imageUpload = async (req: Request, res: Response) => {
       const user = await User.findById(entityId);
       if (!user) return res.status(404).json({ message: 'User not found.' });
 
-      // Delete the previous image if it exists
       if (user.imgPublicId) {
         await cloudinary.uploader.destroy(user.imgPublicId);
       }
 
-      // Save the new image
       user.imgUrl = secure_url;
       user.imgPublicId = public_id;
       await user.save();
-
-    }  if (type === 'company_image') {
+    } else if (type === 'company_image') {
       const company = await Company.findById(entityId);
-      if (!company) {
+      if (!company)
         return res.status(404).json({ message: 'Company not found.' });
-      }
 
-      // Delete the previous logo if it exists
       if (company.logoPublicId) {
         await cloudinary.uploader.destroy(company.logoPublicId);
       }
 
-      // Save the new logo
       company.logo = secure_url;
       company.logoPublicId = public_id;
       await company.save();
@@ -52,27 +46,24 @@ export const imageUpload = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid type specified.' });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       status: 'success',
       data: { url: secure_url },
       message: 'Image uploaded successfully.',
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      status: 'error',
-      message: 'Image upload failed.',
-      error: (error as Error).message,
-    });
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Image upload failed.', error });
   }
 };
-
 
 export const uploadMultiplePropertyImages = async (
   req: Request,
   res: Response
 ) => {
-  const { entityId } = req.body; // Ensure entityId is passed for the property
+  const { entityId } = req.body;
 
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No images uploaded' });
@@ -92,30 +83,26 @@ export const uploadMultiplePropertyImages = async (
         file.buffer,
         folderPath
       );
-
       uploadedImages.push({ url: secure_url, public_id });
     }
 
-    // Add images to the property
     property.images.push(...uploadedImages);
     await property.save();
 
-    return res.status(200).json({
+    res.status(200).json({
       status: 'success',
       data: uploadedImages,
       message: 'Images uploaded successfully.',
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    res.status(500).json({
       status: 'error',
       message: 'Image upload failed.',
-      error: (error as Error).message,
+      error,
     });
   }
 };
-
-
 
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
@@ -126,7 +113,6 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Property not found.' });
     }
 
-    // Find and remove the image
     const imageIndex = property.images.findIndex(
       (image) => image.public_id === publicId
     );
@@ -135,21 +121,14 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Image not found.' });
     }
 
-    // Delete the image from Cloudinary
     await cloudinary.uploader.destroy(publicId);
 
-    // Remove the image from the database
     property.images.splice(imageIndex, 1);
     await property.save();
 
-    return res.status(200).json({
-      message: 'Image deleted successfully.',
-    });
+    res.status(200).json({ message: 'Image deleted successfully.' });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message: 'Failed to delete image.',
-      error: (error as Error).message,
-    });
+    res.status(500).json({ message: 'Failed to delete image.', error });
   }
 };

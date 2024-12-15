@@ -1,4 +1,5 @@
 'use client';
+import MultipleImageUpload from '@/components/pages/MultipleImageUpload';
 import PropertyForm from '@/components/pages/Properties/PropertyForm';
 import PropertiesPage from '@/components/pages/Properties/PropertyList';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ export default function PropertyPage() {
     <div>
       <PropertyForm onSuccess={handleSuccess} />
       <PropertiesPage />
+      <MultipleImageUpload  />
     </div>
   );
 }

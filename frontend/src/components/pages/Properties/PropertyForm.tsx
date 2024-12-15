@@ -9,7 +9,7 @@ import {
   createProperty,
   updateProperty,
   Property,
-  uploadImage,
+  uploadMultipleImages,
   deleteImage,
 } from '@/services/property/propertyApiHandler';
 
@@ -73,7 +73,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await uploadImage(formData);
+      const response = await uploadMultipleImages(formData);
       if (response.status === 'success') {
         uploadedImages.push(response.data);
       } else {
@@ -105,7 +105,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await uploadImage(formData);
+        const response = await uploadMultipleImages(formData);
         if (response.status === 'success') {
           uploadedImages.push(response.data);
         } else {
