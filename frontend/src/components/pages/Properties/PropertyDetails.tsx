@@ -27,6 +27,7 @@ const PropertyPage = () => {
           setError(response.message);
         }
       } catch (err) {
+        console.log(err)
         setError('Failed to fetch property');
       } finally {
         setLoading(false);

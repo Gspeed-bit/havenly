@@ -5,17 +5,23 @@ export interface Property {
   _id: string;
   title: string;
   description: string;
-  images: { url: string; public_id: string }[];
   price: number;
   location: string;
   propertyType: string;
+  images: { url: string; public_id: string }[];
   rooms: number;
   company: string;
   status: string;
   amenities: string[];
-  coordinates: { lat: number; lng: number };
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
   isPublished: boolean;
-  agent: { name: string; contact: string };
+  agent: {
+    name: string;
+    contact: string;
+  };
   sold: boolean;
 }
 
@@ -35,6 +41,7 @@ export interface PropertyResponse {
 
 // Fetch all properties
 export const fetchProperties = async (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters: Record<string, any> = {},
   page: number = 1,
   limit: number = 10

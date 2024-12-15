@@ -18,7 +18,7 @@ interface PropertyFormProps {
   onSuccess: () => void;
 }
 
-const PropertyForm = ({ initialData }: PropertyFormProps) => {
+const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
@@ -26,10 +26,13 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
     location: initialData?.location || '',
     propertyType: initialData?.propertyType || '',
     rooms: initialData?.rooms || '',
-    companyId: initialData?.company|| '', // Update for company reference
-    status: initialData?.status || 'listed', // Default to 'listed'
-    amenities: initialData?.amenities.join(', ') || '', // Join array as string for easy input
-    coordinates: initialData?.coordinates || { lat: 0, lng: 0 },
+    companyId: initialData?.company || '',
+    status: initialData?.status || 'listed',
+    amenities: initialData?.amenities.join(', ') || '',
+    coordinates: {
+      lat: initialData?.coordinates.lat.toString() || '',
+      lng: initialData?.coordinates.lng.toString() || '',
+    },
     isPublished: initialData?.isPublished || false,
     agentName: initialData?.agent?.name || '',
     agentContact: initialData?.agent?.contact || '',
@@ -59,8 +62,9 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
   const handleImageUpload = async (files: File[]) => {
@@ -74,7 +78,7 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         uploadedImages.push(response.data);
       } else {
         setError(`Failed to upload image: ${response.message}`);
-        return; // Exit early if an upload fails
+        return;
       }
     }
     setImages([...images, ...uploadedImages]);
@@ -117,11 +121,13 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
       price: parseFloat(formData.price.toString()),
       rooms: parseInt(formData.rooms.toString(), 10),
       images: [...images, ...uploadedImages],
-      _id: '',
+      _id: initialData?._id || '',
       company: formData.companyId,
-      status: formData.status,
-      amenities: formData.amenities.split(',').map((amenity) => amenity.trim()), // Parse amenities back to array
-      coordinates: formData.coordinates,
+      amenities: formData.amenities.split(',').map((amenity) => amenity.trim()),
+      coordinates: {
+        lat: parseFloat(formData.coordinates.lat.toString()),
+        lng: parseFloat(formData.coordinates.lng.toString()),
+      },
       agent: {
         name: formData.agentName,
         contact: formData.agentContact,
@@ -146,7 +152,7 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         companyId: '',
         status: 'listed',
         amenities: '',
-        coordinates: { lat: 0, lng: 0 },
+        coordinates: { lat: '', lng: '' },
         isPublished: false,
         agentName: '',
         agentContact: '',
@@ -155,6 +161,7 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
       setImages([]);
       setNewImages([]);
       setError(null);
+      onSuccess();
     } else {
       setError(response.message);
     }
@@ -162,7 +169,6 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
-      {/* Title, Description, Price, and Location fields */}
       <input
         type='text'
         name='title'
@@ -195,7 +201,6 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         className='w-full border p-2 rounded'
       />
 
-      {/* Property Type */}
       <select
         name='propertyType'
         value={formData.propertyType}
@@ -204,11 +209,11 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         required
       >
         <option value=''>Select Property Type</option>
-        <option value='house'>House</option>
-        <option value='apartment'>Apartment</option>
+        <option value='Villa'>Villa</option>
+        <option value='Apartment'>Apartment</option>
+        <option value='House'>House</option>
       </select>
 
-      {/* Rooms */}
       <input
         type='number'
         name='rooms'
@@ -218,21 +223,17 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         className='w-full border p-2 rounded'
       />
 
-      {/* Status */}
       <select
         name='status'
         value={formData.status}
         onChange={handleInputChange}
         className='w-full border p-2 rounded'
-        required
       >
-        <option value=''>Select Status</option>
         <option value='listed'>Listed</option>
         <option value='sold'>Sold</option>
-        <option value='under review'>Under Review</option>
+        <option value='under contract'>Under Contract</option>
       </select>
 
-      {/* Amenities */}
       <textarea
         name='amenities'
         value={formData.amenities}
@@ -241,7 +242,6 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         className='w-full border p-2 rounded'
       />
 
-      {/* Coordinates */}
       <div className='flex space-x-2'>
         <input
           type='number'
@@ -252,7 +252,7 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
               ...formData,
               coordinates: {
                 ...formData.coordinates,
-                lat: parseFloat(e.target.value),
+                lat: e.target.value,
               },
             })
           }
@@ -268,7 +268,7 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
               ...formData,
               coordinates: {
                 ...formData.coordinates,
-                lng: parseFloat(e.target.value),
+                lng: e.target.value,
               },
             })
           }
@@ -277,41 +277,46 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         />
       </div>
 
-      {/* Agent Information */}
-      <input
-        type='text'
-        name='agentName'
-        value={formData.agentName}
+      <select
+        name='companyId'
+        value={formData.companyId}
         onChange={handleInputChange}
-        placeholder='Agent Name'
         className='w-full border p-2 rounded'
-      />
-      <input
-        type='text'
-        name='agentContact'
-        value={formData.agentContact}
-        onChange={handleInputChange}
-        placeholder='Agent Contact'
-        className='w-full border p-2 rounded'
-      />
+        required
+      >
+        <option value=''>Select Company</option>
+        {companies.map((company) => (
+          <option key={company._id} value={company._id}>
+            {company.name}
+          </option>
+        ))}
+      </select>
 
-      {/* Image Upload Section */}
-      <div>
-        <label>Property Images:</label>
+      <div className='space-y-2'>
+        <label className='block'>Images</label>
         <input
           type='file'
-          accept='image/*'
           multiple
-          onChange={(e) => handleImageUpload(Array.from(e.target.files || []))}
+          onChange={(e) =>
+            handleImageUpload(e.target.files ? Array.from(e.target.files) : [])
+          }
           className='w-full border p-2 rounded'
         />
-        <div className='grid grid-cols-3 gap-4 mt-4'>
+        <div className='flex flex-wrap gap-2'>
           {images.map((image) => (
             <div key={image.public_id} className='relative'>
-              <img src={image.url} alt='Property' className='w-full h-auto' />
+              <picture>
+                {' '}
+                <img
+                  src={image.url}
+                  alt=''
+                  className='w-20 h-20 object-cover'
+                />
+              </picture>
               <button
+                type='button'
                 onClick={() => handleImageDelete(image.public_id)}
-                className='absolute top-2 right-2 bg-red-500 text-white rounded p-1'
+                className='absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full'
               >
                 X
               </button>
@@ -320,39 +325,37 @@ const PropertyForm = ({ initialData }: PropertyFormProps) => {
         </div>
       </div>
 
-      {/* Sold Status */}
-      <label>
+      <div>
+        <label className='block font-medium'>Sold</label>
         <input
           type='checkbox'
           name='sold'
           checked={formData.sold}
-          onChange={(e) => setFormData({ ...formData, sold: e.target.checked })}
+          onChange={handleInputChange}
+          className='w-5 h-5'
         />
-        Sold
-      </label>
+      </div>
 
-      {/* Published Status */}
-      <label>
+      <div>
+        <label className='block font-medium'>Is Published</label>
         <input
           type='checkbox'
           name='isPublished'
           checked={formData.isPublished}
-          onChange={(e) =>
-            setFormData({ ...formData, isPublished: e.target.checked })
-          }
+          onChange={handleInputChange}
+          className='w-5 h-5'
         />
-        Published
-      </label>
+      </div>
+
+      {error && <p className='text-red-500'>{error}</p>}
 
       <button
         type='submit'
-        className='bg-primary_main  text-white py-2 px-4 rounded'
+        className={`w-full p-2 rounded text-white ${loading ? 'bg-primary_main' : 'bg-red-500'}`}
         disabled={loading}
       >
-        {loading ? 'Saving...' : 'Save Property'}
+        {loading ? 'Submitting...' : 'Submit'}
       </button>
-
-      {error && <p className='text-red-500'>{error}</p>}
     </form>
   );
 };

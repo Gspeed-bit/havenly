@@ -95,6 +95,7 @@ const CreateCompanyForm = () => {
       } else {
         throw new Error(response.message);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setAlertState({
         type: 'error',
@@ -137,6 +138,7 @@ const CreateCompanyForm = () => {
             <input
               type={field.type}
               name={field.name}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               value={(companyData as any)[field.name]}
               onChange={handleChange}
               required={field.required}

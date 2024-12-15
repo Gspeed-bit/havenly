@@ -188,11 +188,13 @@ const CompanyDetailsPage = () => {
               onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
             />
             {formData.logo && (
-              <img
-                src={formData.logo}
-                alt='Current Logo'
-                className='rounded-full w-10 h-10 mt-2'
-              />
+              <picture>
+                <img
+                  src={formData.logo}
+                  alt='Current Logo'
+                  className='rounded-full w-10 h-10 mt-2'
+                />
+              </picture>
             )}
           </div>
 

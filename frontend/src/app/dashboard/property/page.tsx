@@ -1,19 +1,21 @@
 'use client';
 import PropertyForm from '@/components/pages/Properties/PropertyForm';
 import PropertiesPage from '@/components/pages/Properties/PropertyList';
-import React from 'react';
+import { useRouter } from 'next/navigation';
 
-const page = () => {
+export default function PropertyPage() {
+  const router = useRouter();
+
+  const handleSuccess = () => {
+    // Example: Navigate to the properties list or reload the current page
+    router.push('/dashboard/property'); // Redirect to properties page
+    // or router.refresh(); // Refresh the current page
+  };
+
   return (
     <div>
-      <PropertyForm
-        onSuccess={function (): void {
-          throw new Error('Function not implemented.');
-        }}
-      />
+      <PropertyForm onSuccess={handleSuccess} />
       <PropertiesPage />
     </div>
   );
-};
-
-export default page;
+}

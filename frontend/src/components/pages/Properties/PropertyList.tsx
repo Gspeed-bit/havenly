@@ -5,7 +5,6 @@ import {
   fetchProperties,
   deleteProperty,
   Property,
-  PropertyResponse,
 } from '@/services/property/propertyApiHandler';
 import { useRouter } from 'next/navigation';
 
@@ -38,6 +37,7 @@ const PropertiesPage = () => {
         setProperties(response.data.data); // Set properties
         setPagination(response.data.pagination); // Set pagination data
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('Failed to fetch properties. Please try again later.');
     } finally {
@@ -71,6 +71,7 @@ const PropertiesPage = () => {
         } else {
           alert(deleteResponse.message);
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         alert(
           'An error occurred while deleting the property. Please try again.'
