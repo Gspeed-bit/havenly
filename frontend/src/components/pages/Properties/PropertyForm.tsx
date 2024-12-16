@@ -10,8 +10,9 @@ import {
   updateProperty,
   Property,
   uploadMultipleImages,
-  deleteImage,
 } from '@/services/property/propertyApiHandler';
+
+import MultipleImageUpload from '../MultipleImageUpload';
 
 interface PropertyFormProps {
   initialData?: Property; // Pass for update
@@ -39,8 +40,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     sold: initialData?.sold || false,
   });
 
-  const [images, setImages] = useState(initialData?.images || []);
-  const [newImages, setNewImages] = useState<File[]>([]);
+  const [images, setImages] = useState<File[]>([]); // Store local image files
   const [companies, setCompanies] = useState<CompanyData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,52 +67,30 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
-  const handleImageUpload = async (files: File[]) => {
-    const uploadedImages = [];
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await uploadMultipleImages(formData);
-      if (response.status === 'success') {
-        uploadedImages.push(response.data);
-      } else {
-        setError(`Failed to upload image: ${response.message}`);
-        return;
-      }
-    }
-    setImages([...images, ...uploadedImages]);
-  };
-
-  const handleImageDelete = async (publicId: string) => {
-    const response = await deleteImage(initialData?._id || '', publicId);
-    if (response.status === 'success') {
-      setImages(images.filter((image) => image.public_id !== publicId));
-    } else {
-      setError(`Failed to delete image: ${response.message}`);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Upload new images
-    const uploadedImages = [];
-    if (newImages.length > 0) {
-      for (const file of newImages) {
-        const formData = new FormData();
-        formData.append('file', file);
+    // Upload images using the correct handler
+    let uploadedImageUrls: { url: string; public_id: string }[] = [];
+    if (images.length > 0) {
+      try {
+        const uploadFormData = new FormData();
+        images.forEach((image) => uploadFormData.append('images', image));
 
-        const response = await uploadMultipleImages(formData);
+        const response = await uploadMultipleImages(uploadFormData);
+
         if (response.status === 'success') {
-          uploadedImages.push(response.data);
+          uploadedImageUrls = Array.isArray(response.data) ? response.data : [response.data];
         } else {
-          setError(`Image upload failed: ${response.message}`);
-          setLoading(false);
-          return;
+          throw new Error(response.message || 'Image upload failed.');
         }
+      } catch (error) {
+        console.error(error);
+        setError('Image upload failed. Please try again.');
+        setLoading(false);
+        return;
       }
     }
 
@@ -120,7 +98,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
       ...formData,
       price: parseFloat(formData.price.toString()),
       rooms: parseInt(formData.rooms.toString(), 10),
-      images: [...images, ...uploadedImages],
+      images: uploadedImageUrls, // Use uploaded image URLs
       _id: initialData?._id || '',
       company: formData.companyId,
       amenities: formData.amenities.split(',').map((amenity) => amenity.trim()),
@@ -159,7 +137,6 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         sold: false,
       });
       setImages([]);
-      setNewImages([]);
       setError(null);
       onSuccess();
     } else {
@@ -292,38 +269,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         ))}
       </select>
 
-      <div className='space-y-2'>
-        <label className='block'>Images</label>
-        <input
-          type='file'
-          multiple
-          onChange={(e) =>
-            handleImageUpload(e.target.files ? Array.from(e.target.files) : [])
-          }
-          className='w-full border p-2 rounded'
-        />
-        <div className='flex flex-wrap gap-2'>
-          {images.map((image) => (
-            <div key={image.public_id} className='relative'>
-              <picture>
-                {' '}
-                <img
-                  src={image.url}
-                  alt=''
-                  className='w-20 h-20 object-cover'
-                />
-              </picture>
-              <button
-                type='button'
-                onClick={() => handleImageDelete(image.public_id)}
-                className='absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full'
-              >
-                X
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      {error && <p className='text-red-500'>{error}</p>}
 
       <div>
         <label className='block font-medium'>Sold</label>
@@ -344,6 +290,15 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
           checked={formData.isPublished}
           onChange={handleInputChange}
           className='w-5 h-5'
+        />
+      </div>
+
+      <div className='space-y-2'>
+        <MultipleImageUpload
+          images={images}
+          setImages={setImages}
+          previews={[]} // Assuming you have a previews state or you can create one
+          setPreviews={() => {}} // Assuming you have a setPreviews function or you can create one
         />
       </div>
 
