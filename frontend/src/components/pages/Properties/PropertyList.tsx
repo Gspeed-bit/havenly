@@ -34,10 +34,8 @@ const PropertiesPage = () => {
       if (response.status === 'error') {
         setError(response.message);
       } else if ('data' in response) {
-        setProperties(response.data.data); // Set properties
-        setPagination(response.data.pagination); // Set pagination data
+        setProperties(response.data); // Set properties
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('Failed to fetch properties. Please try again later.');
     } finally {
@@ -71,7 +69,7 @@ const PropertiesPage = () => {
         } else {
           alert(deleteResponse.message);
         }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         alert(
           'An error occurred while deleting the property. Please try again.'
@@ -91,7 +89,7 @@ const PropertiesPage = () => {
   return (
     <div>
       <h1>Properties</h1>
-      <ul>
+      {/* <ul>
         {properties.map((property) => (
           <li key={property._id} className='border p-4 rounded mb-4'>
             <a href={`/dashboard/property/${property._id}`}>
@@ -113,14 +111,14 @@ const PropertiesPage = () => {
               Edit
             </button>
             <button
-              onClick={() => handleDelete(property._id)}
+              onClick={() => property._id && handleDelete(property._id)}
               className='bg-red-500 text-white py-1 px-2 rounded ml-2'
             >
               Delete
             </button>
           </li>
         ))}
-      </ul>
+      </ul> */}
       <div className='flex justify-between mt-4'>
         <button
           disabled={pagination.currentPage === 1}

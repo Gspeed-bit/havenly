@@ -28,11 +28,8 @@ export const createProperty = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
-    // Cast company to ObjectId
-    const companyId = new mongoose.Types.ObjectId(company);
-
     // Ensure the company exists
-    const existingCompany = await Company.findById(companyId);
+    const existingCompany = await Company.findById(company);
     if (!existingCompany) {
       return res.status(400).json({ message: 'Invalid company ID.' });
     }
@@ -45,7 +42,7 @@ export const createProperty = async (req: Request, res: Response) => {
       location,
       propertyType,
       rooms,
-      company: companyId,
+      company: company,
       status,
       amenities,
       coordinates,

@@ -1,71 +1,102 @@
 'use client';
 
-import { uploadMultipleImages } from '@/services/property/propertyApiHandler';
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { X } from 'lucide-react';
 
-const MultipleImageUpload: React.FC = () => {
-  const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [uploading, setUploading] = useState<boolean>(false);
+interface PropertyImageUploadProps {
+  propertyId: string;
+  onUploadComplete: (images: { url: string; public_id: string }[]) => void;
+}
 
-  // Hardcoded entityId for testing
-  const entityId = '675f53b145d584c4710f04db'; // Replace with your actual test ID
+export function PropertyImageUpload({
+  propertyId,
+  onUploadComplete,
+}: PropertyImageUploadProps) {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setImages(files);
-      setPreviews(files.map((file) => URL.createObjectURL(file)));
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFiles(Array.from(event.target.files));
     }
   };
 
   const handleUpload = async () => {
-    if (images.length === 0) return alert('Please select images first.');
-
-    const formData = new FormData();
-    images.forEach((image) => formData.append('images', image));
-    formData.append('entityId', entityId);
+    if (selectedFiles.length === 0) return;
 
     setUploading(true);
+    const formData = new FormData();
+    formData.append('propertyId', propertyId);
+    selectedFiles.forEach((file) => {
+      formData.append('images', file);
+    });
+
     try {
-      const response = await uploadMultipleImages(formData);
-      if (response.status === 'success') {
-        alert('Images uploaded successfully');
-        console.log('Uploaded Images:', response.data);
-      } else {
-        alert('Failed to upload images');
+      const response = await fetch('/image/properties/upload-multiple', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
       }
+
+      const result = await response.json();
+      onUploadComplete(result.data);
+      setSelectedFiles([]);
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error('Upload error:', error);
+      // Handle error (e.g., show error message to user)
     } finally {
       setUploading(false);
     }
   };
 
-  return (
-    <div className='multiple-image-upload'>
-      <input
-        type='file'
-        accept='image/*'
-        multiple
-        onChange={handleImageChange}
-      />
-      <div className='previews'>
-        {previews.map((src, idx) => (
-          <picture key={idx}>
-            <img
-              src={src}
-              alt={`Preview ${idx}`}
-              style={{ maxWidth: '100px' }}
-            />
-          </picture>
-        ))}
-      </div>
-      <button onClick={handleUpload} disabled={uploading}>
-        {uploading ? 'Uploading...' : 'Upload Images'}
-      </button>
-    </div>
-  );
-};
+  const removeFile = (index: number) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
 
-export default MultipleImageUpload;
+  return (
+    <Card>
+      <CardContent className='p-4'>
+        <Input
+          type='file'
+          multiple
+          onChange={handleFileChange}
+          className='mb-4'
+          ref={fileInputRef}
+          accept='image/*'
+        />
+        <div className='grid grid-cols-3 gap-4 mb-4'>
+          {selectedFiles.map((file, index) => (
+            <div key={index} className='relative'>
+              <img
+                src={URL.createObjectURL(file)}
+                alt={`Selected ${index + 1}`}
+                className='w-full h-32 object-cover rounded'
+              />
+              <Button
+                variant='destructive'
+                size='icon'
+                className='absolute top-1 right-1'
+                onClick={() => removeFile(index)}
+              >
+                <X className='h-4 w-4' />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button
+          onClick={handleUpload}
+          disabled={uploading || selectedFiles.length === 0}
+        >
+          {uploading ? 'Uploading...' : 'Upload Images'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}

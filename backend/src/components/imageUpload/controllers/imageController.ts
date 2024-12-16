@@ -66,8 +66,8 @@ export const uploadMultiplePropertyImages = async (
   req: Request,
   res: Response
 ) => {
-  const { entityId } = req.body;
-  if (!entityId) {
+  const { propertyId } = req.body;
+  if (!propertyId) {
     return res.status(400).json({ message: 'Property ID is required.' });
   }
 
@@ -76,14 +76,14 @@ export const uploadMultiplePropertyImages = async (
   }
 
   try {
-    const property = await Property.findById(entityId);
+    const property = await Property.findById(propertyId);
     if (!property) {
       return res.status(404).json({ message: 'Property not found.' });
     }
 
     const uploadedImages = await uploadImagesToCloudinary(
       (req.files as Express.Multer.File[]).map((file) => file.buffer),
-      `property_images/${entityId}`
+      `property_images/${propertyId}`
     );
 
     property.images.push(

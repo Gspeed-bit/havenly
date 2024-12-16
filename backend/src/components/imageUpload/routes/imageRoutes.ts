@@ -17,9 +17,14 @@ router.post(
   adminMiddleware,
   upload.array('images', 10), // Limit the number of images if needed
   (req, res, next) => {
-    console.log('Request Body:', req.body); // Should include propertyId
     if (!req.body.propertyId) {
       return res.status(400).json({ message: 'Property id is required' });
+    }
+    // Check if images are uploaded
+    if (!req.files || req.files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: 'At least one image is required.' });
     }
     next();
   },
@@ -27,7 +32,8 @@ router.post(
 );
 router.delete(
   '/properties/:id/images/:publicId',
-  adminMiddleware,deletePropertyImage
+  adminMiddleware,
+  deletePropertyImage
 );
 
 export default router;
