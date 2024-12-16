@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
 import mongoose from 'mongoose';
+import { uploadImageToCloudinary } from 'utils/cloudinary';
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
@@ -68,78 +69,42 @@ export const createProperty = async (req: Request, res: Response) => {
 //update property by id
 
 export const updateProperty = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    // Check if the user is an admin
-    if (!req.user?.isAdmin) {
-      return res.status(403).json({ message: 'Access denied. Admins only.' });
-    }
-
-    // Destructure only the necessary fields from the request body
-    const {
-      title,
-      description,
-      images,
-      price,
-      location,
-      propertyType,
-      rooms,
-      company,
-      status,
-      amenities,
-      coordinates,
-      isPublished,
-      agent,
-    } = req.body;
-
-    // Perform validation on the incoming data if needed
-    if (price && price <= 0) {
-      return res
-        .status(400)
-        .json({ message: 'Price must be greater than zero.' });
-    }
-
-    if (status && !['listed', 'sold', 'under contract'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status value.' });
-    }
-
-    // Find the property by its ID and update it
-    const updatedProperty = await Property.findByIdAndUpdate(
-      id,
-      {
-        title,
-        description,
-        images,
-        price,
-        location,
-        propertyType,
-        rooms,
-        company,
-        status,
-        amenities,
-        coordinates,
-        isPublished,
-        agent,
-        updatedAt: new Date(), // Optionally update the timestamp
-      },
-      {
-        new: true, // Return the updated document
-        runValidators: true, // Validate the update operation
-      }
-    );
-
-    // If the property is not found, return an error
-    if (!updatedProperty) {
-      return res.status(404).json({ message: 'Property not found.' });
-    }
-
-    // Respond with the updated property data
-    res.json(updatedProperty);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: 'Access denied. Admins only.' });
   }
+
+  const { images, ...propertyData } = req.body;
+
+  // Fetch the property by ID
+  const property = await Property.findById(id);
+
+  if (!property) {
+    return res.status(404).json({ message: 'Property not found.' });
+  }
+
+  // Update images if provided
+  if (images && images.length > 0) {
+    // Upload images to Cloudinary, if needed
+    const uploadedImages = [];
+    for (const image of images) {
+      const { secure_url, public_id } = await uploadImageToCloudinary(
+        image.buffer,
+        'property_images'
+      );
+      uploadedImages.push({ url: secure_url, public_id });
+    }
+    property.images.push(...uploadedImages);
+  }
+
+  // Update other property data
+  Object.assign(property, propertyData);
+
+  // Save the property
+  await property.save();
+
+  res.json(property);
 };
 
 //delete property by id

@@ -7,6 +7,7 @@ interface MultipleImageUploadProps {
   previews: string[];
   setImages: React.Dispatch<React.SetStateAction<File[]>>;
   setPreviews: React.Dispatch<React.SetStateAction<string[]>>;
+  handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // Add this line
 }
 
 const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({

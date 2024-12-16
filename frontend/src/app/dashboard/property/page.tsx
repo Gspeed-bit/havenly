@@ -16,7 +16,6 @@ export default function PropertyPage() {
     <div>
       <PropertyForm onSuccess={handleSuccess} />
       <PropertiesPage />
-      
     </div>
   );
 }

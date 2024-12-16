@@ -83,7 +83,7 @@ const PropertyPage = () => {
       </div> */}
 
       <button
-        onClick={() => router.push(`/dashboard/property/edit/${property._id}`)}
+        onClick={() => router.push(`/dashboard/property/${property._id}`)}
         className='bg-primary_main text-white py-1 px-2 rounded'
       >
         Edit Property

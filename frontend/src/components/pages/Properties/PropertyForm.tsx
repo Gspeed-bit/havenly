@@ -41,6 +41,7 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
   });
 
   const [images, setImages] = useState<File[]>([]); // Store local image files
+  const [previews, setPreviews] = useState<string[]>([]); // Image previews for UI
   const [companies, setCompanies] = useState<CompanyData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,38 +68,25 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImages(files);
+      setPreviews(files.map((file) => URL.createObjectURL(file)));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Upload images using the correct handler
-    let uploadedImageUrls: { url: string; public_id: string }[] = [];
-    if (images.length > 0) {
-      try {
-        const uploadFormData = new FormData();
-        images.forEach((image) => uploadFormData.append('images', image));
-
-        const response = await uploadMultipleImages(uploadFormData);
-
-        if (response.status === 'success') {
-          uploadedImageUrls = Array.isArray(response.data) ? response.data : [response.data];
-        } else {
-          throw new Error(response.message || 'Image upload failed.');
-        }
-      } catch (error) {
-        console.error(error);
-        setError('Image upload failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-    }
-
+    // Prepare property data
     const propertyData: Property = {
       ...formData,
       price: parseFloat(formData.price.toString()),
       rooms: parseInt(formData.rooms.toString(), 10),
-      images: uploadedImageUrls, // Use uploaded image URLs
+      images: [], // Start with no images
       _id: initialData?._id || '',
       company: formData.companyId,
       amenities: formData.amenities.split(',').map((amenity) => amenity.trim()),
@@ -113,35 +101,90 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
       sold: formData.sold,
     };
 
-    const response = initialData
-      ? await updateProperty(initialData._id, propertyData) // Update
-      : await createProperty(propertyData); // Create
+    // Create or update property based on the presence of initialData
+    let response;
+    try {
+      response = initialData
+        ? await updateProperty(initialData._id, propertyData) // Update
+        : await createProperty(propertyData); // Create
+    } catch (error) {
+      console.error(error);
+      setError('Property submission failed. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    if (response.status !== 'success') {
+      setError(response.message);
+      setLoading(false);
+      return;
+    }
+
+    // Now that the property is created, upload the images
+    const propertyId = response.data._id; // Get the property ID from the response
+    console.log('Property ID:', propertyId);
+
+    let uploadedImageUrls: { url: string; public_id: string }[] = [];
+    if (images.length > 0) {
+      try {
+        const uploadFormData = new FormData();
+        images.forEach((image) => uploadFormData.append('images', image));
+
+        const uploadResponse = await uploadMultipleImages(uploadFormData);
+        console.log(uploadResponse);
+
+        if (uploadResponse.status === 'success') {
+          uploadedImageUrls = Array.isArray(uploadResponse.data)
+            ? uploadResponse.data
+            : [uploadResponse.data];
+        } else {
+          throw new Error(uploadResponse.message || 'Image upload failed.');
+        }
+      } catch (error) {
+        console.error(error);
+        setError('Image upload failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Update the property with the uploaded image URLs
+    try {
+      const updateResponse = await updateProperty(propertyId, {
+        images: uploadedImageUrls, // Add images to the property
+      });
+
+      if (updateResponse.status === 'success') {
+        // Reset the form and images
+        setFormData({
+          title: '',
+          description: '',
+          price: '',
+          location: '',
+          propertyType: '',
+          rooms: '',
+          companyId: '',
+          status: 'listed',
+          amenities: '',
+          coordinates: { lat: '', lng: '' },
+          isPublished: false,
+          agentName: '',
+          agentContact: '',
+          sold: false,
+        });
+        setImages([]);
+        setPreviews([]);
+        setError(null);
+        onSuccess();
+      } else {
+        setError(updateResponse.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setError('Failed to update property with images.');
+    }
 
     setLoading(false);
-
-    if (response.status === 'success') {
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        location: '',
-        propertyType: '',
-        rooms: '',
-        companyId: '',
-        status: 'listed',
-        amenities: '',
-        coordinates: { lat: '', lng: '' },
-        isPublished: false,
-        agentName: '',
-        agentContact: '',
-        sold: false,
-      });
-      setImages([]);
-      setError(null);
-      onSuccess();
-    } else {
-      setError(response.message);
-    }
   };
 
   return (
@@ -259,7 +302,6 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         value={formData.companyId}
         onChange={handleInputChange}
         className='w-full border p-2 rounded'
-        required
       >
         <option value=''>Select Company</option>
         {companies.map((company) => (
@@ -269,47 +311,20 @@ const PropertyForm = ({ initialData, onSuccess }: PropertyFormProps) => {
         ))}
       </select>
 
+      <MultipleImageUpload
+        images={images}
+        previews={previews}
+        setImages={setImages}
+        setPreviews={setPreviews}
+        handleImageChange={handleImageChange}
+      />
       {error && <p className='text-red-500'>{error}</p>}
-
-      <div>
-        <label className='block font-medium'>Sold</label>
-        <input
-          type='checkbox'
-          name='sold'
-          checked={formData.sold}
-          onChange={handleInputChange}
-          className='w-5 h-5'
-        />
-      </div>
-
-      <div>
-        <label className='block font-medium'>Is Published</label>
-        <input
-          type='checkbox'
-          name='isPublished'
-          checked={formData.isPublished}
-          onChange={handleInputChange}
-          className='w-5 h-5'
-        />
-      </div>
-
-      <div className='space-y-2'>
-        <MultipleImageUpload
-          images={images}
-          setImages={setImages}
-          previews={[]} // Assuming you have a previews state or you can create one
-          setPreviews={() => {}} // Assuming you have a setPreviews function or you can create one
-        />
-      </div>
-
-      {error && <p className='text-red-500'>{error}</p>}
-
       <button
         type='submit'
-        className={`w-full p-2 rounded text-white ${loading ? 'bg-primary_main' : 'bg-red-500'}`}
         disabled={loading}
+        className='w-full bg-blue-500 text-white p-2 rounded'
       >
-        {loading ? 'Submitting...' : 'Submit'}
+        {loading ? 'Submitting...' : 'Submit Property'}
       </button>
     </form>
   );

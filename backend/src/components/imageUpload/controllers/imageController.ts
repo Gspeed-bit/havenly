@@ -64,6 +64,9 @@ export const uploadMultiplePropertyImages = async (
   res: Response
 ) => {
   const { entityId } = req.body;
+   if (!entityId) {
+     return res.status(400).json({ message: 'Property ID is required.' });
+   }
 
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No images uploaded' });
