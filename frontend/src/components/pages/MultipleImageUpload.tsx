@@ -1,27 +1,44 @@
 'use client';
 
-import React from 'react';
+import { uploadMultipleImages } from '@/services/property/propertyApiHandler';
+import { useState } from 'react';
 
-interface MultipleImageUploadProps {
-  images: File[];
-  previews: string[];
-  setImages: React.Dispatch<React.SetStateAction<File[]>>;
-  setPreviews: React.Dispatch<React.SetStateAction<string[]>>;
-  handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // Add this line
-}
+const MultipleImageUpload: React.FC = () => {
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
 
-const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  images,
-  previews,
-  setImages,
-  setPreviews,
-}) => {
+  // Hardcoded entityId for testing
+  const entityId = '675f53b145d584c4710f04db'; // Replace with your actual test ID
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setImages(files);
       setPreviews(files.map((file) => URL.createObjectURL(file)));
+    }
+  };
+
+  const handleUpload = async () => {
+    if (images.length === 0) return alert('Please select images first.');
+
+    const formData = new FormData();
+    images.forEach((image) => formData.append('images', image));
+    formData.append('entityId', entityId);
+
+    setUploading(true);
+    try {
+      const response = await uploadMultipleImages(formData);
+      if (response.status === 'success') {
+        alert('Images uploaded successfully');
+        console.log('Uploaded Images:', response.data);
+      } else {
+        alert('Failed to upload images');
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -44,6 +61,9 @@ const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
           </picture>
         ))}
       </div>
+      <button onClick={handleUpload} disabled={uploading}>
+        {uploading ? 'Uploading...' : 'Upload Images'}
+      </button>
     </div>
   );
 };

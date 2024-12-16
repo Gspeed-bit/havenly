@@ -16,6 +16,13 @@ router.post(
   '/properties/upload-multiple',
   adminMiddleware,
   upload.array('images', 10), // Limit the number of images if needed
+  (req, res, next) => {
+    console.log('Request Body:', req.body); // Should include propertyId
+    if (!req.body.propertyId) {
+      return res.status(400).json({ message: 'Property id is required' });
+    }
+    next();
+  },
   uploadMultiplePropertyImages
 );
 router.delete(
