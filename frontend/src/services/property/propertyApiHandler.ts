@@ -85,15 +85,14 @@ export const deleteProperty = async (
 };
 
 // Upload multipls property images
-// Upload multiple property images
 export const uploadMultipleImages = async (
   formData: FormData
 ): Promise<ApiResponse<{ url: string; public_id: string }>> => {
   try {
     const response = await apiHandler<{ url: string; public_id: string }>(
-      'image/properties/upload-multiple',
-      'POST',
-      formData
+      'image/properties/upload-multiple', 
+      'POST', 
+      formData 
     );
     return response;
   } catch (error) {
@@ -101,7 +100,6 @@ export const uploadMultipleImages = async (
     throw error;
   }
 };
-
 // Delete property image
 export const deleteImage = async (
   id: string,

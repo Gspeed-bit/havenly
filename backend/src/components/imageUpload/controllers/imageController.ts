@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-import { uploadImageToCloudinary } from 'utils/cloudinary';
+import {
+  uploadImagesToCloudinary,
+  uploadImageToCloudinary,
+} from 'utils/cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
 import User from '@components/user/models/userModel';
 import Property from '@components/property/models/propertyModel';
@@ -64,9 +67,9 @@ export const uploadMultiplePropertyImages = async (
   res: Response
 ) => {
   const { entityId } = req.body;
-   if (!entityId) {
-     return res.status(400).json({ message: 'Property ID is required.' });
-   }
+  if (!entityId) {
+    return res.status(400).json({ message: 'Property ID is required.' });
+  }
 
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No images uploaded' });
@@ -78,18 +81,17 @@ export const uploadMultiplePropertyImages = async (
       return res.status(404).json({ message: 'Property not found.' });
     }
 
-    const uploadedImages = [];
+    const uploadedImages = await uploadImagesToCloudinary(
+      (req.files as Express.Multer.File[]).map((file) => file.buffer),
+      `property_images/${entityId}`
+    );
 
-    for (const file of req.files as Express.Multer.File[]) {
-      const folderPath = `property_images/${entityId}`;
-      const { secure_url, public_id } = await uploadImageToCloudinary(
-        file.buffer,
-        folderPath
-      );
-      uploadedImages.push({ url: secure_url, public_id });
-    }
-
-    property.images.push(...uploadedImages);
+    property.images.push(
+      ...uploadedImages.map((image) => ({
+        url: image.secure_url,
+        public_id: image.public_id,
+      }))
+    );
     await property.save();
 
     res.status(200).json({

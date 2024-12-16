@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
 import mongoose from 'mongoose';
-import { uploadImageToCloudinary } from 'utils/cloudinary';
+import { uploadImagesToCloudinary, uploadImageToCloudinary } from 'utils/cloudinary';
+
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
@@ -40,7 +41,6 @@ export const createProperty = async (req: Request, res: Response) => {
     const newProperty = await Property.create({
       title,
       description,
-      images,
       price,
       location,
       propertyType,
@@ -53,10 +53,21 @@ export const createProperty = async (req: Request, res: Response) => {
       agent,
     });
 
+    // Handle images upload if present
+    if (images && images.length > 0) {
+      const uploadedImages = await uploadImagesToCloudinary(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        images.map((image: any) => image.buffer),
+        `property_images/${newProperty._id}`
+      );
+      newProperty.images.push(...uploadedImages.map(image => ({ url: image.secure_url, public_id: image.public_id })));
+      await newProperty.save();
+    }
+
     // Add the property to the company's properties list
     existingCompany.properties.push(
       newProperty._id as mongoose.Schema.Types.ObjectId
-    ); // Cast as ObjectId
+    );
     await existingCompany.save();
 
     res.status(201).json(newProperty);

@@ -32,3 +32,43 @@ export const uploadImageToCloudinary = async (
       .end(fileBuffer);
   });
 };
+
+
+// Multiple file upload function
+export const uploadImagesToCloudinary = async (
+  filesBuffer: Buffer[],
+  folder: string
+): Promise<{ secure_url: string; public_id: string }[]> => {
+  return new Promise((resolve, reject) => {
+    const uploadedImages: { secure_url: string; public_id: string }[] = [];
+
+    // Iterate over each file and upload
+    let uploadCount = 0;
+
+    filesBuffer.forEach((fileBuffer) => {
+      cloudinary.uploader.upload_stream(
+        { folder, resource_type: 'image' },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            return reject(error);
+          }
+
+          if (result) {
+            uploadedImages.push({
+              secure_url: result.secure_url,
+              public_id: result.public_id,
+            });
+          }
+
+          uploadCount++;
+
+          // Resolve when all images are uploaded
+          if (uploadCount === filesBuffer.length) {
+            resolve(uploadedImages);
+          }
+        }
+      ).end(fileBuffer);
+    });
+  });
+};
