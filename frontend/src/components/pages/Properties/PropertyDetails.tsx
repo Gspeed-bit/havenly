@@ -9,8 +9,8 @@ import {
   fetchPropertyById,
   Property,
 } from '@/services/property/propertyApiHandler';
+import { PropertyMap } from '../property-map';
 import { ImageCarousel } from '../image-carousel';
-
 
 export function PropertyDetail() {
   const [property, setProperty] = useState<Property | null>(null);
@@ -110,11 +110,11 @@ export function PropertyDetail() {
         </div>
         {property.coordinates && (
           <div>
-            <p className='font-semibold'>Coordinates</p>
-            <p>
-              Latitude: {property.coordinates.lat}, Longitude:{' '}
-              {property.coordinates.lng}
-            </p>
+            <p className='font-semibold mb-2'>Location</p>
+            <PropertyMap
+              lat={property.coordinates.lat}
+              lng={property.coordinates.lng}
+            />
           </div>
         )}
       </CardContent>
