@@ -1,12 +1,9 @@
-import PropertyDetails from '@/components/pages/Properties/PropertyDetails';
-import React from 'react';
+import { PropertyDetail } from "@/components/pages/Properties/PropertyDetails";
 
-const page = () => {
+export default function PropertyPage() {
   return (
-    <div>
-      <PropertyDetails />
-    </div>
+    <main className='container mx-auto px-4 py-8'>
+      <PropertyDetail />
+    </main>
   );
-};
-
-export default page;
+}

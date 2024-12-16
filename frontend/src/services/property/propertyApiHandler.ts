@@ -24,6 +24,21 @@ export interface Property {
   sold: boolean;
 }
 
+export interface PropertySingleResponse {
+  status: string;
+  message: string;
+  propertyData: Property; // This is the nested company object
+}
+export interface PropertyResponse {
+  data: Property[]; // Array of properties
+  pagination: {
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+
+
 export const createProperty = async (
   data: Property,
 
@@ -41,15 +56,21 @@ export const uploadMultipleImages = async (
   );
 };
 
+// Fetch all properties
 export const fetchProperties = async (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters: Record<string, any> = {},
   page: number = 1,
   limit: number = 10
-): Promise<ApiResponse<Property[]>> => {
-  const queryParams = { ...filters, page, limit };
-  return apiHandler<Property[]>('/properties', 'GET', undefined, queryParams);
+): Promise<ApiResponse<PropertyResponse>> => {
+  const queryParams = { ...filters, page, limit }; // Combine filters with pagination params
+  return apiHandler<PropertyResponse>(
+    '/properties',
+    'GET',
+    undefined,
+    queryParams
+  );
 };
-
 export const fetchPropertyById = async (
   id: string
 ): Promise<ApiResponse<Property>> => {

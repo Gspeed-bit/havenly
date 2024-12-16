@@ -146,9 +146,8 @@ export function CreatePropertyForm() {
           type: 'success',
           message: 'Property created successfully',
         });
-        router.push(`/properties/${newProperty._id}`);
       }
-
+      router.push(`/dashboard/properties/${newProperty._id}`);
     } catch (error) {
       console.error('Error creating property:', error);
       setAlertState({
@@ -311,7 +310,11 @@ export function CreatePropertyForm() {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  agent: { ...prev.agent, name: e.target.value, contact: prev.agent?.contact || '' },
+                  agent: {
+                    ...prev.agent,
+                    name: e.target.value,
+                    contact: prev.agent?.contact || '',
+                  },
                 }))
               }
             />
@@ -325,7 +328,11 @@ export function CreatePropertyForm() {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  agent: { ...prev.agent, contact: e.target.value, name: prev.agent?.name || '' },
+                  agent: {
+                    ...prev.agent,
+                    contact: e.target.value,
+                    name: prev.agent?.name || '',
+                  },
                 }))
               }
             />

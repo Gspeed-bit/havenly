@@ -1,145 +1,101 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   fetchProperties,
-  deleteProperty,
   Property,
 } from '@/services/property/propertyApiHandler';
-import { useRouter } from 'next/navigation';
 
-// Define a type for the pagination data
 interface Pagination {
   total: number;
   currentPage: number;
   totalPages: number;
 }
 
-const PropertiesPage = () => {
+export function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     currentPage: 1,
     totalPages: 1,
   });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); // Add a loading state
-  const router = useRouter();
+  const [itemsPerPage] = useState(10);
 
-  const loadProperties = async (page: number) => {
-    try {
-      setLoading(true); // Show loading when fetching data
-      const response = await fetchProperties({ page });
-
-      if (response.status === 'error') {
-        setError(response.message);
-      } else if ('data' in response) {
-        setProperties(response.data); // Set properties
-      }
-    } catch (error) {
-      setError('Failed to fetch properties. Please try again later.');
-    } finally {
-      setLoading(false); // Set loading to false once fetching is done
-    }
-  };
-
-  // Fetch properties when the component mounts or page changes
   useEffect(() => {
-    loadProperties(pagination.currentPage);
-  }, [pagination.currentPage]);
+    const loadProperties = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchProperties(
+          {},
+          pagination.currentPage,
+          itemsPerPage
+        );
+        if (response.status === 'success') {
+          setProperties(response.data.data);
+          setPagination({
+            total: response.data.pagination.total,
+            currentPage: response.data.pagination.currentPage,
+            totalPages: response.data.pagination.totalPages,
+          });
+        } else {
+          setError('Failed to load properties');
+        }
+      } catch (err) {
+        setError('An error occurred while fetching properties');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProperties();
+  }, [pagination.currentPage, itemsPerPage]);
 
   const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= pagination.totalPages) {
-      setPagination((prev) => ({ ...prev, currentPage: newPage }));
-    }
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
   };
 
-  const handleDelete = async (id: string) => {
-    const isConfirmed = confirm(
-      'Are you sure you want to delete this property?'
-    );
-    if (isConfirmed) {
-      try {
-        const deleteResponse = await deleteProperty(id);
-        if (deleteResponse.status === 'success') {
-          setProperties((prevProperties) =>
-            prevProperties.filter((property) => property._id !== id)
-          );
-          router.refresh(); // Reload the list
-        } else {
-          alert(deleteResponse.message);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        alert(
-          'An error occurred while deleting the property. Please try again.'
-        );
-      }
-    }
-  };
-
-  if (loading) {
-    return <p>Loading properties...</p>; // Show a loading message while data is being fetched
-  }
-
-  if (error) {
-    return <p>Error: {error}</p>; // Show an error message if fetching failed
-  }
+  if (loading) return <div>Loading properties...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
-      <h1>Properties</h1>
-      {/* <ul>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4'>
         {properties.map((property) => (
-          <li key={property._id} className='border p-4 rounded mb-4'>
-            <a href={`/dashboard/property/${property._id}`}>
-              <h2>{property.title}</h2>
-              <p>{property.description}</p>
-              <p>Price: ${property.price}</p>
-              <p>Status: {property.status}</p>
-              <p>Location: {property.location}</p>
-              <p>Amenities: {property.amenities.join(', ')}</p>
-              <p>Sold: {property.sold ? 'Yes' : 'No'}</p>
-              <p>Published: {property.isPublished ? 'Yes' : 'No'}</p>
-            </a>
-            <button
-              onClick={() =>
-                router.push(`/dashboard/property/edit/${property._id}`)
-              }
-              className='bg-primary_main text-white py-1 px-2 rounded'
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => property._id && handleDelete(property._id)}
-              className='bg-red-500 text-white py-1 px-2 rounded ml-2'
-            >
-              Delete
-            </button>
-          </li>
+          <Link href={`/dashboard/property/${property._id}`} key={property._id}>
+            <Card className='hover:shadow-lg transition-shadow'>
+              <CardHeader>
+                <CardTitle>{property.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>Price: ${property.price}</p>
+                <p>Location: {property.location}</p>
+                <p>Type: {property.propertyType}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
-      </ul> */}
-      <div className='flex justify-between mt-4'>
-        <button
-          disabled={pagination.currentPage === 1}
+      </div>
+      <div className='flex justify-center items-center space-x-2 mt-4'>
+        <Button
           onClick={() => handlePageChange(pagination.currentPage - 1)}
-          className='bg-primary_main text-white py-1 px-2 rounded disabled:opacity-50'
+          disabled={pagination.currentPage === 1}
         >
           Previous
-        </button>
-        <p>
+        </Button>
+        <span>
           Page {pagination.currentPage} of {pagination.totalPages}
-        </p>
-        <button
-          disabled={pagination.currentPage === pagination.totalPages}
+        </span>
+        <Button
           onClick={() => handlePageChange(pagination.currentPage + 1)}
-          className='bg-primary_main text-white py-1 px-2 rounded disabled:opacity-50'
+          disabled={pagination.currentPage === pagination.totalPages}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );
-};
-
-export default PropertiesPage;
+}
