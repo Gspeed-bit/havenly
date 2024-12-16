@@ -29,6 +29,7 @@ export function PropertyDetail() {
           setError('Failed to load property details');
         }
       } catch (err) {
+        console.log(err);
         setError('An error occurred while fetching property details');
       } finally {
         setLoading(false);
@@ -64,7 +65,10 @@ export function PropertyDetail() {
       </CardHeader>
       <CardContent className='space-y-6'>
         {property.images && property.images.length > 0 ? (
-          <ImageCarousel images={property.images.map(image => image.url)} alt={property.title} />
+          <ImageCarousel
+            images={property.images.map((image) => image.url)}
+            alt={property.title}
+          />
         ) : (
           <div className='relative h-96 w-full bg-gray-200 flex items-center justify-center rounded-lg'>
             <p className='text-gray-500'>No images available</p>

@@ -54,6 +54,7 @@ export function PropertyList() {
           setError('Failed to load properties');
         }
       } catch (err) {
+        console.log(err);
         setError('An error occurred while fetching properties');
       } finally {
         setLoading(false);

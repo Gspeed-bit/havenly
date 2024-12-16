@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -464,11 +463,13 @@ export function CreatePropertyForm() {
             <div className='grid grid-cols-2 gap-4 mt-4'>
               {previewImages.map((image, index) => (
                 <div key={index} className='relative'>
-                  <img
-                    src={image}
-                    alt={`Selected ${index + 1}`}
-                    className='w-full h-32 object-cover rounded'
-                  />
+                 <picture>
+                    <img
+                      src={image}
+                      alt={`Selected ${index + 1}`}
+                      className='w-full h-32 object-cover rounded'
+                    />
+                 </picture>
                   <Button
                     variant='destructive'
                     size='icon'

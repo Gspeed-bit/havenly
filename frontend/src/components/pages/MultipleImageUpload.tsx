@@ -74,11 +74,13 @@ export function PropertyImageUpload({
         <div className='grid grid-cols-3 gap-4 mb-4'>
           {selectedFiles.map((file, index) => (
             <div key={index} className='relative'>
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`Selected ${index + 1}`}
-                className='w-full h-32 object-cover rounded'
-              />
+              <picture>
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`Selected ${index + 1}`}
+                  className='w-full h-32 object-cover rounded'
+                />
+              </picture>
               <Button
                 variant='destructive'
                 size='icon'
