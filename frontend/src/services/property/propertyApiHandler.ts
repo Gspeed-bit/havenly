@@ -96,6 +96,7 @@ export const uploadMultipleImages = async (
 };
 
 // Delete property image
+// Delete property image
 export const deleteImage = async (
   id: string,
   publicId: string

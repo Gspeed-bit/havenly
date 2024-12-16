@@ -1,11 +1,17 @@
 'use client';
 
-import { uploadMultipleImages } from '@/services/property/propertyApiHandler';
+import {
+  uploadMultipleImages,
+  deleteImage,
+} from '@/services/property/propertyApiHandler';
 import { useState } from 'react';
 
 const MultipleImageUpload: React.FC = () => {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<
+    { url: string; public_id: string }[]
+  >([]);
   const [uploading, setUploading] = useState<boolean>(false);
 
   // Hardcoded entityId for testing
@@ -19,26 +25,49 @@ const MultipleImageUpload: React.FC = () => {
     }
   };
 
-  const handleUpload = async () => {
-    if (images.length === 0) return alert('Please select images first.');
+const handleUpload = async () => {
+  if (images.length === 0) return alert('Please select images first.');
 
-    const formData = new FormData();
-    images.forEach((image) => formData.append('images', image));
-    formData.append('entityId', entityId);
+  const formData = new FormData();
+  images.forEach((image) => formData.append('images', image));
+  formData.append('entityId', entityId);
 
-    setUploading(true);
+  setUploading(true);
+  try {
+    const response = await uploadMultipleImages(formData);
+    if (response.status === 'success') {
+      // Ensure response.data is wrapped as an array
+      setUploadedImages(
+        Array.isArray(response.data) ? response.data : [response.data]
+      );
+      alert('Images uploaded successfully');
+      console.log('Uploaded Images:', response.data);
+    } else {
+      alert('Failed to upload images');
+    }
+  } catch (error) {
+    console.error('Upload failed:', error);
+  } finally {
+    setUploading(false);
+  }
+};
+
+
+
+
+  const handleDeleteImage = async (publicId: string) => {
     try {
-      const response = await uploadMultipleImages(formData);
+      const response = await deleteImage(entityId, publicId);
       if (response.status === 'success') {
-        alert('Images uploaded successfully');
-        console.log('Uploaded Images:', response.data);
+        setUploadedImages((prev) =>
+          prev.filter((image) => image.public_id !== publicId)
+        );
+        alert('Image deleted successfully');
       } else {
-        alert('Failed to upload images');
+        alert('Failed to delete image');
       }
     } catch (error) {
-      console.error('Upload failed:', error);
-    } finally {
-      setUploading(false);
+      console.error('Delete failed:', error);
     }
   };
 
@@ -64,6 +93,24 @@ const MultipleImageUpload: React.FC = () => {
       <button onClick={handleUpload} disabled={uploading}>
         {uploading ? 'Uploading...' : 'Upload Images'}
       </button>
+
+      <div className='uploaded-images'>
+        {uploadedImages.map((image, idx) => (
+          <div key={image.public_id || idx} className='uploaded-image'>
+          
+            <picture>
+              <img
+                src={image.url}
+                alt='Uploaded'
+                style={{ maxWidth: '100px' }}
+              />
+            </picture>
+            <button onClick={() => handleDeleteImage(image.public_id)}>
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
