@@ -3,10 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import {
   fetchPropertyById,
   Property,
 } from '@/services/property/propertyApiHandler';
+import { ImageCarousel } from '../image-carousel';
+
 
 export function PropertyDetail() {
   const [property, setProperty] = useState<Property | null>(null);
@@ -33,41 +37,86 @@ export function PropertyDetail() {
 
     loadProperty();
   }, [propertyId]);
-  console.log(property);
 
-  if (loading) return <div>Loading property details...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!property) return <div>Property not found</div>;
+  if (loading) {
+    return (
+      <Card className='w-full max-w-3xl mx-auto'>
+        <CardHeader>
+          <Skeleton className='h-8 w-3/4' />
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <Skeleton className='h-64 w-full' />
+          <Skeleton className='h-4 w-1/2' />
+          <Skeleton className='h-4 w-3/4' />
+          <Skeleton className='h-4 w-full' />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) return <div className='text-red-500 text-center'>{error}</div>;
+  if (!property) return <div className='text-center'>Property not found</div>;
 
   return (
-    <Card className='w-full max-w-2xl mx-auto'>
+    <Card className='w-full max-w-3xl mx-auto'>
       <CardHeader>
-        <CardTitle>{property.title}</CardTitle>
+        <CardTitle className='text-3xl font-bold'>{property.title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p className='text-2xl font-bold mb-4'>Price: ${property.price}</p>
-        <p>
-          <strong>Location:</strong> {property.location}
-        </p>
-        <p>
-          <strong>Type:</strong> {property.propertyType}
-        </p>
-        <p>
-          <strong>Rooms:</strong> {property.rooms}
-        </p>
-        <p>
-          <strong>Description:</strong> {property.description}
-        </p>
-        <p>
-          <strong>Status:</strong> {property.status}
-        </p>
-        <p>
-          <strong>Amenities:</strong> {property.amenities?.join(', ')}
-        </p>
-        <p>
-          <strong>Agent:</strong> {property.agent?.name} (
-          {property.agent?.contact})
-        </p>
+      <CardContent className='space-y-6'>
+        {property.images && property.images.length > 0 ? (
+          <ImageCarousel images={property.images.map(image => image.url)} alt={property.title} />
+        ) : (
+          <div className='relative h-96 w-full bg-gray-200 flex items-center justify-center rounded-lg'>
+            <p className='text-gray-500'>No images available</p>
+          </div>
+        )}
+        <div className='flex justify-between items-center'>
+          <p className='text-3xl font-bold text-primary'>
+            ${property.price.toLocaleString()}
+          </p>
+          <Badge
+            variant={property.status === 'sold' ? 'destructive' : 'default'}
+          >
+            {property.status}
+          </Badge>
+        </div>
+        <div className='grid grid-cols-2 gap-4'>
+          <div>
+            <p className='font-semibold'>Location</p>
+            <p>{property.location}</p>
+          </div>
+          <div>
+            <p className='font-semibold'>Property Type</p>
+            <p>{property.propertyType}</p>
+          </div>
+          <div>
+            <p className='font-semibold'>Rooms</p>
+            <p>{property.rooms}</p>
+          </div>
+          <div>
+            <p className='font-semibold'>Amenities</p>
+            <p>{property.amenities?.join(', ') || 'None listed'}</p>
+          </div>
+        </div>
+        <div>
+          <p className='font-semibold'>Description</p>
+          <p className='mt-2'>{property.description}</p>
+        </div>
+        <div>
+          <p className='font-semibold'>Agent</p>
+          <p>
+            {property.agent?.name} ({property.agent?.contact})
+          </p>
+        </div>
+        {property.coordinates && (
+          <div>
+            <p className='font-semibold'>Coordinates</p>
+            <p>
+              Latitude: {property.coordinates.lat}, Longitude:{' '}
+              {property.coordinates.lng}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

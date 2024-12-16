@@ -2,11 +2,15 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-   images: {
+  images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'example.com', // Allow external images from this domain
+        hostname: 'example.com', // Example domain
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com', // Allow images from Cloudinary
       },
     ],
   },
@@ -16,4 +20,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

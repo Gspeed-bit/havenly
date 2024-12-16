@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   createProperty,
@@ -43,12 +44,13 @@ export function CreatePropertyForm() {
     company: '',
     status: 'listed',
     amenities: [],
-    coordinates: { lat: 0, lng: 0 },
+    coordinates: { lat: 0 as number, lng: 0 as number },
     isPublished: false,
     agent: { name: '', contact: '' },
     sold: false,
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [alertState, setAlertState] = useState<AlertState>({
     type: null,
     message: '',
@@ -89,8 +91,25 @@ export function CreatePropertyForm() {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      setSelectedFiles(Array.from(event.target.files));
+      const files = Array.from(event.target.files);
+      setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewImages((prevImages) => [
+            ...prevImages,
+            reader.result as string,
+          ]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setPreviewImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -125,7 +144,6 @@ export function CreatePropertyForm() {
         const imageUploadResponse = await uploadMultipleImages(imageFormData);
 
         if (imageUploadResponse.status !== 'success') {
-          // If image upload fails, we might want to delete the created property or handle it differently
           console.error(
             'Failed to upload images:',
             imageUploadResponse.message
@@ -147,7 +165,7 @@ export function CreatePropertyForm() {
           message: 'Property created successfully',
         });
       }
-      router.push(`/dashboard/properties/${newProperty._id}`);
+      router.push(`/dashboard/property/${newProperty._id}`);
     } catch (error) {
       console.error('Error creating property:', error);
       setAlertState({
@@ -162,6 +180,18 @@ export function CreatePropertyForm() {
     }
   };
 
+  const propertyTypes = [
+    'Apartment',
+    'House',
+    'Condo',
+    'Townhouse',
+    'Villa',
+    'Other',
+  ];
+
+  // Remove duplicates from the array
+  const uniquePropertyTypes = Array.from(new Set(propertyTypes));
+
   return (
     <Card className='w-full max-w-2xl mx-auto'>
       <CardHeader>
@@ -174,6 +204,7 @@ export function CreatePropertyForm() {
             <Input
               id='title'
               name='title'
+              placeholder='Enter the property title'
               value={formData.title}
               onChange={handleInputChange}
               required
@@ -184,6 +215,7 @@ export function CreatePropertyForm() {
             <Textarea
               id='description'
               name='description'
+              placeholder='Enter a detailed description of the property'
               value={formData.description}
               onChange={handleInputChange}
               required
@@ -195,6 +227,7 @@ export function CreatePropertyForm() {
               id='price'
               name='price'
               type='number'
+              placeholder='Enter the price in your currency'
               value={formData.price}
               onChange={handleInputChange}
               required
@@ -205,21 +238,79 @@ export function CreatePropertyForm() {
             <Input
               id='location'
               name='location'
+              placeholder='Enter the price in your currency'
               value={formData.location}
               onChange={handleInputChange}
               required
             />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='propertyType'>Property Type</Label>
+            <Label htmlFor='latitude'>Latitude</Label>
             <Input
-              id='propertyType'
-              name='propertyType'
-              value={formData.propertyType}
-              onChange={handleInputChange}
+              id='latitude'
+              name='latitude'
+              type='number'
+              step='any'
+              placeholder='Enter latitude'
+              value={formData.coordinates?.lat}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  coordinates: {
+                    ...prev.coordinates,
+                    lat: parseFloat(e.target.value) || 0,
+                  } as { lat: number; lng: number },
+                }))
+              }
               required
             />
           </div>
+          <div className='space-y-2'>
+            <Label htmlFor='longitude'>Longitude</Label>
+            <Input
+              id='longitude'
+              name='longitude'
+              type='number'
+              step='any'
+              placeholder='Enter longitude'
+              value={formData.coordinates?.lng}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  coordinates: {
+                    ...prev.coordinates,
+                    lng: parseFloat(e.target.value) || 0,
+                  } as { lat: number; lng: number },
+                }))
+              }
+              required
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='propertyType'>Property Type</Label>
+            <Select
+              name='propertyType'
+              onValueChange={(value) =>
+                handleSelectChange('propertyType', value)
+              }
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select a Property Type' />
+              </SelectTrigger>
+              <SelectContent>
+                {uniquePropertyTypes.map((propertyType, index) => (
+                  <SelectItem
+                    key={`${propertyType}-${index}`}
+                    value={propertyType || ''}
+                  >
+                    {propertyType}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className='space-y-2'>
             <Label htmlFor='rooms'>Number of Rooms</Label>
             <Input
@@ -272,6 +363,7 @@ export function CreatePropertyForm() {
             <Input
               id='amenities'
               name='amenities'
+              placeholder='e.g., Pool, Gym, Parking'
               value={formData.amenities?.join(', ')}
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -302,10 +394,29 @@ export function CreatePropertyForm() {
             </Select>
           </div>
           <div className='space-y-2'>
+            <Label htmlFor='sold'>Sold</Label>
+            <Select
+              name='sold'
+              onValueChange={(value) =>
+                handleSelectChange('sold', (value === 'true').toString())
+              }
+              defaultValue='false'
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Is property sold?' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='true'>Yes</SelectItem>
+                <SelectItem value='false'>No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className='space-y-2'>
             <Label htmlFor='agentName'>Agent Name</Label>
             <Input
               id='agentName'
               name='agentName'
+              placeholder="Enter the agent's name"
               value={formData.agent?.name}
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -324,6 +435,7 @@ export function CreatePropertyForm() {
             <Input
               id='agentContact'
               name='agentContact'
+              placeholder="Enter the agent's contact information"
               value={formData.agent?.contact}
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -348,6 +460,27 @@ export function CreatePropertyForm() {
               accept='image/*'
             />
           </div>
+          {previewImages.length > 0 && (
+            <div className='grid grid-cols-2 gap-4 mt-4'>
+              {previewImages.map((image, index) => (
+                <div key={index} className='relative'>
+                  <img
+                    src={image}
+                    alt={`Selected ${index + 1}`}
+                    className='w-full h-32 object-cover rounded'
+                  />
+                  <Button
+                    variant='destructive'
+                    size='icon'
+                    className='absolute top-1 right-1'
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    <X className='h-4 w-4' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
           {alertState.type && (
             <Alert
               variant={alertState.type === 'error' ? 'destructive' : 'default'}
