@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import Company from '../models/companyModel';
 import Property from '../models/propertyModel';
 import mongoose from 'mongoose';
-import { uploadImagesToCloudinary, uploadImageToCloudinary } from 'utils/cloudinary';
-
+import {
+  uploadImagesToCloudinary,
+  uploadImageToCloudinary,
+} from 'utils/cloudinary';
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
@@ -48,6 +50,7 @@ export const createProperty = async (req: Request, res: Response) => {
       coordinates,
       isPublished,
       agent,
+      adminId: req.user._id,
     });
 
     // Handle images upload if present
@@ -57,7 +60,12 @@ export const createProperty = async (req: Request, res: Response) => {
         images.map((image: any) => image.buffer),
         `property_images/${newProperty._id}`
       );
-      newProperty.images.push(...uploadedImages.map(image => ({ url: image.secure_url, public_id: image.public_id })));
+      newProperty.images.push(
+        ...uploadedImages.map((image) => ({
+          url: image.secure_url,
+          public_id: image.public_id,
+        }))
+      );
       await newProperty.save();
     }
 
@@ -155,8 +163,13 @@ export const getProperties = async (req: Request, res: Response) => {
       rooms,
     } = req.query;
 
+    // Ensure the user is authenticated and an admin
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filters: any = {};
+    const filters: any = { adminId: req.user._id }; // Filter properties for this specific admin
     if (city) filters.location = { $regex: city, $options: 'i' };
     if (propertyType) filters.propertyType = propertyType;
     if (priceRange) {
@@ -193,10 +206,16 @@ export const getPropertyById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const property = await Property.findById(id)
-      
+    const property = await Property.findById(id);
+
     if (!property) {
       return res.status(404).json({ message: 'Property not found.' });
+    }
+    // Check if the logged-in admin is the one who created this property
+    if (property.adminId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: 'Access denied. You are not authorized to view this property.',
+      });
     }
 
     res.json(property);
@@ -205,4 +224,3 @@ export const getPropertyById = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
-

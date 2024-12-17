@@ -15,6 +15,8 @@ export interface IProperty extends Document {
   coordinates?: { lat: number; lng: number }; // Geolocation coordinates
   isPublished: boolean; // Indicates if the property is published
   agent?: { name: string; contact: string }; // Agent managing the property
+  adminId: Schema.Types.ObjectId; // New field to store the admin's ID
+
   sold: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -55,6 +57,8 @@ const propertySchema = new Schema<IProperty>(
       contact: { type: String },
     },
     sold: { type: Boolean, default: false },
+
+    adminId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Admin ID who created the property
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );

@@ -10,7 +10,7 @@ export interface ICompany extends Document {
   website?: string; // Optional website URL
   description?: string; // Brief description about the company
   properties: mongoose.Schema.Types.ObjectId[]; // List of properties added by the company
-  adminId: mongoose.Schema.Types.ObjectId[]; // List of properties added by the company
+  adminId: mongoose.Schema.Types.ObjectId[]; 
   createdAt: Date;
   updatedAt: Date;
 }

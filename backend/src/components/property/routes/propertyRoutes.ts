@@ -351,8 +351,8 @@ const router = express.Router();
 
 
 router.post('/properties', adminMiddleware, createProperty);
-router.get('/properties', getProperties);
-router.get('/properties/:id', getPropertyById);
+router.get('/properties',adminMiddleware, getProperties);
+router.get('/properties/:id',adminMiddleware, getPropertyById);
 router.put('/properties/:id', adminMiddleware, updateProperty);
 router.delete('/properties/:id', adminMiddleware, deleteProperty);
 
