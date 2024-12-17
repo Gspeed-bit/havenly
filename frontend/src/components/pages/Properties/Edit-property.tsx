@@ -3,11 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,18 +13,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 import {
-  fetchPropertyById,
-  updateProperty,
-  deletePropertyImage,
+  // updateProperty,
   uploadMultipleImages,
+  deletePropertyImage,
+  fetchPropertyById,
   Property,
 } from '@/services/property/propertyApiHandler';
+import {
+  CompanyData,
+  fetchCompanies,
+} from '@/services/company/companyApiHandler';
+
+import { updateProperty as apiUpdateProperty } from '@/services/property/propertyApiHandler';
 import { AmenitiesInput } from './AmenitiesInputs';
+
+interface AlertState {
+  type: 'success' | 'error' | null;
+  message: string;
+}
 
 interface EditPropertyProps {
   propertyId: string;
@@ -34,34 +43,47 @@ interface EditPropertyProps {
 
 export function EditProperty({ propertyId }: EditPropertyProps) {
   const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<CompanyData[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [alertState, setAlertState] = useState<AlertState>({
+    type: null,
+    message: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alertState, setAlertState] = useState<{
-    type: 'success' | 'error' | null;
-    message: string;
-  }>({ type: null, message: '' });
-  const [newImages, setNewImages] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const loadProperty = async () => {
+    const loadPropertyAndCompanies = async () => {
       try {
-        const response = await fetchPropertyById(propertyId);
-        if (response.status === 'success') {
-          setProperty(response.data);
+        const [propertyResponse, companiesResponse] = await Promise.all([
+          fetchPropertyById(propertyId),
+          fetchCompanies(),
+        ]);
+
+        if (propertyResponse.status === 'success' && propertyResponse.data) {
+          setProperty(propertyResponse.data);
         } else {
-          setError('Failed to load property details');
+          setAlertState({ type: 'error', message: 'Failed to load property' });
         }
-      } catch (err) {
-        console.error(err);
-        setError('An error occurred while fetching property details');
+
+        if (companiesResponse.status === 'success') {
+          setCompanies(companiesResponse.data.companies);
+        } else {
+          setAlertState({ type: 'error', message: 'Failed to load companies' });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setAlertState({
+          type: 'error',
+          message: 'An error occurred while loading data',
+        });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    loadProperty();
+    loadPropertyAndCompanies();
   }, [propertyId]);
 
   const handleInputChange = (
@@ -74,118 +96,143 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
   const handleSelectChange = (name: string, value: string) => {
     setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
   };
+  
+const handleRemoveImage = async (publicId: string) => {
+  if (!property?._id) return;
 
-  const handleAmenitiesChange = (amenities: string[]) => {
-    setProperty((prev) => (prev ? { ...prev, amenities } : null));
-  };
+  try {
+    // Ensure the URL matches the correct endpoint path
+    const response = await deletePropertyImage(property._id, publicId);
+    console.log(response); // Log the response to see if there are any issues
+    setProperty((prev) =>
+      prev
+        ? {
+            ...prev,
+            images: prev.images.filter((img) => img.public_id !== publicId),
+          }
+        : null
+    );
+    setAlertState({ type: 'success', message: 'Image removed successfully' });
+  } catch (error) {
+    console.error('Error removing image:', error);
+    setAlertState({ type: 'error', message: 'Failed to remove image' });
+  }
+};
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewImages(Array.from(e.target.files));
-    }
-  };
+ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+   if (event.target.files) {
+     const files = Array.from(event.target.files);
+     const nonEmptyFiles = files.filter((file) => file.size > 0);
+     if (nonEmptyFiles.length !== files.length) {
+       setAlertState({
+         type: 'error',
+         message: 'One or more selected files are empty and will be ignored.',
+       });
+     }
+     setSelectedFiles(nonEmptyFiles);
+   }
+ };
 
-  const handleRemoveImage = async (publicId: string) => {
-    if (!property?._id) return;
-    try {
-      await deletePropertyImage(property._id, publicId);
-      setProperty((prev) =>
-        prev
-          ? {
-              ...prev,
-              images: prev.images.filter((img) => img.public_id !== publicId),
-            }
-          : null
-      );
-    } catch (err) {
-      console.error('Failed to delete image:', err);
-      setAlertState({ type: 'error', message: 'Failed to delete image' });
-    }
-  };
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+   e.preventDefault();
+   if (!property) return;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!property) return;
+   if (selectedFiles.length === 0) {
+     setAlertState({
+       type: 'error',
+       message: 'Please select at least one valid image to upload.',
+     });
+     return;
+   }
 
-    setIsSubmitting(true);
-    setAlertState({ type: null, message: '' });
+   setIsSubmitting(true);
+   setAlertState({ type: null, message: '' });
 
-    try {
-      // Update property details
-      const updateResponse = await updateProperty(propertyId, property);
-      if (updateResponse.status !== 'success') {
-        throw new Error(updateResponse.message || 'Failed to update property');
+   try {
+     // Step 1: Update the property
+     const updateResponse = await apiUpdateProperty(propertyId, property);
+
+     if (!updateResponse || updateResponse.status !== 'success') {
+       throw new Error(updateResponse.message || 'Failed to update property');
+     }
+
+     // Step 2: Upload new images if any are selected
+     if (selectedFiles.length > 0) {
+       const imageFormData = new FormData();
+       imageFormData.append('propertyId', propertyId);
+       selectedFiles.forEach((file) => {
+         if (file.size > 0) {
+           imageFormData.append('images', file);
+         }
+       });
+
+       const imageUploadResponse = await uploadMultipleImages(imageFormData);
+       console.log(imageUploadResponse); // Check the structure of the data
+       if (imageUploadResponse.status !== 'success') {
+         console.error('Failed to upload images:', imageUploadResponse.message);
+         setAlertState({
+           type: 'error',
+           message: 'Property updated, but failed to upload new images.',
+         });
+       } else {
+         setProperty((prev) =>
+  prev
+    ? {
+        ...prev,
+        images: [
+          ...prev.images,
+          ...(Array.isArray(imageUploadResponse.data) 
+            ? imageUploadResponse.data.map((img) => ({ url: img.url, public_id: img.public_id })) 
+            : [])
+        ]
       }
+    : null
+);
+       }
+     }
 
-      // Upload new images if any
-      if (newImages.length > 0) {
-        const formData = new FormData();
-        formData.append('propertyId', propertyId);
-        newImages.forEach((file) => formData.append('images', file));
+     setAlertState({
+       type: 'success',
+       message: 'Property updated successfully',
+     });
+     router.push(`/dashboard/property/${propertyId}`);
+   } catch (error) {
+     console.error('Error updating property:', error);
+     setAlertState({
+       type: 'error',
+       message:
+         error instanceof Error
+           ? error.message
+           : 'An error occurred while updating the property',
+     });
+   } finally {
+     setIsSubmitting(false);
+   }
+ };
 
-        const uploadResponse = await uploadMultipleImages(formData);
-        if (uploadResponse.status !== 'success') {
-          throw new Error('Failed to upload new images');
-        }
-
-        // Update property with new images
-        setProperty((prev) =>
-          prev
-            ? {
-                ...prev,
-                images: [...prev.images, ...uploadResponse.data],
-              }
-            : null
-        );
-      }
-
-      setAlertState({
-        type: 'success',
-        message: 'Property updated successfully',
-      });
-      router.push(`/dashboard/property/${propertyId}`);
-    } catch (err) {
-      console.error('Error updating property:', err);
-      setAlertState({
-        type: 'error',
-        message:
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while updating the property',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Card className='w-full max-w-3xl mx-auto'>
-        <CardHeader>
-          <Skeleton className='h-8 w-3/4' />
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <Skeleton className='h-64 w-full' />
-          <Skeleton className='h-4 w-1/2' />
-          <Skeleton className='h-4 w-3/4' />
-          <Skeleton className='h-4 w-full' />
-        </CardContent>
-      </Card>
+      <div className='flex justify-center items-center h-screen'>
+        Loading...
+      </div>
     );
   }
 
-  if (error) return <div className='text-red-500 text-center'>{error}</div>;
-  if (!property) return <div className='text-center'>Property not found</div>;
+  if (!property) {
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        Property not found
+      </div>
+    );
+  }
 
   return (
-    <Card className='w-full max-w-3xl mx-auto'>
+    <Card className='w-full max-w-2xl mx-auto'>
       <CardHeader>
-        <CardTitle className='text-3xl font-bold'>
-          Edit Property: {property.title}
-        </CardTitle>
+        <CardTitle>Edit Property</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='title'>Title</Label>
             <Input
@@ -196,7 +243,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='description'>Description</Label>
             <Textarea
@@ -207,7 +253,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='price'>Price</Label>
             <Input
@@ -219,7 +264,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='location'>Location</Label>
             <Input
@@ -230,7 +274,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='propertyType'>Property Type</Label>
             <Input
@@ -241,7 +284,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='rooms'>Number of Rooms</Label>
             <Input
@@ -253,13 +295,32 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               required
             />
           </div>
-
+          <div className='space-y-2'>
+            <Label htmlFor='company'>Company</Label>
+            <Select
+              name='company'
+              value={property.company}
+              onValueChange={(value) => handleSelectChange('company', value)}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select a company' />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company._id} value={company._id || ''}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className='space-y-2'>
             <Label htmlFor='status'>Status</Label>
             <Select
               name='status'
+              value={property.status}
               onValueChange={(value) => handleSelectChange('status', value)}
-              defaultValue={property.status}
             >
               <SelectTrigger>
                 <SelectValue placeholder='Select status' />
@@ -271,23 +332,23 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               </SelectContent>
             </Select>
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='amenities'>Amenities</Label>
             <AmenitiesInput
               value={property.amenities}
-              onChange={handleAmenitiesChange}
+              onChange={(amenities) =>
+                setProperty((prev) => (prev ? { ...prev, amenities } : null))
+              }
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='isPublished'>Published</Label>
             <Select
               name='isPublished'
+              value={property.isPublished.toString()}
               onValueChange={(value) =>
                 handleSelectChange('isPublished', value)
               }
-              defaultValue={property.isPublished.toString()}
             >
               <SelectTrigger>
                 <SelectValue placeholder='Is property published?' />
@@ -298,82 +359,87 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               </SelectContent>
             </Select>
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='agentName'>Agent Name</Label>
             <Input
               id='agentName'
               name='agentName'
-              value={property.agent.name}
+              value={property.agent?.name}
               onChange={(e) =>
                 setProperty((prev) =>
                   prev
                     ? {
                         ...prev,
-                        agent: { ...prev.agent, name: e.target.value },
+                        agent: {
+                          ...prev.agent,
+                          name: e.target.value,
+                        },
                       }
                     : null
                 )
               }
-              required
             />
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='agentContact'>Agent Contact</Label>
             <Input
               id='agentContact'
               name='agentContact'
-              value={property.agent.contact}
+              value={property.agent?.contact}
               onChange={(e) =>
                 setProperty((prev) =>
                   prev
                     ? {
                         ...prev,
-                        agent: { ...prev.agent, contact: e.target.value },
+                        agent: {
+                          ...prev.agent,
+                          contact: e.target.value,
+                        },
                       }
                     : null
                 )
               }
-              required
             />
           </div>
-
           <div className='space-y-2'>
-            <Label htmlFor='images'>Add New Images</Label>
+            <Label>Current Images</Label>
+            {property.images && property.images.length > 0 ? (
+              <div className='grid grid-cols-2 gap-4'>
+                {property.images.map((image, index) => (
+                  <div key={index} className='relative'>
+                    <Image
+                      src={image.url}
+                      alt={`Property image ${index + 1}`}
+                      width={200}
+                      height={200}
+                      className='object-cover rounded-md'
+                    />
+                    <Button
+                      variant='destructive'
+                      size='icon'
+                      className='absolute top-2 right-2'
+                      onClick={() => handleRemoveImage(image.public_id)}
+                    >
+                      <X className='h-4 w-4' />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No images available</p>
+            )}
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='newImages'>Add New Images</Label>
             <Input
-              id='images'
-              name='images'
+              id='newImages'
+              name='newImages'
               type='file'
               multiple
-              onChange={handleImageUpload}
+              onChange={handleFileChange}
               accept='image/*'
             />
           </div>
-
-          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-            {property.images.map((image) => (
-              <div key={image.public_id} className='relative'>
-                <Image
-                  src={image.url}
-                  alt='Property'
-                  width={200}
-                  height={200}
-                  className='object-cover rounded'
-                />
-                <Button
-                  type='button'
-                  variant='destructive'
-                  size='icon'
-                  className='absolute top-2 right-2'
-                  onClick={() => handleRemoveImage(image.public_id)}
-                >
-                  <X className='h-4 w-4' />
-                </Button>
-              </div>
-            ))}
-          </div>
-
           {alertState.type && (
             <Alert
               variant={alertState.type === 'error' ? 'destructive' : 'default'}
@@ -389,9 +455,8 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               <AlertDescription>{alertState.message}</AlertDescription>
             </Alert>
           )}
-
           <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting ? 'Updating Property...' : 'Update Property'}
+            {isSubmitting ? 'Updating...' : 'Update Property'}
           </Button>
         </form>
       </CardContent>

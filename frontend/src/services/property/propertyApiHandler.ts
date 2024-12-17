@@ -38,10 +38,8 @@ export interface PropertyResponse {
   };
 }
 
-
 export const createProperty = async (
-  data: Property,
-
+  data: Property
 ): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>('/properties', 'POST', data);
 };
@@ -49,11 +47,22 @@ export const createProperty = async (
 export const uploadMultipleImages = async (
   formData: FormData
 ): Promise<ApiResponse<{ url: string; public_id: string }[]>> => {
-  return apiHandler<{ url: string; public_id: string }[]>(
-    '/image/properties/upload-multiple',
-    'POST',
-    formData
-  );
+  try {
+    const response = await apiHandler<{ url: string; public_id: string }[]>(
+      '/image/properties/upload-multiple',
+      'POST',
+      formData
+    );
+    if (response.status === 'success') {
+      return response;
+    } else {
+      throw new Error(response.message || 'Image upload failed');
+    }
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    return { status: 'error', message: 'Cloudinary upload failed' };
+  }
+
 };
 
 // Fetch all properties

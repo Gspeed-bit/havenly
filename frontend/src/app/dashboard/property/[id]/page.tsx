@@ -17,11 +17,12 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const propertyId = useParams().id;
 
   useEffect(() => {
     const loadProperty = async () => {
       try {
-        const response = await fetchPropertyById(params.id as string);
+        const response = await fetchPropertyById(propertyId as string);
         if (response.status === 'success' && response.data) {
           setProperty(response.data);
         } else {
@@ -40,7 +41,7 @@ export default function PropertyDetailPage() {
 
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
-        const response = await deleteProperty(property._id as string);
+        const response = await deleteProperty(propertyId as string);  
         if (response.status === 'success') {
           router.push('/dashboard/properties');
         } else {
