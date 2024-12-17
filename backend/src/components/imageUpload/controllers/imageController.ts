@@ -8,6 +8,15 @@ import User from '@components/user/models/userModel';
 import Property from '@components/property/models/propertyModel';
 import Company from '@components/property/models/companyModel';
 
+const getFolderPath = ({
+  type,
+  entityId,
+}: {
+  type: string;
+  entityId: string;
+}) => {
+  return `${type}/${entityId}`;
+};
 export const imageUpload = async (req: Request, res: Response) => {
   const { type, entityId } = req.body;
 
@@ -16,7 +25,7 @@ export const imageUpload = async (req: Request, res: Response) => {
   }
 
   try {
-    const folderPath = `${type}/${entityId}`;
+    const folderPath = getFolderPath({ type, entityId });
     const { secure_url, public_id } = await uploadImageToCloudinary(
       req.file.buffer,
       folderPath
@@ -111,7 +120,7 @@ export const uploadMultiplePropertyImages = async (
 
 export const deletePropertyImage = async (req: Request, res: Response) => {
   const { id, publicId } = req.params;
-
+  console.log(id, publicId);
   try {
     const property = await Property.findById(id);
     if (!property) {
@@ -135,7 +144,6 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
       await cloudinary.uploader.destroy(publicId);
     } catch (cloudinaryError) {
       console.error('Cloudinary deletion error:', cloudinaryError);
-      // Continue with removing the image from the property, even if Cloudinary deletion fails
     }
 
     // Remove the image from the property

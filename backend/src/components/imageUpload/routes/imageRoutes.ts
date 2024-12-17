@@ -32,7 +32,7 @@ router.post(
   uploadMultiplePropertyImages
 );
 router.delete(
-  '/properties/:id/images/:publicId',
+  '/properties/:id/images/:publicId(*)',
   adminMiddleware,
   deletePropertyImage
 );

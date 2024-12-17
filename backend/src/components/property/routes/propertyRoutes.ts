@@ -358,3 +358,7 @@ router.delete('/properties/:id', adminMiddleware, deleteProperty);
 
 
 export default router;
+
+  // Cannot DELETE
+  // /image/properties/676156e373f40eb0fb387e19/images/property_images/676156e373f40eb0fb387e19/jvhhrj5wzny6djce29kg
+
