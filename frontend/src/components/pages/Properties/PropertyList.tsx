@@ -16,6 +16,7 @@ import {
   fetchProperties,
   Property,
 } from '@/services/property/propertyApiHandler';
+import { Home } from 'lucide-react';
 
 interface Pagination {
   total: number;
@@ -100,15 +101,19 @@ export function PropertyList() {
             >
               <Card className='w-full hover:shadow-lg transition-shadow duration-300 overflow-hidden'>
                 <div className='relative h-48'>
-                  <Image
-                    src={
-                      property.images?.[0]?.url || '/placeholder-property.jpg'
-                    }
-                    alt={property.title}
-                    layout='fill'
-                    objectFit='cover'
-                    className='rounded-t-lg'
-                  />
+                  {property.images[0]?.url  ? (
+                    <img
+                      src={
+                        property.images?.[0]?.url || '/placeholder-property.jpg'
+                      }
+                      alt={property.title}
+                      className='w-full h-full object-cover rounded-lg'
+                    />
+                  ) : (
+                    <div className='flex items-center justify-center w-full h-full bg-gray-200 rounded-lg'>
+                      <Home className='w-8 h-8 text-gray-500' />
+                    </div>
+                  )}
                 </div>
                 <CardHeader>
                   <CardTitle className='line-clamp-1'>
