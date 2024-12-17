@@ -97,27 +97,34 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
     setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
   };
   
-const handleRemoveImage = async (publicId: string) => {
-  if (!property?._id) return;
+ const handleRemoveImage = async (publicId: string) => {
+   if (!property?._id) return;
 
-  try {
-    // Ensure the URL matches the correct endpoint path
-    const response = await deletePropertyImage(property._id, publicId);
-    console.log(response); // Log the response to see if there are any issues
-    setProperty((prev) =>
-      prev
-        ? {
-            ...prev,
-            images: prev.images.filter((img) => img.public_id !== publicId),
-          }
-        : null
-    );
-    setAlertState({ type: 'success', message: 'Image removed successfully' });
-  } catch (error) {
-    console.error('Error removing image:', error);
-    setAlertState({ type: 'error', message: 'Failed to remove image' });
-  }
-};
+   try {
+     // Update the URL to match the backend route
+     const response = await deletePropertyImage(property._id, publicId);
+
+     if (response.status === 'success') {
+       setProperty((prev) =>
+         prev
+           ? {
+               ...prev,
+               images: prev.images.filter((img) => img.public_id !== publicId),
+             }
+           : null
+       );
+       setAlertState({
+         type: 'success',
+         message: 'Image removed successfully',
+       });
+     } else {
+       throw new Error(response.message || 'Failed to remove image');
+     }
+   } catch (error) {
+     console.error('Error removing image:', error);
+     setAlertState({ type: 'error', message: 'Failed to remove image' });
+   }
+ };
 
  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
    if (event.target.files) {

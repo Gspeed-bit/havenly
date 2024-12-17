@@ -17,6 +17,7 @@ router.post(
   adminMiddleware,
   upload.array('images', 10), // Limit the number of images if needed
   (req, res, next) => {
+
     if (!req.body.propertyId) {
       return res.status(400).json({ message: 'Property id is required' });
     }

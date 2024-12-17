@@ -115,7 +115,9 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
   try {
     const property = await Property.findById(id);
     if (!property) {
-      return res.status(404).json({ message: 'Property not found.' });
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Property not found.' });
     }
 
     const imageIndex = property.images.findIndex(
@@ -123,17 +125,33 @@ export const deletePropertyImage = async (req: Request, res: Response) => {
     );
 
     if (imageIndex === -1) {
-      return res.status(404).json({ message: 'Image not found.' });
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Image not found.' });
     }
 
-    await cloudinary.uploader.destroy(publicId);
+    // Attempt to delete the image from Cloudinary
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (cloudinaryError) {
+      console.error('Cloudinary deletion error:', cloudinaryError);
+      // Continue with removing the image from the property, even if Cloudinary deletion fails
+    }
 
+    // Remove the image from the property
     property.images.splice(imageIndex, 1);
     await property.save();
 
-    res.status(200).json({ message: 'Image deleted successfully.' });
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Image deleted successfully.' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to delete image.', error });
+    console.error('Error in deletePropertyImage:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete image.',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      error: (error as any).message,
+    });
   }
 };
