@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { CheckIcon, PlusCircleIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
-const defaultAmenities = [
+interface AmenitiesInputProps {
+  value: string[];
+  onChange: (amenities: string[]) => void;
+}
+
+const predefinedAmenities = [
   'Pool',
   'Gym',
   'Parking',
@@ -27,87 +20,110 @@ const defaultAmenities = [
   'Garden',
   'Security System',
   'Laundry',
+  'Pet Friendly',
+  'Fireplace',
+  'Playground',
+  'BBQ Area',
+  'Conference Room',
+  'Sauna',
+  'Jacuzzi',
+  'Tennis Court',
+  'Sports Court',
+  'Spa',
+  'Dishwasher',
+  'Cable TV',
+  'Furnished',
+  'Smart Home Features',
+  'Outdoor Kitchen',
+  'Rooftop Terrace',
+  'Bicycle Storage',
+  'Wheelchair Accessible',
+  'Shuttle Service',
+  '24-Hour Concierge',
+  'Clubhouse',
+  'Backup Generator',
+  'Solar Panels',
+  'Water Heater',
+  'CCTV Surveillance',
+  'Covered Parking',
+  'Dryer',
+  'Game Room',
+  'Library',
+  'Movie Theater',
+  'Car Charging Station',
+  'Walking Trails',
+  'Yoga Studio',
+  'Private Entrance',
+  'Storage Unit',
+  'Beach Access',
+  'Helipad',
 ];
 
-interface AmenitiesInputProps {
-  selectedAmenities: string[];
-  onChange: (amenities: string[]) => void;
-}
-
-export function AmenitiesInput({
-  selectedAmenities,
-  onChange,
-}: AmenitiesInputProps) {
-  const [open, setOpen] = useState(false);
+export function AmenitiesInput({ value, onChange }: AmenitiesInputProps) {
   const [inputValue, setInputValue] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const handleSelect = (amenity: string) => {
-    if (selectedAmenities.includes(amenity)) {
-      onChange(selectedAmenities.filter((item) => item !== amenity));
-    } else {
-      onChange([...selectedAmenities, amenity]);
-    }
-  };
+  useEffect(() => {
+    const filteredSuggestions = predefinedAmenities.filter(
+      (amenity) =>
+        !value.includes(amenity) &&
+        amenity.toLowerCase().includes(inputValue.toLowerCase())
+    );
+    setSuggestions(filteredSuggestions);
+  }, [inputValue, value]);
 
-  const handleAddCustom = () => {
-    if (inputValue && !selectedAmenities.includes(inputValue)) {
-      onChange([...selectedAmenities, inputValue]);
+  const addAmenity = (amenity: string) => {
+    if (amenity && !value.includes(amenity)) {
+      onChange([...value, amenity]);
       setInputValue('');
     }
   };
 
+  const removeAmenity = (amenity: string) => {
+    onChange(value.filter((a) => a !== amenity));
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant='outline' className='w-full justify-start'>
-          {selectedAmenities.length > 0 ? (
-            <>
-              <Badge variant='secondary' className='mr-2'>
-                {selectedAmenities.length}
-              </Badge>
-              {selectedAmenities.length > 2
-                ? `${selectedAmenities.slice(0, 2).join(', ')} ...`
-                : selectedAmenities.join(', ')}
-            </>
-          ) : (
-            'Select amenities'
-          )}
+    <div className='space-y-2'>
+      <div className='flex space-x-2'>
+        <Input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder='Type or select amenities'
+        />
+        <Button onClick={() => addAmenity(inputValue)} type='button'>
+          Add
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className='w-[300px] p-0'>
-        <Command>
-          <CommandInput
-            placeholder='Search amenities'
-            value={inputValue}
-            onValueChange={setInputValue}
-          />
-          <CommandEmpty>
+      </div>
+      <div className='flex flex-wrap gap-2'>
+        {value.map((amenity) => (
+          <Badge key={amenity} variant='secondary'>
+            {amenity}
             <Button
               variant='ghost'
-              className='w-full justify-start'
-              onClick={handleAddCustom}
+              size='sm'
+              className='ml-2 h-4 w-4 p-0'
+              onClick={() => removeAmenity(amenity)}
             >
-              <PlusCircleIcon className='mr-2 h-4 w-4' />
-              Add "{inputValue}"
+              <X className='h-3 w-3' />
             </Button>
-          </CommandEmpty>
-          <CommandGroup>
-            {defaultAmenities.map((amenity) => (
-              <CommandItem key={amenity} onSelect={() => handleSelect(amenity)}>
-                <CheckIcon
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    selectedAmenities.includes(amenity)
-                      ? 'opacity-100'
-                      : 'opacity-0'
-                  )}
-                />
-                {amenity}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          </Badge>
+        ))}
+      </div>
+      {suggestions.length > 0 && (
+        <div className='flex flex-wrap gap-2 mt-2'>
+          {suggestions.map((suggestion) => (
+            <Badge
+              key={suggestion}
+              variant='outline'
+              className='cursor-pointer'
+              onClick={() => addAmenity(suggestion)}
+            >
+              {suggestion}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

@@ -25,6 +25,8 @@ import {
   CompanyData,
   fetchCompanies,
 } from '@/services/company/companyApiHandler';
+import { AmenitiesInput } from './AmenitiesInputs';
+
 
 interface AlertState {
   type: 'success' | 'error' | null;
@@ -196,6 +198,21 @@ export function CreatePropertyForm() {
       <CardHeader>
         <CardTitle>Create New Property</CardTitle>
       </CardHeader>
+      {alertState.type && (
+        <Alert
+          variant={alertState.type === 'error' ? 'destructive' : 'default'}
+        >
+          {alertState.type === 'error' ? (
+            <AlertCircle className='h-4 w-4' />
+          ) : (
+            <CheckCircle2 className='h-4 w-4' />
+          )}
+          <AlertTitle>
+            {alertState.type === 'error' ? 'Error' : 'Success'}
+          </AlertTitle>
+          <AlertDescription>{alertState.message}</AlertDescription>
+        </Alert>
+      )}
       <CardContent>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
@@ -358,19 +375,11 @@ export function CreatePropertyForm() {
             </Select>
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='amenities'>Amenities (comma-separated)</Label>
-            <Input
-              id='amenities'
-              name='amenities'
-              placeholder='e.g., Pool, Gym, Parking'
-              value={formData.amenities?.join(', ')}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  amenities: e.target.value
-                    .split(',')
-                    .map((item) => item.trim()),
-                }))
+            <Label htmlFor='amenities'>Amenities</Label>
+            <AmenitiesInput
+              value={formData.amenities || []}
+              onChange={(amenities) =>
+                setFormData((prev) => ({ ...prev, amenities }))
               }
             />
           </div>
@@ -463,13 +472,13 @@ export function CreatePropertyForm() {
             <div className='grid grid-cols-2 gap-4 mt-4'>
               {previewImages.map((image, index) => (
                 <div key={index} className='relative'>
-                 <picture>
+                  <picture>
                     <img
                       src={image}
                       alt={`Selected ${index + 1}`}
                       className='w-full h-32 object-cover rounded'
                     />
-                 </picture>
+                  </picture>
                   <Button
                     variant='destructive'
                     size='icon'
@@ -481,21 +490,6 @@ export function CreatePropertyForm() {
                 </div>
               ))}
             </div>
-          )}
-          {alertState.type && (
-            <Alert
-              variant={alertState.type === 'error' ? 'destructive' : 'default'}
-            >
-              {alertState.type === 'error' ? (
-                <AlertCircle className='h-4 w-4' />
-              ) : (
-                <CheckCircle2 className='h-4 w-4' />
-              )}
-              <AlertTitle>
-                {alertState.type === 'error' ? 'Error' : 'Success'}
-              </AlertTitle>
-              <AlertDescription>{alertState.message}</AlertDescription>
-            </Alert>
           )}
           <Button type='submit' className='w-full' disabled={isSubmitting}>
             {isSubmitting ? 'Creating Property...' : 'Create Property'}
