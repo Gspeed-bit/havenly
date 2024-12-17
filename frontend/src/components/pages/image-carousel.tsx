@@ -9,7 +9,8 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 interface ImageCarouselProps {
-  images: string[];
+  images: { url: string; public_id: string }[];
+
   alt: string;
 }
 
@@ -43,7 +44,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
         {images.map((image, index) => (
           <div key={index} className='relative h-96 w-full'>
             <Image
-              src={image}
+              src={image.url}
               alt={`${alt} - Image ${index + 1}`}
               layout='fill'
               objectFit='cover'

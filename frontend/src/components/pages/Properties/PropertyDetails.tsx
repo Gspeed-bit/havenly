@@ -1,117 +1,97 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import {
-  fetchPropertyById,
-  Property,
-} from '@/services/property/propertyApiHandler';
+
+import { Property } from '@/services/property/propertyApiHandler';
+import { Pencil, Trash2 } from 'lucide-react';
 import { PropertyMap } from '../property-map';
 import { ImageCarousel } from '../image-carousel';
 
-export function PropertyDetail() {
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const params = useParams();
-  const propertyId = params.id as string;
+interface PropertyDetailProps {
+  property: Property;
+  onDelete: () => void;
+}
 
-  useEffect(() => {
-    const loadProperty = async () => {
-      try {
-        const response = await fetchPropertyById(propertyId);
-        if (response.status === 'success') {
-          setProperty(response.data);
-        } else {
-          setError('Failed to load property details');
-        }
-      } catch (err) {
-        console.log(err);
-        setError('An error occurred while fetching property details');
-      } finally {
-        setLoading(false);
-      }
-    };
+export function PropertyDetail({ property, onDelete }: PropertyDetailProps) {
+  const router = useRouter();
 
-    loadProperty();
-  }, [propertyId]);
-
-  if (loading) {
-    return (
-      <Card className='w-full max-w-3xl mx-auto'>
-        <CardHeader>
-          <Skeleton className='h-8 w-3/4' />
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <Skeleton className='h-64 w-full' />
-          <Skeleton className='h-4 w-1/2' />
-          <Skeleton className='h-4 w-3/4' />
-          <Skeleton className='h-4 w-full' />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) return <div className='text-red-500 text-center'>{error}</div>;
-  if (!property) return <div className='text-center'>Property not found</div>;
+  const handleEdit = () => {
+    router.push(`/dashboard/property/${property._id}/edit`);
+  };
 
   return (
-    <Card className='w-full max-w-3xl mx-auto'>
+    <Card className='w-full max-w-4xl mx-auto'>
       <CardHeader>
-        <CardTitle className='text-3xl font-bold'>{property.title}</CardTitle>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        {property.images && property.images.length > 0 ? (
-          <ImageCarousel
-            images={property.images.map((image) => image.url)}
-            alt={property.title}
-          />
-        ) : (
-          <div className='relative h-96 w-full bg-gray-200 flex items-center justify-center rounded-lg'>
-            <p className='text-gray-500'>No images available</p>
-          </div>
-        )}
-        <div className='flex justify-between items-center'>
-          <p className='text-3xl font-bold text-primary'>
-            ${property.price.toLocaleString()}
-          </p>
+        <CardTitle className='text-2xl font-bold'>{property.title}</CardTitle>
+        <div className='flex justify-between items-center mt-2'>
           <Badge
-            variant={property.status === 'sold' ? 'destructive' : 'default'}
+            variant={property.status === 'listed' ? 'default' : 'secondary'}
           >
             {property.status}
           </Badge>
+          <div className='space-x-2'>
+            <Button onClick={handleEdit} variant='outline' size='sm'>
+              <Pencil className='mr-2 h-4 w-4' /> Edit
+            </Button>
+            <Button onClick={onDelete} variant='destructive' size='sm'>
+              <Trash2 className='mr-2 h-4 w-4' /> Delete
+            </Button>
+          </div>
         </div>
+      </CardHeader>
+      <CardContent className='space-y-6'>
+        {property.images && property.images.length > 0 ? (
+          <ImageCarousel images={property.images} alt={''} />
+        ) : (
+          <div className='bg-gray-200 h-64 flex items-center justify-center'>
+            <p>No images available</p>
+          </div>
+        )}
+
         <div className='grid grid-cols-2 gap-4'>
           <div>
-            <p className='font-semibold'>Location</p>
+            <h3 className='font-semibold'>Price</h3>
+            <p>${property.price.toLocaleString()}</p>
+          </div>
+          <div>
+            <h3 className='font-semibold'>Location</h3>
             <p>{property.location}</p>
           </div>
           <div>
-            <p className='font-semibold'>Property Type</p>
+            <h3 className='font-semibold'>Property Type</h3>
             <p>{property.propertyType}</p>
           </div>
           <div>
-            <p className='font-semibold'>Rooms</p>
+            <h3 className='font-semibold'>Number of Rooms</h3>
             <p>{property.rooms}</p>
           </div>
-          <div>
-            <p className='font-semibold'>Amenities</p>
-            <p>{property.amenities?.join(', ') || 'None listed'}</p>
-          </div>
         </div>
+
         <div>
-          <p className='font-semibold'>Description</p>
-          <p className='mt-2'>{property.description}</p>
+          <h3 className='font-semibold'>Description</h3>
+          <p>{property.description}</p>
         </div>
+
         <div>
-          <p className='font-semibold'>Agent</p>
-          <p>
-            {property.agent?.name} ({property.agent?.contact})
-          </p>
+          <h3 className='font-semibold'>Amenities</h3>
+          <ul className='list-disc list-inside'>
+            {property.amenities.map((amenity, index) => (
+              <li key={index}>{amenity}</li>
+            ))}
+          </ul>
         </div>
+
+        <div>
+          <h3 className='font-semibold'>Agent Information</h3>
+          <p>Name: {property.agent?.name}</p>
+          <p>Contact: {property.agent?.contact}</p>
+        </div>
+
         {property.coordinates && (
           <div>
             <p className='font-semibold mb-2'>Location</p>
