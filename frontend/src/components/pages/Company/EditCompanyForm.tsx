@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  createCompany,
+  fetchCompanyById,
+  updateCompany,
   uploadCompanyLogo,
 } from '@/services/company/companyApiHandler';
 import { X } from 'lucide-react'; // Assuming you are using lucide-react for the icon
 
-export function CreateCompanyForm() {
+interface EditCompanyFormProps {
+  companyId: string;
+}
+
+export function EditCompanyForm({ companyId }: EditCompanyFormProps) {
   const router = useRouter();
   const [companyData, setCompanyData] = useState({
     name: '',
@@ -21,11 +26,10 @@ export function CreateCompanyForm() {
     phoneNumber: '',
     address: '',
     logo: null as File | null,
+    logoUrl: '',
     website: '',
     description: '',
   });
-
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const [alertState, setAlertState] = useState<{
     type: 'success' | 'error' | null;
@@ -33,6 +37,51 @@ export function CreateCompanyForm() {
   }>({ type: null, message: '' });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    const loadCompany = async () => {
+      try {
+        const response = await fetchCompanyById(companyId);
+        if (response.status === 'success' && response.data) {
+          const {
+            name,
+            email,
+            phoneNumber,
+            address,
+            website = '',
+            description = '',
+            logo,
+          } = response.data.company;
+          setCompanyData({
+            name,
+            email,
+            phoneNumber,
+            address,
+            website,
+            description,
+            logo: null,
+            logoUrl: logo || '',
+          });
+        } else {
+          setAlertState({
+            type: 'error',
+            message: 'Failed to load company data',
+          });
+        }
+      } catch (error) {
+        setAlertState({
+          type: 'error',
+          message: 'An error occurred while loading company data',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCompany();
+  }, [companyId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -45,14 +94,7 @@ export function CreateCompanyForm() {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setSelectedFiles(newFiles);
-      setCompanyData((prev) => ({ ...prev, logo: newFiles[0] }));
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    if (index === 0) {
-      setCompanyData((prev) => ({ ...prev, logo: null }));
+      setCompanyData((prev) => ({ ...prev, logo: newFiles[0], logoUrl: '' }));
     }
   };
 
@@ -76,7 +118,7 @@ export function CreateCompanyForm() {
     }
 
     try {
-      const response = await createCompany({
+      const response = await updateCompany(companyId, {
         name: companyData.name,
         email: companyData.email,
         phoneNumber: companyData.phoneNumber,
@@ -86,8 +128,6 @@ export function CreateCompanyForm() {
       });
 
       if (response.status === 'success') {
-        const companyId = response.data.company._id as string;
-
         if (companyData.logo) {
           const uploadResponse = await uploadCompanyLogo(
             companyData.logo,
@@ -97,7 +137,7 @@ export function CreateCompanyForm() {
           if (uploadResponse.status === 'success') {
             setAlertState({
               type: 'success',
-              message: 'Company created and logo uploaded successfully.',
+              message: 'Company updated and logo uploaded successfully.',
             });
           } else {
             throw new Error(uploadResponse.message);
@@ -105,11 +145,11 @@ export function CreateCompanyForm() {
         } else {
           setAlertState({
             type: 'success',
-            message: 'Company created successfully.',
+            message: 'Company updated successfully.',
           });
         }
 
-        // Redirect to the company list page after successful creation
+        // Redirect to the company list page after successful update
         setTimeout(() => {
           router.push('/dashboard/companies');
         }, 2000);
@@ -120,12 +160,27 @@ export function CreateCompanyForm() {
       setAlertState({
         type: 'error',
         message:
-          error.message || 'An error occurred while creating the company.',
+          error.message || 'An error occurred while updating the company.',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    if (index === 0) {
+      setCompanyData((prev) => ({ ...prev, logo: null }));
+    }
+  };
+
+  const removeLogo = () => {
+    setCompanyData((prev) => ({ ...prev, logo: null, logoUrl: '' }));
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
@@ -174,7 +229,7 @@ export function CreateCompanyForm() {
         />
       </div>
       <div>
-        <Label htmlFor='logo'>Upload Company Logo</Label>
+        <Label htmlFor='logo'>Upload New Company Logo (optional)</Label>
         <Input
           id='logo'
           type='file'
@@ -182,6 +237,25 @@ export function CreateCompanyForm() {
           accept='image/*'
         />
       </div>
+      {companyData.logoUrl && (
+        <div className='relative inline-block mt-4'>
+          <picture>
+            <img
+              src={companyData.logoUrl}
+              alt='Current logo'
+              className='w-32 h-32 object-cover rounded'
+            />
+          </picture>
+          <Button
+            variant='destructive'
+            size='icon'
+            className='absolute top-1 right-1'
+            onClick={removeLogo}
+          >
+            <X className='h-4 w-4' />
+          </Button>
+        </div>
+      )}
       <div className='grid grid-cols-3 gap-4 mt-4'>
         {selectedFiles.map((file, index) => (
           <div key={index} className='relative'>
@@ -204,7 +278,7 @@ export function CreateCompanyForm() {
         ))}
       </div>
       <Button type='submit' disabled={isSubmitting} className='w-full'>
-        {isSubmitting ? 'Creating...' : 'Create Company'}
+        {isSubmitting ? 'Updating...' : 'Update Company'}
       </Button>
     </form>
   );
