@@ -14,7 +14,7 @@ import {
   LogOut,
   Home,
 } from 'lucide-react';
-import { useUser } from '@/components/hooks/api/useUser';
+import { useUserStore } from '@/store/users';
 
 interface SidebarLink {
   href: string;
@@ -57,7 +57,7 @@ const links: SidebarLink[] = [
 
 export function UserProfileSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const user = useUserStore((state) => state.user);
 
   return (
     <div className='flex flex-col h-full bg-gradient-to-b from-blue-50 to-indigo-100 text-gray-800 rounded-lg shadow-lg overflow-hidden'>
