@@ -29,9 +29,8 @@ app.get('/', (req: Request, res: Response) => {
 const server = http.createServer(app);
 
 // Middleware to handle CORS
-app.use(
-  cors()
-);
+
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5000'] }));
 // Initialize Socket.IO with CORS support
 const io = new Server(server, {
   cors: {

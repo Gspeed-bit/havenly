@@ -1,66 +1,43 @@
 import { create } from 'zustand';
-import { User } from '../services/types/user.types';
+import { persist } from 'zustand/middleware';
+import { setAuthToken, clearAuthToken, getAuthToken } from '../config/helpers';
 
-type AuthStore = {
+interface AuthState {
   isAuthenticated: boolean;
-  isAdmin: boolean;
-  user: User | null;
   token: string | null;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (token: string) => void;
   clearAuth: () => void;
-  logout: () => void;
-};
+  logout: () => Promise<void>;
+}
 
-export const useAuthStore = create<AuthStore>((set) => {
-  const isClient = typeof window !== 'undefined'; // Ensure it's client-side
-  const storedUser = isClient ? localStorage.getItem('user') : null;
-  const storedToken = isClient ? localStorage.getItem('token') : null;
-
-  const initialState =
-    storedUser && storedToken
-      ? {
-          isAuthenticated: true,
-          isAdmin: JSON.parse(storedUser).isAdmin, // Fetch isAdmin from stored user
-          user: JSON.parse(storedUser),
-          token: storedToken,
+export const useAuthStore = create(
+  persist<AuthState>(
+    (set, get) => ({
+      isAuthenticated: false,
+      token: null,
+      setAuth: (token: string) => {
+        setAuthToken(token);
+        set({ isAuthenticated: true, token });
+      },
+      clearAuth: () => {
+        clearAuthToken();
+        set({ isAuthenticated: false, token: null });
+      },
+      logout: async () => {
+        get().clearAuth();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
         }
-      : { isAuthenticated: false, isAdmin: false, user: null, token: null };
+      },
+    }),
+    {
+      name: 'auth-storage',
+    }
+  )
+);
 
-  return {
-    ...initialState,
-    setAuth: (user: User, token: string) => {
-      if (isClient) {
-        localStorage.setItem('user', JSON.stringify(user)); // Persist user to localStorage
-        localStorage.setItem('token', token); // Persist token to localStorage
-      }
-      set({
-        isAuthenticated: true,
-        isAdmin: user?.isAdmin || false,
-        user,
-        token,
-      });
-    },
-    clearAuth: () => {
-      if (isClient) {
-        localStorage.removeItem('user'); // Remove user from localStorage
-        localStorage.removeItem('token'); // Remove token from localStorage
-      }
-      set({ isAuthenticated: false, isAdmin: false, user: null, token: null });
-    },
-    logout: () => {
-      if (isClient) {
-        localStorage.removeItem('user'); // Remove user from localStorage
-        localStorage.removeItem('token'); // Remove token from localStorage
-      }
-      set({ isAuthenticated: false, isAdmin: false, user: null, token: null });
-    },
-  };
-});
-
-// Export store actions for external usage
 export const authStoreActions = {
-  setAuth: (user: User, token: string) =>
-    useAuthStore.getState().setAuth(user, token),
+  setAuth: (token: string) => useAuthStore.getState().setAuth(token),
   clearAuth: () => useAuthStore.getState().clearAuth(),
   logout: () => useAuthStore.getState().logout(),
 };

@@ -1,7 +1,9 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import keys from './keys';
-import { logOutUser } from '../services/auth/auth';
-import { getAuthToken, clearAuthToken } from './helpers';
+
+import { getAuthToken } from './helpers';
+import { authStoreActions } from '@/store/auth';
+import { useUserStore } from '@/store/users';
 
 export interface SuccessResponse<T> {
   message: string;
@@ -24,6 +26,29 @@ const instance = axios.create({
   },
 });
 
+instance.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+instance.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      await authStoreActions.logout();
+      useUserStore.getState().clearUser();
+
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const apiHandler = async <T>(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -32,21 +57,19 @@ export const apiHandler = async <T>(
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> => {
   try {
-    const token = getAuthToken(); // Correctly retrieve token from localStorage
     const isFormData = data instanceof FormData;
-
-    const response = await instance({
+    const config: AxiosRequestConfig = {
       url,
       method,
       data,
       params,
       headers: {
-        ...instance.defaults.headers.common,
-        Authorization: token ? `Bearer ${token}` : '', // Add token to Authorization header
         ...customHeaders,
         ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {}),
       },
-    });
+    };
+
+    const response = await instance(config);
 
     return {
       status: 'success',
@@ -56,10 +79,13 @@ export const apiHandler = async <T>(
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
+
+      // Handle 401 errors (although they should be caught by the interceptor)
       if (axiosError.response?.status === 401) {
-        logOutUser(); // Handle unauthorized access
-        clearAuthToken(); // Clear invalid token
-        window.location.href = '/auth/login'; // Redirect to login
+        await authStoreActions.logout();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
       }
 
       return {

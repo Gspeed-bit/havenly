@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken } from '@/config/helpers';
 import { useAuthStore } from '@/store/auth';
+import { useUserStore } from '@/store/users';
 import { getLoggedInUser } from '@/services/user/userApi';
 
 interface AuthenticatedProps {
@@ -15,45 +16,50 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
   accessLevel = 'user',
 }) => {
   const router = useRouter();
-  const { isAuthenticated, user, isAdmin } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
+  const { user, setUser } = useUserStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkAuth = async () => {
       try {
         const token = getAuthToken();
         if (!token) {
-          // If no token, redirect to login
+          logout();
           router.push('/auth/login');
           return;
         }
 
-        // If user data is not yet loaded, fetch it
         if (!user) {
-          await getLoggedInUser();
+          const response = await getLoggedInUser();
+          if (response.status !== 'success') {
+            throw new Error('Failed to fetch user data');
+          }
+          setUser(response.data);
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
-        router.push('/auth/login'); // Redirect to login on failure
+        console.error('Authentication error:', error);
+        logout();
+        router.push('/auth/login');
       } finally {
-        setLoading(false); // End loading state
+        setLoading(false);
       }
     };
 
-    fetchUser();
-  }, [user, router]);
+    checkAuth();
+  }, [user, router, logout, setUser]);
 
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
-      if (accessLevel === 'admin' && !isAdmin) {
-        router.push('/'); // Redirect non-admins from admin-only pages
-      } else if (accessLevel === 'non-admin' && isAdmin) {
-        router.push('/'); // Redirect admins from non-admin pages
+      if (accessLevel === 'admin' && !user.isAdmin) {
+        router.push('/');
+      } else if (accessLevel === 'non-admin' && user.isAdmin) {
+        router.push('/');
       }
     }
-  }, [loading, isAuthenticated, user, isAdmin, accessLevel, router]);
+  }, [loading, isAuthenticated, user, accessLevel, router]);
 
-  if (loading || isAuthenticated === null) {
+  if (loading) {
     return (
       <div className='flex justify-center items-center h-screen'>
         <p>Loading...</p>

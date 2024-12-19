@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -85,6 +85,10 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
     loadPropertyAndCompanies();
   }, [propertyId]);
 
+  const handleSelectChange = (name: string, value: string) => {
+    setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -92,99 +96,98 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
     setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
-  };
+ const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+   setSelectedFiles(Array.from(e.target.files || []));
+ };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setSelectedFiles(Array.from(event.target.files));
-    }
-  };
+ const handleRemoveImage = async (publicId: string) => {
+   if (!property?._id) return;
 
-  const handleRemoveImage = async (publicId: string) => {
-    if (!property?._id) return;
+   try {
+     const response = await deletePropertyImage(property._id, publicId);
+     if (response.status === 'success') {
+       setProperty((prev) =>
+         prev
+           ? {
+               ...prev,
+              images: prev.images.filter((img: { url: string; public_id: string }) => img.public_id !== publicId),
+             }
+           : null
+       );
+       setAlertState({
+         type: 'success',
+         message: 'Image removed successfully',
+       });
+     } else {
+       throw new Error(response.message || 'Failed to remove image');
+     }
+   } catch (error) {
+     console.error('Error removing image:', error);
+     setAlertState({ type: 'error', message: 'Failed to remove image' });
+   }
+ };
 
-    try {
-      await deletePropertyImage(property._id, publicId);
-      setProperty((prev) =>
-        prev
-          ? {
-              ...prev,
-              images: prev.images.filter((img) => img.public_id !== publicId),
-            }
-          : null
-      );
-      setAlertState({ type: 'success', message: 'Image removed successfully' });
-    } catch (error) {
-      console.error('Error removing image:', error);
-      setAlertState({ type: 'error', message: 'Failed to remove image' });
-    }
-  };
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+   e.preventDefault();
+   if (!property) return;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!property) return;
+   setIsSubmitting(true);
+   setAlertState({ type: null, message: '' });
 
-    setIsSubmitting(true);
-    setAlertState({ type: null, message: '' });
+   try {
+     // Step 1: Update the property
+     const updateResponse = await updateProperty(propertyId, property);
 
-    try {
-      // Step 1: Update the property
-      const updateResponse = await updateProperty(propertyId, property);
+     if (!updateResponse || updateResponse.status !== 'success') {
+       throw new Error(updateResponse.message || 'Failed to update property');
+     }
 
-      if (!updateResponse || updateResponse.status !== 'success') {
-        throw new Error(updateResponse.message || 'Failed to update property');
-      }
+     // Step 2: Upload new images if any are selected
+     if (selectedFiles.length > 0) {
+       const imageFormData = new FormData();
+       imageFormData.append('propertyId', propertyId);
+       selectedFiles.forEach((file) => {
+         imageFormData.append('images', file);
+       });
 
-      // Step 2: Upload new images if any are selected
-      if (selectedFiles.length > 0) {
-        const imageFormData = new FormData();
-        imageFormData.append('propertyId', propertyId);
-        selectedFiles.forEach((file) => {
-          imageFormData.append('images', file);
-        });
+       const imageUploadResponse = await uploadMultipleImages(imageFormData);
 
-        const imageUploadResponse = await uploadMultipleImages(imageFormData);
+       if (imageUploadResponse.status !== 'success') {
+         console.error('Failed to upload images:', imageUploadResponse.message);
+         setAlertState({
+           type: 'error',
+           message: 'Property updated, but failed to upload new images.',
+         });
+       } else {
+         setProperty((prev) =>
+           prev
+             ? {
+                 ...prev,
+                images: [...prev.images, ...(imageUploadResponse.data || []).map((img: any) => ({ url: img.url, public_id: img.public_id }))],
+               }
+             : null
+         );
+       }
+     }
 
-        if (imageUploadResponse.status !== 'success') {
-          console.error(
-            'Failed to upload images:',
-            imageUploadResponse.message
-          );
-          setAlertState({
-            type: 'error',
-            message: 'Property updated, but failed to upload new images.',
-          });
-        } else {
-          setProperty((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  images: [...prev.images, ...imageUploadResponse.data],
-                }
-              : null
-          );
-        }
-      }
+     setAlertState({
+       type: 'success',
+       message: 'Property updated successfully',
+     });
+     router.push(`/dashboard/property/${propertyId}`);
+   } catch (error) {
+     setAlertState({
+       type: 'error',
+       message:
+         error instanceof Error
+           ? error.message
+           : 'An error occurred while updating the property',
+     });
+   } finally {
+     setIsSubmitting(false);
+   }
+ };
 
-      setAlertState({
-        type: 'success',
-        message: 'Property updated successfully',
-      });
-      router.push(`/dashboard/property/${propertyId}`);
-    } catch (error) {
-      setAlertState({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'An error occurred while updating the property',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (isLoading) {
     return (

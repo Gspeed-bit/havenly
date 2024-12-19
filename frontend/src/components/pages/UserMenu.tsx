@@ -16,9 +16,7 @@ import { useUser } from '../hooks/api/useUser';
 const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
   const { user, loading } = useUser(); // Fetch the user data
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = useAuthStore((state) => state.isAdmin); // Check if the user is an admin
-
+ const { isAuthenticated } = useAuthStore();
   useEffect(() => {
     setHydrated(true); // Resolve server-side rendering issues
   }, []);
@@ -67,7 +65,7 @@ const UserMenu: React.FC = () => {
               <p className='text-xs text-gray-500'>{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
-            {isAdmin && (
+            {isAuthenticated && user.isAdmin && (
               <DropdownMenuItem asChild>
                 <Link
                   href='/dashboard'

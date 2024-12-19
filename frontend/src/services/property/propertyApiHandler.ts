@@ -46,23 +46,22 @@ export const createProperty = async (
 
 export const uploadMultipleImages = async (
   formData: FormData
-): Promise<ApiResponse<{ url: string; public_id: string }[]>> => {
+): Promise<ApiResponse<string[]>> => {
   try {
-    const response = await apiHandler<{ url: string; public_id: string }[]>(
-      '/image/properties/upload-multiple',
+    const response = await apiHandler<string[]>(
+      '/image/upload',
       'POST',
-      formData
+      formData,
+      {},
+      {
+        'Content-Type': 'multipart/form-data',
+      }
     );
-    if (response.status === 'success') {
-      return response;
-    } else {
-      throw new Error(response.message || 'Image upload failed');
-    }
+    return response;
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    return { status: 'error', message: 'Cloudinary upload failed' };
+    console.error('Error uploading images:', error);
+    return { status: 'error', message: 'Failed to upload images' };
   }
-
 };
 
 // Fetch all properties
@@ -87,12 +86,21 @@ export const fetchPropertyById = async (
 };
 
 export const updateProperty = async (
-  id: string,
-  data: Partial<Property>
+  propertyId: string,
+  propertyData: Partial<Property>
 ): Promise<ApiResponse<Property>> => {
-  return apiHandler<Property>(`/properties/${id}`, 'PUT', data);
+  try {
+    const response = await apiHandler<Property>(
+      `/properties/${propertyId}`,
+      'PUT',
+      propertyData
+    );
+    return response;
+  } catch (error) {
+    console.error('Error updating property:', error);
+    return { status: 'error', message: 'Failed to update property' };
+  }
 };
-
 export const deleteProperty = async (
   id: string
 ): Promise<ApiResponse<null>> => {
@@ -100,11 +108,17 @@ export const deleteProperty = async (
 };
 
 export const deletePropertyImage = async (
-  id: string,
+  propertyId: string,
   publicId: string
-): Promise<ApiResponse<null>> => {
-  return apiHandler<null>(
-    `/image/properties/${id}/images/${publicId}`,
-    'DELETE'
-  );
+): Promise<ApiResponse<void>> => {
+  try {
+    const response = await apiHandler<void>(
+      `/image/properties/${propertyId}/images/${publicId}`,
+      'DELETE'
+    );
+    return response;
+  } catch (error) {
+    console.error('Error deleting property image:', error);
+    return { status: 'error', message: 'Failed to delete property image' };
+  }
 };

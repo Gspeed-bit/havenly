@@ -1,9 +1,5 @@
 import { authStoreActions } from '../../store/auth';
-import {
-  setAuthToken,
-  isBrowser,
-  clearAuthToken,
-} from '../../config/helpers';
+
 import { apiHandler, ApiResponse } from '../../config/server';
 import {
   LoginCredentials,
@@ -13,12 +9,7 @@ import {
   VerifyAccountResponse,
 } from '../types/user.types';
 import { SignUpRequest, SignUpResponse } from '../types/user.types';
-
-export const logOutUser = () => {
-  
-  clearAuthToken();
-  authStoreActions.clearAuth();
-};
+import { useUserStore } from '@/store/users';
 
 export const login = async (loginData: LoginCredentials) => {
   const response = await apiHandler<LoginResponse>('/login', 'POST', loginData);
@@ -26,17 +17,19 @@ export const login = async (loginData: LoginCredentials) => {
   if (response.status === 'success') {
     const { token, user } = response.data;
 
-    if (isBrowser()) {
-      setAuthToken(token);
-    }
+    authStoreActions.setAuth(token);
+    useUserStore.getState().setUser(user as User);
 
-    authStoreActions.setAuth(user as User, token);
     return { status: 'success', message: 'Login successful' };
   } else {
     return { status: 'error', message: response.message || 'Login failed' };
   }
 };
 
+export const logOutUser = () => {
+  authStoreActions.clearAuth();
+  useUserStore.getState().clearUser();
+};
 // Signup function
 export const signUp = async (
   userData: SignUpRequest
