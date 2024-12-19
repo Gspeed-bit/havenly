@@ -19,8 +19,9 @@ import {
   verifyAccount,
   requestNewVerificationCode,
 } from '@/services/auth/auth';
-import { useAuthStore } from '@/store/auth';
+
 import Image from 'next/image';
+import { useUserStore } from '@/store/users';
 
 export default function VerificationPage() {
   const [email, setEmail] = useState('');
@@ -32,7 +33,7 @@ export default function VerificationPage() {
   const pathname = usePathname();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [from, setFrom] = useState<string | null>(null);
-  const user = useAuthStore((state) => state.user); // Zustand auth store
+  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     // Use URLSearchParams to extract query parameters directly from the URL
