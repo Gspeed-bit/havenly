@@ -26,7 +26,7 @@ export default function CompanyDetailsPage() {
         } else {
           setError(response.message || 'Failed to load company details');
         }
-      } catch (err) {
+      } catch {
         setError('An error occurred while fetching company details');
       } finally {
         setLoading(false);

@@ -38,87 +38,48 @@ export interface PropertyResponse {
   };
 }
 
-export const createProperty = async (
-  data: Property
+export const createProperty = (
+  propertyData: Partial<Property>
 ): Promise<ApiResponse<Property>> => {
-  return apiHandler<Property>('/properties', 'POST', data);
+  return apiHandler<Property>('/properties', 'POST', propertyData);
 };
 
-export const uploadMultipleImages = async (
-  formData: FormData
-): Promise<ApiResponse<string[]>> => {
-  try {
-    const response = await apiHandler<string[]>(
-      '/image/upload',
-      'POST',
-      formData,
-      {},
-      {
-        'Content-Type': 'multipart/form-data',
-      }
-    );
-    return response;
-  } catch (error) {
-    console.error('Error uploading images:', error);
-    return { status: 'error', message: 'Failed to upload images' };
-  }
+export const updateProperty = (
+  id: string,
+  propertyData: Partial<Property>
+): Promise<ApiResponse<Property>> => {
+  return apiHandler<Property>(`/properties/${id}`, 'PUT', propertyData);
 };
 
-// Fetch all properties
-export const fetchProperties = async (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filters: Record<string, any> = {},
-  page: number = 1,
-  limit: number = 10
-): Promise<ApiResponse<PropertyResponse>> => {
-  const queryParams = { ...filters, page, limit }; // Combine filters with pagination params
-  return apiHandler<PropertyResponse>(
+export const deleteProperty = (id: string): Promise<ApiResponse<void>> => {
+  return apiHandler<void>(`/properties/${id}`, 'DELETE');
+};
+
+export const fetchProperties = (
+  filters: Record<string, string>
+): Promise<ApiResponse<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>> => {
+  return apiHandler<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>(
     '/properties',
     'GET',
     undefined,
-    queryParams
+    filters
   );
 };
-export const fetchPropertyById = async (
+
+export const fetchPropertyById = (
   id: string
 ): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>(`/properties/${id}`, 'GET');
 };
 
-export const updateProperty = async (
-  propertyId: string,
-  propertyData: Partial<Property>
-): Promise<ApiResponse<Property>> => {
-  try {
-    const response = await apiHandler<Property>(
-      `/properties/${propertyId}`,
-      'PUT',
-      propertyData
-    );
-    return response;
-  } catch (error) {
-    console.error('Error updating property:', error);
-    return { status: 'error', message: 'Failed to update property' };
-  }
-};
-export const deleteProperty = async (
-  id: string
-): Promise<ApiResponse<null>> => {
-  return apiHandler<null>(`/properties/${id}`, 'DELETE');
+export const uploadMultipleImages = async (formData: FormData) => {
+  return apiHandler<{ secure_url: string; public_id: string }[]>(
+    '/image/properties/upload-multiple',
+    'POST',
+    formData
+  );
 };
 
-export const deletePropertyImage = async (
-  propertyId: string,
-  publicId: string
-): Promise<ApiResponse<void>> => {
-  try {
-    const response = await apiHandler<void>(
-      `/image/properties/${propertyId}/images/${publicId}`,
-      'DELETE'
-    );
-    return response;
-  } catch (error) {
-    console.error('Error deleting property image:', error);
-    return { status: 'error', message: 'Failed to delete property image' };
-  }
+export const deletePropertyImage = async (propertyId: string, publicId: string) => {
+  return apiHandler<void>(`image/properties/${propertyId}/images/${publicId}`, 'DELETE');
 };

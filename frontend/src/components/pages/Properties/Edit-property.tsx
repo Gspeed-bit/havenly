@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,14 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import {
-  // updateProperty,
-  uploadMultipleImages,
-  deletePropertyImage,
   fetchPropertyById,
   Property,
   updateProperty,
@@ -29,65 +25,58 @@ import {
   CompanyData,
   fetchCompanies,
 } from '@/services/company/companyApiHandler';
+
+import { PropertyImageManager } from './PropertyImageManager';
 import { AmenitiesInput } from './AmenitiesInputs';
 
-interface AlertState {
-  type: 'success' | 'error' | null;
-  message: string;
+interface EditPropertyFormProps {
+  id: string;
 }
 
-interface EditPropertyProps {
-  propertyId: string;
-}
-
-export function EditProperty({ propertyId }: EditPropertyProps) {
+export function EditPropertyForm({ id }: EditPropertyFormProps) {
   const [property, setProperty] = useState<Property | null>(null);
+  const [originalImages, setOriginalImages] = useState<
+    { url: string; public_id: string }[]
+  >([]);
   const [companies, setCompanies] = useState<CompanyData[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [alertState, setAlertState] = useState<AlertState>({
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [alertState, setAlertState] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({
     type: null,
     message: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const loadPropertyAndCompanies = async () => {
+      setLoading(true);
       try {
         const [propertyResponse, companiesResponse] = await Promise.all([
-          fetchPropertyById(propertyId),
+          fetchPropertyById(id),
           fetchCompanies(),
         ]);
-
-        if (propertyResponse.status === 'success' && propertyResponse.data) {
+        if (
+          propertyResponse.status === 'success' &&
+          companiesResponse.status === 'success'
+        ) {
           setProperty(propertyResponse.data);
-        } else {
-          setAlertState({ type: 'error', message: 'Failed to load property' });
-        }
-
-        if (companiesResponse.status === 'success') {
+          setOriginalImages(propertyResponse.data.images);
           setCompanies(companiesResponse.data.companies);
         } else {
-          setAlertState({ type: 'error', message: 'Failed to load companies' });
+          setError('Failed to load property or companies');
         }
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setAlertState({
-          type: 'error',
-          message: 'An error occurred while loading data',
-        });
+      } catch {
+        setError('An error occurred while fetching data');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     loadPropertyAndCompanies();
-  }, [propertyId]);
-
-  const handleSelectChange = (name: string, value: string) => {
-    setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
-  };
+  }, [id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -96,114 +85,61 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
     setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
   };
 
- const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-   setSelectedFiles(Array.from(e.target.files || []));
- };
+  const handleSelectChange = (name: string, value: string) => {
+    setProperty((prev) => (prev ? { ...prev, [name]: value } : null));
+  };
 
- const handleRemoveImage = async (publicId: string) => {
-   if (!property?._id) return;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!property) return;
 
-   try {
-     const response = await deletePropertyImage(property._id, publicId);
-     if (response.status === 'success') {
-       setProperty((prev) =>
-         prev
-           ? {
-               ...prev,
-              images: prev.images.filter((img: { url: string; public_id: string }) => img.public_id !== publicId),
-             }
-           : null
-       );
-       setAlertState({
-         type: 'success',
-         message: 'Image removed successfully',
-       });
-     } else {
-       throw new Error(response.message || 'Failed to remove image');
-     }
-   } catch (error) {
-     console.error('Error removing image:', error);
-     setAlertState({ type: 'error', message: 'Failed to remove image' });
-   }
- };
+    setLoading(true);
+    setAlertState({ type: null, message: '' });
 
- const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-   e.preventDefault();
-   if (!property) return;
+    try {
+      // Only include images in the update if they've changed
+      const updatedProperty: Partial<Property> = { ...property };
+      if (
+        JSON.stringify(updatedProperty.images) ===
+        JSON.stringify(originalImages)
+      ) {
+        delete updatedProperty.images;
+      }
 
-   setIsSubmitting(true);
-   setAlertState({ type: null, message: '' });
+      const updateResponse = await updateProperty(id, updatedProperty);
+      if (updateResponse.status === 'success') {
+        setAlertState({
+          type: 'success',
+          message: 'Property updated successfully',
+        });
+        setTimeout(() => {
+          router.push(`/dashboard/property/${id}`);
+        }, 2000);
+      } else {
+        setAlertState({
+          type: 'error',
+          message: 'Failed to update property',
+        });
+      }
+    } catch {
+      setAlertState({
+        type: 'error',
+        message: 'An error occurred while updating the property',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   try {
-     // Step 1: Update the property
-     const updateResponse = await updateProperty(propertyId, property);
+  const handleImagesUpdate = (
+    newImages: { url: string; public_id: string }[]
+  ) => {
+    setProperty((prev) => (prev ? { ...prev, images: newImages } : null));
+  };
 
-     if (!updateResponse || updateResponse.status !== 'success') {
-       throw new Error(updateResponse.message || 'Failed to update property');
-     }
-
-     // Step 2: Upload new images if any are selected
-     if (selectedFiles.length > 0) {
-       const imageFormData = new FormData();
-       imageFormData.append('propertyId', propertyId);
-       selectedFiles.forEach((file) => {
-         imageFormData.append('images', file);
-       });
-
-       const imageUploadResponse = await uploadMultipleImages(imageFormData);
-
-       if (imageUploadResponse.status !== 'success') {
-         console.error('Failed to upload images:', imageUploadResponse.message);
-         setAlertState({
-           type: 'error',
-           message: 'Property updated, but failed to upload new images.',
-         });
-       } else {
-         setProperty((prev) =>
-           prev
-             ? {
-                 ...prev,
-                images: [...prev.images, ...(imageUploadResponse.data || []).map((img: any) => ({ url: img.url, public_id: img.public_id }))],
-               }
-             : null
-         );
-       }
-     }
-
-     setAlertState({
-       type: 'success',
-       message: 'Property updated successfully',
-     });
-     router.push(`/dashboard/property/${propertyId}`);
-   } catch (error) {
-     setAlertState({
-       type: 'error',
-       message:
-         error instanceof Error
-           ? error.message
-           : 'An error occurred while updating the property',
-     });
-   } finally {
-     setIsSubmitting(false);
-   }
- };
-
-
-  if (isLoading) {
-    return (
-      <div className='flex justify-center items-center h-screen'>
-        Loading...
-      </div>
-    );
-  }
-
-  if (!property) {
-    return (
-      <div className='flex justify-center items-center h-screen'>
-        Property not found
-      </div>
-    );
-  }
+  if (loading) return <p>Loading property details...</p>;
+  if (error) return <p className='text-red-500'>{error}</p>;
+  if (!property) return <p>Property not found</p>;
 
   return (
     <Card className='w-full max-w-2xl mx-auto'>
@@ -255,13 +191,22 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
           </div>
           <div className='space-y-2'>
             <Label htmlFor='propertyType'>Property Type</Label>
-            <Input
-              id='propertyType'
+            <Select
               name='propertyType'
               value={property.propertyType}
-              onChange={handleInputChange}
-              required
-            />
+              onValueChange={(value) =>
+                handleSelectChange('propertyType', value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select a Property Type' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='Apartment'>Apartment</SelectItem>
+                <SelectItem value='House'>House</SelectItem>
+                <SelectItem value='Condo'>Condo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className='space-y-2'>
             <Label htmlFor='rooms'>Number of Rooms</Label>
@@ -280,7 +225,6 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               name='company'
               value={property.company}
               onValueChange={(value) => handleSelectChange('company', value)}
-              required
             >
               <SelectTrigger>
                 <SelectValue placeholder='Select a company' />
@@ -343,16 +287,13 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
             <Input
               id='agentName'
               name='agentName'
-              value={property.agent?.name}
+              value={property.agent?.name || ''}
               onChange={(e) =>
                 setProperty((prev) =>
                   prev
                     ? {
                         ...prev,
-                        agent: {
-                          ...prev.agent,
-                          name: e.target.value,
-                        },
+                        agent: { ...prev.agent, name: e.target.value },
                       }
                     : null
                 )
@@ -364,61 +305,24 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
             <Input
               id='agentContact'
               name='agentContact'
-              value={property.agent?.contact}
+              value={property.agent?.contact || ''}
               onChange={(e) =>
                 setProperty((prev) =>
                   prev
                     ? {
                         ...prev,
-                        agent: {
-                          ...prev.agent,
-                          contact: e.target.value,
-                        },
+                        agent: { ...prev.agent, contact: e.target.value },
                       }
                     : null
                 )
               }
             />
           </div>
-          <div className='space-y-2'>
-            <Label>Current Images</Label>
-            {property.images && property.images.length > 0 ? (
-              <div className='grid grid-cols-2 gap-4'>
-                {property.images.map((image, index) => (
-                  <div key={index} className='relative'>
-                    <Image
-                      src={image.url}
-                      alt={`Property image ${index + 1}`}
-                      width={200}
-                      height={200}
-                      className='object-cover rounded-md'
-                    />
-                    <Button
-                      variant='destructive'
-                      size='icon'
-                      className='absolute top-2 right-2'
-                      onClick={() => handleRemoveImage(image.public_id)}
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No images available</p>
-            )}
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='newImages'>Add New Images</Label>
-            <Input
-              id='newImages'
-              name='newImages'
-              type='file'
-              multiple
-              onChange={handleFileChange}
-              accept='image/*'
-            />
-          </div>
+          <PropertyImageManager
+            propertyId={id}
+            images={property.images}
+            onImagesUpdate={handleImagesUpdate}
+          />
           {alertState.type && (
             <Alert
               variant={alertState.type === 'error' ? 'destructive' : 'default'}
@@ -434,8 +338,8 @@ export function EditProperty({ propertyId }: EditPropertyProps) {
               <AlertDescription>{alertState.message}</AlertDescription>
             </Alert>
           )}
-          <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting ? 'Updating Property...' : 'Update Property'}
+          <Button type='submit' className='w-full' disabled={loading}>
+            {loading ? 'Updating Property...' : 'Update Property'}
           </Button>
         </form>
       </CardContent>

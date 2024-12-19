@@ -116,11 +116,10 @@ export function CreateCompanyForm() {
       } else {
         throw new Error(response.message);
       }
-    } catch (error: any) {
+    } catch {
       setAlertState({
         type: 'error',
-        message:
-          error.message || 'An error occurred while creating the company.',
+        message: 'An error occurred while creating the company.',
       });
     } finally {
       setIsSubmitting(false);
@@ -158,6 +157,7 @@ export function CreateCompanyForm() {
             id={field.name}
             type={field.type}
             name={field.name}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value={(companyData as any)[field.name]}
             onChange={handleChange}
             required={field.required}

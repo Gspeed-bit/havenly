@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,11 +59,11 @@ const predefinedAmenities = [
   'Helipad',
 ];
 
-export function AmenitiesInput({ value, onChange }: AmenitiesInputProps) {
+export function AmenitiesInput({ value = [], onChange }: AmenitiesInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  useEffect(() => {
+  const updateSuggestions = useCallback(() => {
     const filteredSuggestions = predefinedAmenities.filter(
       (amenity) =>
         !value.includes(amenity) &&
@@ -71,6 +71,10 @@ export function AmenitiesInput({ value, onChange }: AmenitiesInputProps) {
     );
     setSuggestions(filteredSuggestions);
   }, [inputValue, value]);
+
+  useEffect(() => {
+    updateSuggestions();
+  }, [updateSuggestions]);
 
   const addAmenity = (amenity: string) => {
     if (amenity && !value.includes(amenity)) {

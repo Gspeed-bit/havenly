@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { setAuthToken, clearAuthToken, getAuthToken } from '../config/helpers';
+import { setAuthToken, clearAuthToken } from '../config/helpers';
 
 interface AuthState {
   isAuthenticated: boolean;

@@ -70,7 +70,7 @@ export function EditCompanyForm({ companyId }: EditCompanyFormProps) {
             message: 'Failed to load company data',
           });
         }
-      } catch (error) {
+      } catch {
         setAlertState({
           type: 'error',
           message: 'An error occurred while loading company data',
@@ -156,11 +156,11 @@ export function EditCompanyForm({ companyId }: EditCompanyFormProps) {
       } else {
         throw new Error(response.message);
       }
-    } catch (error: any) {
+    } catch  {
       setAlertState({
         type: 'error',
         message:
-          error.message || 'An error occurred while updating the company.',
+         'An error occurred while updating the company.',
       });
     } finally {
       setIsSubmitting(false);
@@ -213,6 +213,7 @@ export function EditCompanyForm({ companyId }: EditCompanyFormProps) {
             id={field.name}
             type={field.type}
             name={field.name}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value={(companyData as any)[field.name]}
             onChange={handleChange}
             required={field.required}

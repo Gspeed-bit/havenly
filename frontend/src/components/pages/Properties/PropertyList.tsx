@@ -1,164 +1,191 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   fetchProperties,
   Property,
 } from '@/services/property/propertyApiHandler';
-import { Home } from 'lucide-react';
-
-interface Pagination {
-  total: number;
-  currentPage: number;
-  totalPages: number;
-}
 
 export function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<Pagination>({
-    total: 0,
-    currentPage: 1,
-    totalPages: 1,
+  const [filters, setFilters] = useState({
+    city: '',
+    propertyType: '',
+    priceRange: '',
+    rooms: '',
   });
-  const [itemsPerPage] = useState(9);
+
+  const [currentPage, setCurrentPage] = useState(1); // Track the current page
+  const [totalPages, setTotalPages] = useState(1); // Track total pages from the API
+
+  const router = useRouter();
 
   useEffect(() => {
     const loadProperties = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        const response = await fetchProperties(
-          {},
-          pagination.currentPage,
-          itemsPerPage
-        );
+        const response = await fetchProperties({
+          ...filters,
+          page: currentPage.toString(),
+        });
+        console.log('API Response:', response); // Add this line to debug
+
         if (response.status === 'success') {
           setProperties(response.data.data);
-          setPagination({
-            total: response.data.pagination.total,
-            currentPage: response.data.pagination.currentPage,
-            totalPages: response.data.pagination.totalPages,
-          });
+          setTotalPages(response.data.pagination.totalPages);
         } else {
           setError('Failed to load properties');
         }
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.error('Error fetching properties:', error);
         setError('An error occurred while fetching properties');
       } finally {
         setLoading(false);
       }
     };
-    loadProperties();
-  }, [pagination.currentPage, itemsPerPage]);
 
-  const handlePageChange = (newPage: number) => {
-    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+    // Load properties when filters or current page changes
+    loadProperties();
+  }, [filters, currentPage]);
+
+  const handleFilterChange = (name: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setCurrentPage(1); // Reset to the first page when filters change
   };
 
-  if (loading) {
-    return (
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {[...Array(itemsPerPage)].map((_, index) => (
-          <Card key={index} className='w-full'>
-            <Skeleton className='h-48 w-full rounded-t-lg' />
-            <CardContent className='mt-4'>
-              <Skeleton className='h-4 w-3/4 mb-2' />
-              <Skeleton className='h-4 w-1/2' />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
-  if (error) return <div className='text-red-500 text-center'>{error}</div>;
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
 
   return (
-    <div className='space-y-6'>
-      {properties.length === 0 ? (
-        <div className='text-center text-muted-foreground text-lg'>
-          No properties found
+    <Card className='w-full'>
+      <CardHeader>
+        <CardTitle>Property Listings</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Filter Section */}
+        <div className='flex space-x-4 mb-4'>
+          <Input
+            placeholder='City'
+            value={filters.city}
+            onChange={(e) => handleFilterChange('city', e.target.value)}
+          />
+          <Select
+            value={filters.propertyType}
+            onValueChange={(value) => handleFilterChange('propertyType', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Property Type' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='Apartment'>Apartment</SelectItem>
+              <SelectItem value='House'>House</SelectItem>
+              <SelectItem value='Condo'>Condo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            placeholder='Price Range (e.g., 100000-200000)'
+            value={filters.priceRange}
+            onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+          />
+          <Input
+            placeholder='Rooms'
+            type='number'
+            value={filters.rooms}
+            onChange={(e) => handleFilterChange('rooms', e.target.value)}
+          />
         </div>
-      ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {properties.map((property) => (
-            <Link
-              href={`/dashboard/property/${property._id}`}
-              key={property._id}
-            >
-              <Card className='w-full hover:shadow-lg transition-shadow duration-300 overflow-hidden'>
-                <div className='relative h-48'>
-                  {property.images[0]?.url  ? (
-                    <img
-                      src={
-                        property.images?.[0]?.url || '/placeholder-property.jpg'
-                      }
-                      alt={property.title}
-                      className='w-full h-full object-cover rounded-lg'
-                    />
-                  ) : (
-                    <div className='flex items-center justify-center w-full h-full bg-gray-200 rounded-lg'>
-                      <Home className='w-8 h-8 text-gray-500' />
-                    </div>
+
+        {/* Property Listings */}
+        {loading ? (
+          <p>Loading properties...</p>
+        ) : error ? (
+          <p className='text-red-500'>{error}</p>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {properties.map((property) => (
+              <Card
+                key={property._id}
+                className='cursor-pointer hover:shadow-lg transition-shadow'
+              >
+                <CardContent
+                  className='p-4'
+                  onClick={() =>
+                    router.push(`/dashboard/property/${property._id}`)
+                  }
+                >
+                  {property.images && property.images.length > 0 && (
+                    <picture>
+                      <img
+                        src={property.images[0].url}
+                        alt={property.title}
+                        className='w-full rounded-lg h-[7rem] object-cover mb-4'
+                      />
+                    </picture>
                   )}
-                </div>
-                <CardHeader>
-                  <CardTitle className='line-clamp-1'>
+
+                  <h3 className='text-lg font-semibold mb-2'>
                     {property.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-2xl font-bold text-primary'>
+                  </h3>
+                  <p className='text-sm text-gray-600 mb-2'>
+                    {property.location}
+                  </p>
+                  <p className='text-sm font-medium mb-2'>
                     ${property.price.toLocaleString()}
                   </p>
-                  <p className='text-muted-foreground'>{property.location}</p>
-                  <p className='text-sm text-muted-foreground'>
-                    {property.propertyType}
+                  <p className='text-sm text-gray-600'>
+                    {property.rooms} rooms • {property.propertyType}
                   </p>
                 </CardContent>
-                <CardFooter>
-                  <p className='text-sm text-muted-foreground'>
-                    {property.rooms} {property.rooms === 1 ? 'room' : 'rooms'} •{' '}
-                    {property.status}
-                  </p>
-                </CardFooter>
               </Card>
-            </Link>
-          ))}
+            ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        <div className='flex justify-center gap-5 items-center mt-6'>
+          <Button
+            disabled={currentPage === 1}
+            onClick={goToPreviousPage}
+            variant='outline'
+          >
+            Previous
+          </Button>
+          <p>
+            Page {currentPage} of {totalPages}
+          </p>
+          <Button
+            disabled={currentPage === totalPages}
+            onClick={goToNextPage}
+            variant='outline'
+          >
+            Next
+          </Button>
         </div>
-      )}
-      <div className='flex justify-center items-center space-x-2 mt-8'>
-        <Button
-          onClick={() => handlePageChange(pagination.currentPage - 1)}
-          disabled={pagination.currentPage === 1}
-          variant='outline'
-        >
-          Previous
-        </Button>
-        <span className='text-muted-foreground'>
-          Page {pagination.currentPage} of {pagination.totalPages}
-        </span>
-        <Button
-          onClick={() => handlePageChange(pagination.currentPage + 1)}
-          disabled={pagination.currentPage === pagination.totalPages}
-          variant='outline'
-        >
-          Next
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

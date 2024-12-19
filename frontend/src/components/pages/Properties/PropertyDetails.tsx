@@ -1,106 +1,230 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 
-import { Property } from '@/services/property/propertyApiHandler';
-import { Pencil, Trash2 } from 'lucide-react';
-import { PropertyMap } from '../property-map';
-import { ImageCarousel } from '../image-carousel';
+import {
+  fetchPropertyById,
+  Property,
+  deleteProperty,
+} from '@/services/property/propertyApiHandler';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
-interface PropertyDetailProps {
-  property: Property;
-  onDelete: () => void;
+interface PropertyDetailsProps {
+  id: string;
+}
+interface AlertState {
+  type: 'success' | 'error' | null;
+  message: string;
 }
 
-export function PropertyDetail({ property, onDelete }: PropertyDetailProps) {
+export function PropertyDetails({ id }: PropertyDetailsProps) {
+  const [property, setProperty] = useState<Property | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [alertState, setAlertState] = useState<AlertState>({
+    type: null,
+    message: '',
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Track dialog state
   const router = useRouter();
 
-  const handleEdit = () => {
-    router.push(`/dashboard/property/${property._id}/edit`);
+  useEffect(() => {
+    const loadProperty = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetchPropertyById(id);
+        if (response.status === 'success') {
+          if (response.data) {
+            setProperty(response.data);
+          } else {
+            setAlertState({
+              type: 'error',
+              message: 'Failed to load property details',
+            });
+          }
+        } else {
+          setAlertState({
+            type: 'error',
+            message: 'Failed to load property details',
+          });
+        }
+      } catch {
+        setError('An error occurred while fetching property details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProperty();
+  }, [id]);
+
+  const handleDelete = async () => {
+    setIsDialogOpen(false); // Close dialog on delete action
+    try {
+      const response = await deleteProperty(id);
+      if (response.status === 'success') {
+        router.push('/dashboard/property');
+        setAlertState({
+          type: 'success',
+          message: 'Image deleted successfully',
+        });
+      } else {
+        setError('');
+        setAlertState({
+          type: 'error',
+          message: 'Failed to delete property',
+        });
+      }
+    } catch {
+      setError('An error occurred while deleting the property');
+    }
   };
 
-  return (
-    <Card className='w-full max-w-4xl mx-auto'>
-      <CardHeader>
-        <CardTitle className='text-2xl font-bold'>{property.title}</CardTitle>
-        <div className='flex justify-between items-center mt-2'>
-          <Badge
-            variant={property.status === 'listed' ? 'default' : 'secondary'}
-          >
-            {property.status}
-          </Badge>
-          <div className='space-x-2'>
-            <Button onClick={handleEdit} variant='outline' size='sm'>
-              <Pencil className='mr-2 h-4 w-4' /> Edit
-            </Button>
-            <Button onClick={onDelete} variant='destructive' size='sm'>
-              <Trash2 className='mr-2 h-4 w-4' /> Delete
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        {property.images && property.images.length > 0 ? (
-          <ImageCarousel images={property.images} alt={''} />
-        ) : (
-          <div className='bg-gray-200 h-64 flex items-center justify-center'>
-            <p>No images available</p>
-          </div>
-        )}
+  if (isLoading) return <p>Loading property details...</p>;
+  if (error) return <p className='text-red-500'>{error}</p>;
+  if (!property) return <p>Property not found</p>;
 
-        <div className='grid grid-cols-2 gap-4'>
+  return (
+    <Card className='w-full max-w-3xl mx-auto'>
+      <CardHeader>
+        <CardTitle>{property.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className='grid grid-cols-2 gap-4 mb-4'>
           <div>
-            <h3 className='font-semibold'>Price</h3>
-            <p>${property.price.toLocaleString()}</p>
+            <p className='font-semibold'>Price:</p>
+            <p>{property.price ? property.price.toLocaleString() : 'N/A'}</p>
           </div>
           <div>
-            <h3 className='font-semibold'>Location</h3>
+            <p className='font-semibold'>Location:</p>
             <p>{property.location}</p>
           </div>
           <div>
-            <h3 className='font-semibold'>Property Type</h3>
+            <p className='font-semibold'>Property Type:</p>
             <p>{property.propertyType}</p>
           </div>
           <div>
-            <h3 className='font-semibold'>Number of Rooms</h3>
+            <p className='font-semibold'>Rooms:</p>
             <p>{property.rooms}</p>
           </div>
+          <div>
+            <p className='font-semibold'>Status:</p>
+            <p>{property.status}</p>
+          </div>
+          <div>
+            <p className='font-semibold'>Published:</p>
+            <p>{property.isPublished ? 'Yes' : 'No'}</p>
+          </div>
         </div>
-
-        <div>
-          <h3 className='font-semibold'>Description</h3>
+        <div className='mb-4'>
+          <p className='font-semibold'>Description:</p>
           <p>{property.description}</p>
         </div>
-
-        <div>
-          <h3 className='font-semibold'>Amenities</h3>
-          <ul className='list-disc list-inside'>
-            {property.amenities.map((amenity, index) => (
-              <li key={index}>{amenity}</li>
-            ))}
-          </ul>
+        <div className='mb-4'>
+          <p className='font-semibold text-primary_main'>Amenities:</p>
+          {property.amenities && property.amenities.length > 0 ? (
+            <div className='flex flex-wrap gap-2'>
+              {property.amenities.map((amenity, index) => (
+                <Badge key={index} variant='outline' className='text-primary'>
+                  {amenity}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className='text-gray-500 text-sm'>No amenities available</p>
+          )}
         </div>
-
-        <div>
-          <h3 className='font-semibold'>Agent Information</h3>
-          <p>Name: {property.agent?.name}</p>
-          <p>Contact: {property.agent?.contact}</p>
-        </div>
-
-        {property.coordinates && (
-          <div>
-            <p className='font-semibold mb-2'>Location</p>
-            <PropertyMap
-              lat={property.coordinates.lat}
-              lng={property.coordinates.lng}
-            />
+        {property.agent && (
+          <div className='mb-4'>
+            <p className='font-semibold'>Agent:</p>
+            <p>
+              {property.agent.name} - {property.agent.contact}
+            </p>
           </div>
         )}
+        {property.images && (
+          <div className='mb-4'>
+            <p className='font-semibold'>Images:</p>
+            <div className='grid grid-cols-3 gap-4'>
+              {property.images.map((image, index) => (
+                <picture key={index}>
+                  <img
+                    key={index}
+                    src={image.url}
+                    alt={`Property image ${index + 1}`}
+                    className='w-full h-48 object-cover rounded-lg'
+                  />
+                </picture>
+              ))}
+            </div>
+          </div>
+        )}
+        {alertState.type && (
+          <Alert
+            variant={alertState.type === 'error' ? 'destructive' : 'default'}
+          >
+            {alertState.type === 'error' ? (
+              <AlertCircle className='h-4 w-4' />
+            ) : (
+              <CheckCircle2 className='h-4 w-4' />
+            )}
+            <AlertTitle>
+              {alertState.type === 'error' ? 'Error' : 'Success'}
+            </AlertTitle>
+            <AlertDescription>{alertState.message}</AlertDescription>
+          </Alert>
+        )}
+        <div className='flex space-x-4'>
+          <Button
+            onClick={() =>
+              router.push(`/dashboard/property/edit/${property._id}`)
+            }
+          >
+            Edit
+          </Button>
+
+          {/* Delete button now triggers the AlertDialog */}
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant='destructive'>Delete</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Are you sure you want to delete this property?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. It will permanently delete this
+                  property from the system.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </CardContent>
     </Card>
   );
