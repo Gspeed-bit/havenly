@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '../icons/Icon';
 import Link from 'next/link';
-import { useAuthStore } from '@store/auth';
 import Page from '@components/common/links/page';
 import UserMenu from './UserMenu';
 import { useUserStore } from '@/store/users';
+import { useAuthStore } from '@/store/auth';
 
 interface NavigationProps {
   isMobileMenuOpen: boolean;
@@ -20,32 +20,32 @@ const Navigation: React.FC<NavigationProps> = ({
   const [hydrated, setHydrated] = useState(false); // Hydration state
 
   // Get authentication and admin status from store
-   const { isAuthenticated } = useAuthStore();
-   const { user } = useUserStore();
-   const isAdmin = user?.isAdmin === true;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useUserStore((state) => state.user);
+  const isAdmin = user?.isAdmin === true;
 
-   useEffect(() => {
-     setHydrated(true);
-   }, []);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
-   if (!hydrated) return null;
+  if (!hydrated) return null;
 
-   const userNavItems = [
-     { label: 'Home', path: '/' },
-     { label: 'About', path: '/about' },
-     { label: 'Profile', path: '/user-profile' },
-     { label: 'Listings', path: '/listings' },
-     { label: 'Services', path: '/services' },
-   ];
+  const userNavItems = [
+    { label: 'Home', path: '/' },
+    { label: 'About', path: '/about' },
+    { label: 'Profile', path: '/user-profile' },
+    { label: 'Listings', path: '/listings' },
+    { label: 'Services', path: '/services' },
+  ];
 
-   const adminNavItems = [
-     { label: 'Dashboard', path: '/dashboard/admins' },
-     { label: 'Manage Admins', path: '/dashboard/admins' },
-     { label: 'Manage Users', path: '/dashboard/users' },
-     { label: 'Profile', path: '/dashboard/update-profile' },
-   ];
+  const adminNavItems = [
+    { label: 'Dashboard', path: '/dashboard/admins' },
+    { label: 'Manage Admins', path: '/dashboard/admins' },
+    { label: 'Manage Users', path: '/dashboard/users' },
+    { label: 'Profile', path: '/dashboard/update-profile' },
+  ];
 
-   const navItems = isAdmin ? adminNavItems : userNavItems;
+  const navItems = isAdmin ? adminNavItems : userNavItems;
 
   return (
     <nav className='bg-white'>

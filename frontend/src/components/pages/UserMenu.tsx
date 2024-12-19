@@ -19,12 +19,15 @@ const UserMenu: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const user = useUserStore((state) => state.user);
-  useEffect(() => {
-    setHydrated(true); // Resolve server-side rendering issues
-    setLoading((prevLoading) => !prevLoading);
-  }, []);
+
+useEffect(() => {
+  setHydrated(true);
+  setLoading(false); // Ensure loading is explicitly set to false
+}, []);
 
   if (!hydrated) return null;
+  console.log('Authenticated:', isAuthenticated);
+  console.log('User:', user);
 
   if (loading) {
     return (
@@ -34,7 +37,7 @@ const UserMenu: React.FC = () => {
       </div>
     );
   }
-
+  console.log(user);
   return (
     <div className='relative'>
       {isAuthenticated && user ? (
@@ -42,10 +45,13 @@ const UserMenu: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <div className='flex items-center space-x-2 cursor-pointer'>
               <Avatar className='h-8 w-8'>
-                <AvatarImage src={user.imgUrl} />
+                <AvatarImage
+                  src={user?.imgUrl || '/default-avatar.png'}
+                  alt='User Avatar'
+                />
                 <AvatarFallback>
-                  {user?.firstName?.[0]}
-                  {user?.lastName?.[0]}
+                  {user?.firstName?.[0]?.toUpperCase() || 'U'}
+                  {user?.lastName?.[0]?.toUpperCase() || ''}
                 </AvatarFallback>
               </Avatar>
 
