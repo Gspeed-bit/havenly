@@ -45,8 +45,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { logOutUser } from '@/services/auth/auth';
-import { useUser } from '@/components/hooks/api/useUser';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { useUserStore } from '@/store/users';
 
 export default function UserDashboardLayout({
   children,
@@ -55,8 +55,8 @@ export default function UserDashboardLayout({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { user } = useUser(); // Hook to fetch user data
   const [pageTitle, setPageTitle] = useState('Dashboard');
+  const user = useUserStore((state) => state.user);
 
   const menuItems = [
     { href: '/', icon: Home, label: 'Home' },

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUser } from '@/components/hooks/api/useUser';
 import { apiHandler, SuccessResponse } from '@/config/server';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,9 +17,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Camera, Phone, User, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/store/users';
 
 const UserProfileUpdate = () => {
-  const { user, loading: userLoading } = useUser();
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -38,12 +37,13 @@ const UserProfileUpdate = () => {
   const [adminPin, setAdminPin] = useState('');
   const [pinRequested, setPinRequested] = useState(false);
   // State to control loading behavior
+  const user = useUserStore((state) => state.user);
 
   const router = useRouter(); // Initialize the router for redirection
 
   useEffect(() => {
     // Wait for user data to be fully loaded
-    if (!userLoading) {
+    if (!loading) {
       // Check if user is an admin and redirect accordingly
       if (user) {
         setUserData({
@@ -55,7 +55,7 @@ const UserProfileUpdate = () => {
         setIsAdmin(user.isAdmin || false);
       }
     }
-  }, [user, userLoading, isAdmin, router]);
+  }, [user, isAdmin, router, loading]);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const file = e.target.files[0];
@@ -214,7 +214,7 @@ const UserProfileUpdate = () => {
     }
   };
 
-  if (userLoading) {
+  if (loading) {
     return (
       <div className='flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100'>
         <div className='w-16 h-16 border-t-4 border-blue-600 border-solid rounded-full animate-spin'></div>
