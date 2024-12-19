@@ -46,7 +46,7 @@ import {
 import { motion } from 'framer-motion';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { logOutUser } from '@/services/auth/auth';
-import { useUser } from '@/components/hooks/api/useUser';
+import { useUserStore } from '@/store/users';
 
 export default function DashboardLayout({
   children,
@@ -55,8 +55,9 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { user } = useUser();
+
   const [pageTitle, setPageTitle] = useState('Dashboard');
+  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     const title = pathname.split('/').pop();

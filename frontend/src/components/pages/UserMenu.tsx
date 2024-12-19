@@ -11,14 +11,17 @@ import {
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/icons/Icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useUser } from '../hooks/api/useUser';
+import { useUserStore } from '@/store/users';
 
 const UserMenu: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
-  const { user, loading } = useUser(); // Fetch the user data
- const { isAuthenticated } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+
+  const { isAuthenticated } = useAuthStore();
+  const user = useUserStore((state) => state.user);
   useEffect(() => {
     setHydrated(true); // Resolve server-side rendering issues
+    setLoading((prevLoading) => !prevLoading);
   }, []);
 
   if (!hydrated) return null;
