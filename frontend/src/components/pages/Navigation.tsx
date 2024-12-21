@@ -36,6 +36,7 @@ const Navigation: React.FC<NavigationProps> = ({
     { label: 'Profile', path: '/user-profile' },
     { label: 'Listings', path: '/listings' },
     { label: 'Services', path: '/services' },
+    { label: 'Inquiries', path: '/inquiries' },
   ];
 
   const adminNavItems = [

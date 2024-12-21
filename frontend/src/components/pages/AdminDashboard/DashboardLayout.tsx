@@ -76,6 +76,7 @@ export default function DashboardLayout({
     { href: '/dashboard/users', icon: Users, label: 'Users' },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
     { href: '/dashboard/companies', icon: Building2, label: 'Companies' },
+    { href: '/dashboard/inquiries', icon: Building2, label: 'Inquiry' },
     {
       href: '/dashboard/property',
       icon: Building2,

@@ -19,15 +19,12 @@ const UserMenu: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const user = useUserStore((state) => state.user);
-
-useEffect(() => {
-  setHydrated(true);
-  setLoading(false); // Ensure loading is explicitly set to false
-}, []);
+  useEffect(() => {
+    setHydrated(true);
+    setLoading(false); // Ensure loading is explicitly set to false
+  }, []);
 
   if (!hydrated) return null;
-  console.log('Authenticated:', isAuthenticated);
-  console.log('User:', user);
 
   if (loading) {
     return (
@@ -37,7 +34,6 @@ useEffect(() => {
       </div>
     );
   }
-  console.log(user);
   return (
     <div className='relative'>
       {isAuthenticated && user ? (
@@ -46,7 +42,7 @@ useEffect(() => {
             <div className='flex items-center space-x-2 cursor-pointer'>
               <Avatar className='h-8 w-8'>
                 <AvatarImage
-                  src={user?.imgUrl || '/default-avatar.png'}
+                  src={`${user?.imgUrl}?${new Date().getTime()}`} 
                   alt='User Avatar'
                 />
                 <AvatarFallback>

@@ -27,8 +27,9 @@ export const login = async (loginData: LoginCredentials) => {
 };
 
 export const logOutUser = () => {
-  authStoreActions.clearAuth();
   useUserStore.getState().clearUser();
+  authStoreActions.clearAuth();
+  authStoreActions.logout();
 };
 // Signup function
 export const signUp = async (

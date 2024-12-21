@@ -92,38 +92,6 @@ const UserProfileUpdate = () => {
     return true;
   };
 
-  const handleImageUpload = async () => {
-    if (!image) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('image', image as File);
-      formData.append('type', 'user_image');
-      formData.append('entityId', user?._id || 'default-entity-id');
-      if (isAdmin) formData.append('pin', adminPin);
-
-      const response = await apiHandler<SuccessResponse<{ url: string }>>(
-        '/image/upload',
-        'POST',
-        formData
-      );
-
-      if (response.status === 'success') {
-        setUserData({ ...userData, imgUrl: response.data?.data?.url });
-        setMessage({ type: 'success', text: 'Image uploaded successfully!' });
-        // Refresh the page after image upload
-        window.location.reload();
-      } else {
-        throw new Error(response.message || 'Image upload failed.');
-      }
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Image upload failed.',
-      });
-    }
-  };
-
   const handleRequestPin = async () => {
     setLoading(true);
     setMessage(null);
@@ -154,47 +122,68 @@ const UserProfileUpdate = () => {
     setLoading(true);
     setMessage(null);
 
-    // Validate the form first
     if (!validateForm()) {
       setLoading(false);
-      return; // Stop further execution if validation fails
+      return;
     }
 
     try {
+      let updatedImgUrl = userData.imgUrl;
+
+      // Step 1: Handle Image Upload
+      if (image) {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('type', 'user_image');
+        formData.append('entityId', user?._id || 'default-entity-id');
+        if (isAdmin) formData.append('pin', adminPin);
+
+        const imageResponse = await apiHandler<
+          SuccessResponse<{ url: string }>
+        >('/image/upload', 'POST', formData);
+
+        if (imageResponse.status === 'success') {
+          updatedImgUrl = imageResponse.data?.data?.url || '';
+          setUserData((prev) => ({ ...prev, imgUrl: updatedImgUrl }));
+          setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+        } else {
+          throw new Error(imageResponse.message || 'Image upload failed.');
+        }
+      }
+
+      // Step 2: Update Profile Data
       const updatedData = {
         ...userData,
         ...(isAdmin ? { pin: adminPin } : {}),
       };
 
-      if (isAdmin && !pinRequested) {
-        setMessage({
-          type: 'error',
-          text: 'Invalid or missing PIN.',
-        });
-        setPinRequested(false); // Reset pinRequested to false
-        setLoading(false);
-        return;
-      }
-
-      const response = await apiHandler<SuccessResponse<object>>(
+      const profileResponse = await apiHandler<SuccessResponse<object>>(
         '/user/update',
         'PUT',
         updatedData
       );
 
-      if (response.status === 'success') {
+      if (profileResponse.status === 'success') {
         setMessage({
           type: 'success',
           text: 'Your profile has been successfully updated.',
         });
-        // If image is changed, upload it
-        await handleImageUpload();
-        // Refresh the page after successful update
-        window.location.reload();
+
+        // Update Zustand store
+        const { ...userWithoutData } = user;
+        useUserStore.getState().setUser({
+          ...userWithoutData,
+          ...updatedData,
+          imgUrl: updatedImgUrl,
+        });
+
+        // Optionally reload the page or fetch updated user data
+        router.refresh();
       } else {
-        throw new Error(response.message || 'Profile update failed.');
+        throw new Error(profileResponse.message || 'Profile update failed.');
       }
     } catch (error) {
+      console.error(error);
       setMessage({
         type: 'error',
         text:
@@ -202,13 +191,6 @@ const UserProfileUpdate = () => {
             ? error.message
             : 'An unexpected error occurred.',
       });
-
-      if (
-        error instanceof Error &&
-        error.message.includes('invalid or missing PIN')
-      ) {
-        setPinRequested(false); // Ensure button visibility after error
-      }
     } finally {
       setLoading(false);
     }

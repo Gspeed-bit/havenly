@@ -26,7 +26,7 @@ export const useAuthStore = create(
       logout: async () => {
         get().clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
+          window.location.href = '/';
         }
       },
     }),
