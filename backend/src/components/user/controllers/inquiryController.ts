@@ -40,13 +40,12 @@ export const createInquiry = async (req: Request, res: Response) => {
     const notificationMessage = `New inquiry for property: ${property.title}`;
     await sendNotification(companyId, 'inquiry', notificationMessage);
 
-    // Emit real-time notification
     const io = req.app.get('io');
     io.to(companyId).emit('newInquiry', {
       inquiryId: inquiry._id,
-      propertyId,
       message: notificationMessage,
     });
+
 
     res.status(201).json({ status: 'success', data: inquiry });
   } catch (error) {

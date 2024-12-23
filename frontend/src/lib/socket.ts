@@ -1,20 +1,24 @@
-import { io } from 'socket.io-client';
+import { useSocketStore } from '@/store/socket';
+import { useUserStore } from '@/store/users';
+import { useEffect } from 'react';
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SERVER_URI || 'http://localhost:5000';
+const useSocket = () => {
+  const { socket, initializeSocket, disconnectSocket } = useSocketStore();
+  const { user } = useUserStore();
 
-export const socket = io(SOCKET_URL, {
-  autoConnect: false,
-  withCredentials: true,
-});
+  useEffect(() => {
+    if (user) {
+      if (user._id) {
+        initializeSocket(user.isAdmin ? 'admin' : user._id);
+      }
+    }
 
-export const connectSocket = (userId: string) => {
-  socket.auth = { userId };
-  socket.connect();
+    return () => {
+      disconnectSocket();
+    };
+  }, [user, initializeSocket, disconnectSocket]);
+
+  return socket;
 };
 
-export const disconnectSocket = () => {
-  socket.disconnect();
-};
-
-export default socket;
+export default useSocket;

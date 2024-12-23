@@ -29,7 +29,7 @@ const server = http.createServer(app);
 // Create Socket.io instance with specific CORS for frontend
 const io = new Server(server, {
   cors: {
-    // Only allow frontend URL since that's where client connections will come from
+  
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
@@ -41,10 +41,24 @@ io.on('connection', (socket) => {
   console.log('New client connected');
 
   const userId = socket.handshake.auth.userId;
+
   if (userId) {
     socket.join(userId);
     console.log(`User ${userId} joined their room`);
   }
+
+  // Listen for inquiry submission
+  socket.on('newInquiry', (data) => {
+    console.log('New inquiry received:', data);
+    io.emit('inquiryAlert', { ...data }); // Notify all admins
+  });
+
+  // Listen for admin responses
+  socket.on('respondToInquiry', (data) => {
+    console.log('Admin responded to inquiry:', data);
+    const { userId } = data; // Ensure data contains userId
+    io.to(userId).emit('responseAlert', data); // Notify the specific user
+  });
 
   socket.on('disconnect', () => {
     if (userId) {

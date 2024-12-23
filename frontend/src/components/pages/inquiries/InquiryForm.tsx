@@ -1,32 +1,28 @@
-'use client';
-import { apiHandler } from '@/config/server';
-import { useUserStore } from '@/store/users';
+'use client'; 
 import React, { useState } from 'react';
+import { useUserStore } from '@/store/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useSocketStore } from '@/store/socket';
 
 const InquiryForm: React.FC<{ propertyId: string }> = ({ propertyId }) => {
   const [inquiryMessage, setInquiryMessage] = useState('');
   const { user } = useUserStore();
+  const { sendInquiry } = useSocketStore();
 
-  const handleInquirySubmit = async (e: React.FormEvent) => {
+  const handleInquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !user._id) return;
 
-    const response = await apiHandler('/inquiries/send', 'POST', {
+    sendInquiry({
       propertyId,
       userId: user._id,
       message: inquiryMessage,
     });
 
-    if (response.status === 'success') {
-      setInquiryMessage('');
-      alert('Inquiry sent successfully!');
-      
-    } else {
-      alert('Failed to send inquiry. Please try again.');
-    }
+    setInquiryMessage('');
+    alert('Inquiry sent successfully!');
   };
 
   return (
