@@ -3,12 +3,14 @@ import jwt from 'jsonwebtoken';
 import User from '@components/user/models/userModel';
 import { IUser } from '@components/user/models/userModel';
 
+// Interface for JWT payload
 interface UserPayload {
-  isAdmin: boolean;
   id: string;
+  isAdmin?: boolean;
 }
 
-export const authMiddleware = async (
+// Middleware to authenticate all users (both admins and regular users)
+export const userMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -35,10 +37,23 @@ export const authMiddleware = async (
 
     req.user = user as IUser;
     req.user.isAdmin =
-      decoded.isAdmin || user.adminCode === process.env.ADMIN_CODE;
+      user.adminCode === process.env.ADMIN_CODE || user.isAdmin;
+
     next();
   } catch (err) {
     console.error(err);
-    res.status(401).json({ message: 'Token is not valid or has expired' });
+    res.status(401).json({ message: 'Invalid token or token expired' });
   }
+};
+
+// Middleware to restrict access to admins only
+export const adminMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: 'Access denied. Admins only.' });
+  }
+  next();
 };

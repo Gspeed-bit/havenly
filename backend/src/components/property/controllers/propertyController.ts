@@ -200,6 +200,52 @@ export const getProperties = async (req: Request, res: Response) => {
   }
 };
 
+export const getPropertiesUser = async (req: Request, res: Response) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      city,
+      propertyType,
+      priceRange,
+      rooms,
+    } = req.query;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filters: any = { isPublished: true }; // Show only published properties for public users
+
+    // Apply filters based on query parameters
+    if (city) filters.location = { $regex: city, $options: 'i' };
+    if (propertyType) filters.propertyType = propertyType;
+    if (priceRange) {
+      const [min, max] = (priceRange as string).split('-').map(Number);
+      filters.price = { $gte: min, $lte: max };
+    }
+    if (rooms) filters.rooms = +rooms;
+
+    // Fetch properties with pagination
+    const properties = await Property.find(filters)
+      .skip((+page - 1) * +limit)
+      .limit(+limit)
+      .exec();
+
+    const totalCount = await Property.countDocuments(filters);
+
+    // Send response
+    res.json({
+      data: properties,
+      pagination: {
+        total: totalCount,
+        currentPage: +page,
+        totalPages: Math.ceil(totalCount / +limit),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
 //get property by id
 
 export const getPropertyById = async (req: Request, res: Response) => {
@@ -218,6 +264,25 @@ export const getPropertyById = async (req: Request, res: Response) => {
       });
     }
 
+    res.json(property);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const getPropertyByIdForUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Find the property by ID
+    const property = await Property.findById(id);
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found.' });
+    }
+
+   
     res.json(property);
   } catch (error) {
     console.error(error);

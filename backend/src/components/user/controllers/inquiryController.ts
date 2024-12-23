@@ -1,163 +1,127 @@
 import { Request, Response } from 'express';
-import Inquiry from '@components/user/models/inquiryModel';
-import Notification from '@components/user/models/notificationModel';
-import Property from 'components/property/models/propertyModel';
-import { sendInquiryEmail } from 'utils/emailUtils';
+import Inquiry from '../models/inquiryModel';
 
-import { createNotification } from './notificationController';
+import Property from '../../property/models/propertyModel';
+import { sendNotification } from './notificationController';
 
-export const sendInquiry = async (req: Request, res: Response) => {
+// Create Inquiry Handler
+export const createInquiry = async (req: Request, res: Response) => {
+  // Assert that req.user is present before accessing
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const { propertyId, message } = req.body;
+  const userId = req.user.id; // Now we can safely access req.user
+
   try {
-    const { propertyId, message } = req.body;
-    const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ message: 'User not authenticated.' });
-    }
-
-    // Populate company field with full object (including email)
-    const property = await Property.findById(propertyId).populate('company');
+    // Fetch property and populate company details
+    const property = await Property.findById(propertyId).populate<{
+      company: { _id: string };
+    }>('company');
     if (!property) {
-      return res.status(404).json({ message: 'Property not found.' });
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Property not found' });
     }
 
-    const newInquiry = new Inquiry({
-      userId: user._id,
+    // Ensure company ID is a string
+    const companyId = property.company._id as string;
+
+    // Create a new inquiry
+    const inquiry = await Inquiry.create({
       propertyId,
-      message,
-    });
-    await newInquiry.save();
-
-    // Ensure the company object has the email field
-    const company = property.company; // Now this should be a fully populated object
-    if (!company || !company.email) {
-      return res.status(400).json({ message: 'Company email not found.' });
-    }
-    const userName = user.name || `${user.firstName} ${user.lastName}`;
-
-    // Send inquiry email to the company (property owner)
-    await sendInquiryEmail(
-      user.email,
-      property.title,
-      property.location,
-      property.price.toString(),
-      property.description,
-      company.email,
-      userName
-    );
-
-    res
-      .status(201)
-      .json({ message: 'Inquiry sent successfully!', inquiry: newInquiry });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
-  }
-};
-
-// Update inquiry status and notify user
-export const updateInquiryStatus = async (req: Request, res: Response) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res
-        .status(403)
-        .json({ message: 'Permission denied. Admins only.' });
-    }
-
-    const { id } = req.params;
-    const { status, customMessage, propertySold } = req.body;
-
-    if (!['Submitted', 'Under Review', 'Answered'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status.' });
-    }
-
-    const updatedInquiry = await Inquiry.findByIdAndUpdate(
-      id,
-      { status, customMessage },
-      { new: true, runValidators: true }
-    ).populate('userId');
-
-    if (!updatedInquiry) {
-      return res.status(404).json({ message: 'Inquiry not found.' });
-    }
-
-    const inquiryId = (updatedInquiry._id as string).toString();
-    const userId = updatedInquiry.userId?._id.toString();
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: 'User not found for this inquiry.' });
-    }
-
-    // Create a notification
-    const notificationMessage = `Your inquiry status has been updated to "${status}". ${
-      customMessage || ''
-    }`;
-    const notification = await createNotification(
       userId,
-      inquiryId,
-      notificationMessage,
-      propertySold || false
-    );
-
-    // Emit a Socket.IO event to the user
-    req.io?.to(userId).emit('inquiry-update', { notification });
-
-    res.json({
-      message: 'Inquiry status updated successfully, and notification sent.',
-      inquiry: updatedInquiry,
+      message,
+      isResponded: false,
     });
+
+    // Send notification to the company
+    const notificationMessage = `New inquiry for property: ${property.title}`;
+    await sendNotification(companyId, 'inquiry', notificationMessage);
+
+    // Emit real-time notification
+    const io = req.app.get('io');
+    io.to(companyId).emit('newInquiry', {
+      inquiryId: inquiry._id,
+      propertyId,
+      message: notificationMessage,
+    });
+
+    res.status(201).json({ status: 'success', data: inquiry });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error creating inquiry:', error);
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Failed to create inquiry' });
   }
 };
 
-export const getInquiries = async (req: Request, res: Response) => {
-  try {
-    const { status, propertyId, userId, page = 1, limit = 10 } = req.query;
-    const filters: Record<string, unknown> = req.user?.isAdmin
-      ? {}
-      : { userId: req.user?._id };
-
-    if (status) filters.status = status;
-    if (propertyId) filters.propertyId = propertyId;
-    if (req.user?.isAdmin && userId) filters.userId = userId;
-
-    const inquiries = await Inquiry.find(filters)
-      .skip((+page - 1) * +limit)
-      .limit(+limit)
-      .populate('propertyId', 'title location price')
-      .populate('userId', 'name email');
-
-    res.json({
-      message: 'Inquiries retrieved successfully.',
-      inquiries,
-      pagination: { page: +page, limit: +limit, total: inquiries.length },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to retrieve inquiries.', error });
+// Respond to Inquiry Handler
+export const respondToInquiry = async (req: Request, res: Response) => {
+  // Assert that req.user is present before accessing
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
   }
-};
 
-// Mark property as sold and notify users
-export const markPropertyAsSold = async (propertyId: string) => {
+  const { inquiryId } = req.params;
+  const { response } = req.body;
+ 
+
   try {
-    const property = await Property.findById(propertyId);
-    if (!property) {
-      console.log('Property not found');
-      return;
+    const inquiry = await Inquiry.findById(inquiryId);
+    if (!inquiry) {
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Inquiry not found' });
     }
 
-    // Mark the property as sold in the database
-    property.sold = true;
-    await property.save();
+    inquiry.response = response;
+    inquiry.isResponded = true;
+    await inquiry.save();
 
-    // Notify users who inquired about the property that it has been sold
-    await Notification.markPropertyAsSold(propertyId);
+    // Send notification to the user who made the inquiry
+    const notificationMessage = `Your inquiry for property ${inquiry.propertyId} has been answered`;
+    await sendNotification(inquiry.userId, 'response', notificationMessage);
+
+    // Emit real-time notification
+    const io = req.app.get('io');
+    io.to(inquiry.userId.toString()).emit('inquiryResponse', {
+      inquiryId,
+      message: notificationMessage,
+    });
+
+    res.status(200).json({ status: 'success', data: inquiry });
   } catch (error) {
-    console.error('Error marking property as sold:', error);
+    console.error('Error responding to inquiry:', error);
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Failed to respond to inquiry' });
+  }
+};
+
+export const getInquiriesForAdmin = async (req: Request, res: Response) => {
+  try {
+    const inquiries = await Inquiry.find().sort({ createdAt: -1 });
+    res.status(200).json({ status: 'success', data: inquiries });
+  } catch (error) {
+    console.error('Error fetching inquiries:', error);
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Failed to fetch inquiries' });
+  }
+};
+
+export const getInquiriesForUser = async (req: Request, res: Response) => {
+  const userId = req.user.id; // Assuming you have user info in req.user
+
+  try {
+    const inquiries = await Inquiry.find({ userId }).sort({ createdAt: -1 });
+    res.status(200).json({ status: 'success', data: inquiries });
+  } catch (error) {
+    console.error('Error fetching user inquiries:', error);
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Failed to fetch user inquiries' });
   }
 };

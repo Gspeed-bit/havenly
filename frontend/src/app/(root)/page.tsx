@@ -3,9 +3,8 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Header from '../../components/pages/Header';
 import Navigation from '../../components/pages/Navigation';
-import MainContent from '../../components/pages/MainContent';
 
-
+import MainContent from '@/components/pages/MainContent';
 
 export default function Page() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -23,15 +22,17 @@ export default function Page() {
             className='object-cover'
           />
         </div>
-  
+
         <Header />
         <Navigation
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
         <MainContent />
-       
       </div>
     </>
   );
 }
+
+
+

@@ -1,66 +1,99 @@
 import express from 'express';
-import http from 'http';
 import { Request, Response } from 'express';
-import { Server } from 'socket.io';
 import cors from 'cors';
-import authRoutes from './components/user/routes/authRoutes'; // Your routes
+import cron from 'node-cron';
+import basicAuth from 'express-basic-auth';
 import dotenv from 'dotenv';
-import { connectToMongoose } from './config/mongoose'; // Import the mongoose connection function
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import userRoutes from './components/user/routes/userRoutes';
-import cron from 'node-cron'; // Import node-cron
-import basicAuth from 'express-basic-auth'; // Import basic-auth
+
+import { connectToMongoose } from './config/mongoose'; // Import the mongoose connection function
 import { KEYS } from './config/config';
+import User from '@components/user/models/userModel'; // Import the User model
+import { Server } from 'socket.io';
+import http from 'http';
+// Routes
+import authRoutes from './components/user/routes/authRoutes';
+import userRoutes from './components/user/routes/userRoutes';
 import propertyRoutes from 'components/property/routes/propertyRoutes';
 import companyRoutes from 'components/property/routes/companyRoutes';
 import notificationRoutes from '@components/user/routes/notificationRoutes';
 import inquiryRoutes from '@components/user/routes/inquiryRoutes';
-import User from '@components/user/models//userModel'; // Import the User model
 import imageRoutes from '@components/imageUpload/routes/imageRoutes';
 
 dotenv.config({ path: '.env' });
 
 const app = express();
+const server = http.createServer(app);
+
+// Create Socket.io instance with specific CORS for frontend
+const io = new Server(server, {
+  cors: {
+    // Only allow frontend URL since that's where client connections will come from
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// Socket.io setup
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  const userId = socket.handshake.auth.userId;
+  if (userId) {
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  }
+
+  socket.on('disconnect', () => {
+    if (userId) {
+      socket.leave(userId);
+      console.log(`User ${userId} left their room`);
+    }
+    console.log('Client disconnected');
+  });
+});
+
+// Make io available to your routes
+app.set('io', io);
+
+// Middleware
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'https://havenly-chdr.onrender.com',
+    ],
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Routes
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to the Havenly backend!');
 });
-const server = http.createServer(app);
+app.use(
+  '/',
+  authRoutes,
+  propertyRoutes,
+  companyRoutes,
+  notificationRoutes,
+  inquiryRoutes
+);
+app.use('/user', userRoutes); // All routes under /user/me
+app.use('/image', imageRoutes); // All routes under /image
 
-// Middleware to handle CORS
-
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5000'] }));
-// Initialize Socket.IO with CORS support
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  },
-});
-
-// Middleware to attach Socket.IO to requests
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
-
-// Handle Socket.IO connections
-io.on('connection', (socket) => {
-  console.log(`A user connected: ${socket.id}`);
-  socket.on('joinRoom', (roomId) => {
-    socket.join(roomId);
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
+// MongoDB connection
+connectToMongoose()
+  .then(() => {
+    console.log('MongoDB connected');
+  })
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
   });
-  socket.on('disconnect', () => {
-    console.log(`A user disconnected: ${socket.id}`);
-  });
-});
-
-
-// Middleware to parse JSON request bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -81,7 +114,6 @@ const swaggerOptions = {
         description: `${KEYS.appEnv} Server`,
       },
     ],
-
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -101,52 +133,24 @@ const swaggerOptions = {
     './src/components/user/routes/**/*.ts',
     './src/components/property/routes/**/*.ts',
     './src/components/imageUpload/routes/**/*.ts',
-    
-  ], // Specify your route files
+  ],
 };
-
-export default swaggerOptions;
-
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
-
-// Set up basic authentication
 app.use(
-  '/api-docs', // Protect this route with authentication
+  '/api-docs',
   basicAuth({
     users: {
-      [KEYS.serverUsername]: KEYS.serverPassword, // Dynamically use env variables
+      [KEYS.serverUsername]: KEYS.serverPassword,
     },
-    challenge: true, // Will prompt the user with a login dialog
-    realm: 'Protected API', // This is the prompt message
+    challenge: true,
+    realm: 'Protected API',
   }),
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocs)
 );
 
-app.use(
-  '/',
-  authRoutes,
-  propertyRoutes,
-  companyRoutes,
-  notificationRoutes,
-  inquiryRoutes
-);
-app.use('/image', imageRoutes); // All routes under
-
-app.use('/user', userRoutes); // All routes under /user/me
-
-// MongoDB connection
-connectToMongoose()
-  .then(() => {
-    console.log('MongoDB connected');
-  })
-  .catch((err) => {
-    console.error('Error connecting to MongoDB:', err);
-  });
-
-// Schedule a cron job to clean up expired verification codes every 24 hours (at midnight)
+// Cron job for cleaning up expired verification codes
 cron.schedule('0 0 * * *', async () => {
-  // Runs at midnight every day
   const now = new Date();
   try {
     await User.updateMany(
@@ -161,7 +165,6 @@ cron.schedule('0 0 * * *', async () => {
 
 // Start the server
 const port = process.env.PORT || 5000;
-
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

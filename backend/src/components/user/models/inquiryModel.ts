@@ -1,26 +1,30 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IInquiry extends Document {
-  userId: mongoose.Types.ObjectId;
-  propertyId: mongoose.Types.ObjectId;
+  propertyId: string;
+  userId: string;
   message: string;
-  status?: string;
-  customMessage?: string;
+  isResponded: boolean;
+  response: string;
 }
 
-const inquirySchema = new Schema<IInquiry>(
+const InquirySchema = new Schema<IInquiry>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     propertyId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: 'Property',
       required: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.String,
+      ref: 'User',
+      required: true,
+    },
     message: { type: String, required: true },
-    status: { type: String, default: 'Submitted' },
-    customMessage: { type: String },
+    isResponded: { type: Boolean, default: false },
+    response: { type: String, default: '' },
   },
   { timestamps: true }
 );
 
-export default mongoose.model<IInquiry>('Inquiry', inquirySchema);
+export default mongoose.model<IInquiry>('Inquiry', InquirySchema);

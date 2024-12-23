@@ -74,6 +74,11 @@ export default function DashboardLayout({
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/update-profile', icon: UserCog, label: 'Profile' },
     { href: '/dashboard/users', icon: Users, label: 'Users' },
+    {
+      href: '/dashboard/notification',
+      icon: Bell,
+      label: 'Notification',
+    },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
     { href: '/dashboard/companies', icon: Building2, label: 'Companies' },
     { href: '/dashboard/inquiries', icon: Building2, label: 'Inquiry' },

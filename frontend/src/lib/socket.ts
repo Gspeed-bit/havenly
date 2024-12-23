@@ -1,22 +1,20 @@
-'use client';
-
 import { io } from 'socket.io-client';
 
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_SERVER_URI || 'http://localhost:5000';
 
-const socket = io(SOCKET_URL);
-
-socket.on('connect', () => {
-  console.log('Connected to socket server');
+export const socket = io(SOCKET_URL, {
+  autoConnect: false,
+  withCredentials: true,
 });
 
-socket.on('connect_error', (error) => {
-  console.error('Socket connection error:', error);
-});
+export const connectSocket = (userId: string) => {
+  socket.auth = { userId };
+  socket.connect();
+};
 
-export const joinRoom = (roomId: string) => {
-  socket.emit('joinRoom', roomId);
+export const disconnectSocket = () => {
+  socket.disconnect();
 };
 
 export default socket;

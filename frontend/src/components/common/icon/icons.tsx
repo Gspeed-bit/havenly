@@ -13,7 +13,7 @@ import {
   BarChart2,
   ShieldEllipsis,
   User,
-
+  SlidersHorizontal,
   Clock,
   Phone,
   Asterisk,
@@ -27,8 +27,8 @@ import {
   Search,
   LayoutDashboard,
   Link2,
-} from "lucide-react";
-import React from "react";
+} from 'lucide-react';
+import React from 'react';
 
 const iconMap = {
   AlignRight,
@@ -40,6 +40,7 @@ const iconMap = {
   ShoppingCart,
   CircleUser,
   DollarSign,
+  SlidersHorizontal,
   Package,
   BarChart2,
   User,
@@ -71,7 +72,7 @@ interface IconProps extends LucideProps {
 const Icon: React.FC<IconProps> = ({
   type,
   size = 24,
-  color = "#000",
+  color = '#000',
   strokeWidth = 2,
   className,
   style,
@@ -94,6 +95,5 @@ const Icon: React.FC<IconProps> = ({
 };
 
 export default Icon;
-
 
 //   <Icon type={"CirclePlus"} color={"#ffff"} strokeWidth={1.5} size={22} />

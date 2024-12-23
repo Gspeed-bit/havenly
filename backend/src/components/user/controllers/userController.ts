@@ -110,10 +110,12 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 
   // Handle Admin PIN validation
+  if (isAdmin && (!pin || adminPins[userId] !== pin)) {
+    return res.status(400).json({ message: 'Invalid or missing PIN.' });
+  }
+
+  // If admin PIN is valid, clear it after validation
   if (isAdmin) {
-    if (!pin || adminPins[userId] !== pin) {
-      return res.status(400).json({ message: 'Invalid or missing PIN.' });
-    }
     delete adminPins[userId]; // Clear the PIN after validation
   }
 
@@ -121,9 +123,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Update user profile in the database
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found.' });
-    // Handle image upload if a file is provided
 
-    // Check if there's a new profile image uploaded
+    // Handle image upload if a file is provided
     if (req.file) {
       // Upload new image to Cloudinary
       const { secure_url, public_id } = await uploadImageToCloudinary(
@@ -149,6 +150,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       user.toObject() as unknown as Record<string, unknown>,
       ['password']
     );
+    console.log('Updating user with:', updates);
+
     res.json({ message: 'Profile updated successfully.', user: sanitizedUser });
   } catch (error) {
     const errorMessage =

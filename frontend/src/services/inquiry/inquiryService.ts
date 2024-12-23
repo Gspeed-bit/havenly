@@ -1,67 +1,35 @@
-import { apiHandler, ApiResponse } from "@/config/server";
+import { apiHandler } from '@/config/server';
+
+// In a file like src/types/inquiryTypes.ts
+export interface InquiryData {
+  propertyId: string;
+  userId: string;
+  message: string;
+  
+  // Add other fields as necessary
+}
 
 export interface Inquiry {
-  _id: string;
-  userId: {
-    name: string;
-    email: string;
-  };
-  propertyId: {
-    _id: string;
-    title: string;
-    location: string;
-    price: number;
-  };
-  message: string;
-  customMessage?: string;
-  status: 'Submitted' | 'Under Review' | 'Answered';
-  createdAt: string;
-  updatedAt: string;
+  id: string;
+  data: InquiryData;
+  status: string;
+  // Add other fields as necessary
 }
 
-export interface InquiryListResponse {
-  message: string;
-  inquiries: Inquiry[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-}
 
-export const sendInquiry = async (
-  propertyId: string,
-  message: string
-): Promise<ApiResponse<Inquiry>> => {
-  return apiHandler<Inquiry>('/inquiries/send', 'POST', {
-    propertyId,
-    message,
-  });
-};
 
-export const getInquiries = async (
-  status?: string,
-  propertyId?: string,
-  page: number = 1,
-  limit: number = 10
-): Promise<ApiResponse<InquiryListResponse>> => {
-  const params = { status, propertyId, page, limit };
-  return apiHandler<InquiryListResponse>(
-    '/inquiries',
-    'GET',
-    undefined,
-    params
+// Create a new inquiry
+export const createInquiry = async (inquiryData: InquiryData) => {
+  const response = await apiHandler<{ inquiry: Inquiry }>(
+    '/inquiries', // Replace with your actual endpoint
+    'POST',
+    inquiryData
   );
-};
 
-export const updateInquiryStatus = async (
-  id: string,
-  status: 'Submitted' | 'Under Review' | 'Answered',
-  customMessage?: string
-): Promise<ApiResponse<Inquiry>> => {
-  return apiHandler<Inquiry>(`/inquiries/${id}`, 'PUT', {
-    status,
-    customMessage,
-  });
+  if (response.status === 'success') {
+    return response.data.inquiry;
+  } else {
+    console.error('Error creating inquiry:', response.message);
+    return null;
+  }
 };

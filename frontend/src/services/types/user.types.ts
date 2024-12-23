@@ -1,7 +1,7 @@
 // frontend/types/user.types.ts
 
 export interface User {
-  data: { user: any; };
+  data: { user: UserDetails; };
   _id?: string;
   firstName: string;
   lastName: string;
@@ -20,6 +20,17 @@ export interface User {
 }
 
 // types/user.types.ts
+export interface UserDetails {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  imgUrl?: string;
+  isVerified: boolean;
+  isAdmin: boolean;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;

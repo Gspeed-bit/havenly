@@ -1,42 +1,27 @@
-import { apiHandler, SuccessResponse } from '@/config/server';
+import { apiHandler } from '@/config/server';
 
-interface Notification {
+export interface Notification {
   _id: string;
   userId: string;
-  inquiryId: string;
+  inquiryId?: string;
   message: string;
   read: boolean;
-  propertySold?: boolean;
+  propertySold: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
-export const fetchNotifications = async (): Promise<
-  SuccessResponse<Notification[]>
-> => {
-  const response = await apiHandler('/notifications', 'GET');
-  if (response.status === 'success') {
-    return {
-      status: 'success',
-      message: response.message,
-      data: response.data as Notification[],
-    };
-  }
-  throw new Error(response.message);
-};
-
-export const markNotificationAsRead = async (
-  id: string
-): Promise<SuccessResponse<Notification>> => {
-  const response = await apiHandler<Notification>(
-    `/notifications/${id}`,
-    'PUT'
+// Fetch notifications for a specific user
+export const getNotifications = async (userId: string) => {
+  const response = await apiHandler<{ notifications: Notification[] }>(
+    `/notifications/${userId}`, // Replace with your actual endpoint
+    'GET'
   );
+
   if (response.status === 'success') {
-    return {
-      status: 'success',
-      message: response.message,
-      data: response.data as Notification,
-    };
+    return response.data.notifications;
+  } else {
+    console.error('Error fetching notifications:', response.message);
+    return [];
   }
-  throw new Error(response.message);
 };

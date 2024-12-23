@@ -5,19 +5,26 @@ import {
   imageUpload,
   uploadMultiplePropertyImages,
 } from '../controllers/imageController';
-import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
+import {
+  adminMiddleware,
+  userMiddleware,
+} from '@middleware/userAndAdminMiddleware/protect';
 import upload from '@middleware/fileUpload/multer';
 
 const router = express.Router();
 
 // POST endpoint for image upload
+
+// Route accessible to both users and admins
 router.post('/upload', userMiddleware, upload.single('image'), imageUpload);
+
+
+// Admin-only route
 router.post(
-  '/properties/upload-multiple',
+  '/properties/upload-multiple',userMiddleware,
   adminMiddleware,
   upload.array('images', 10), // Limit the number of images if needed
   (req, res, next) => {
-
     if (!req.body.propertyId) {
       return res.status(400).json({ message: 'Property id is required' });
     }
@@ -31,8 +38,9 @@ router.post(
   },
   uploadMultiplePropertyImages
 );
+// Admin-only route
 router.delete(
-  '/properties/:id/images/:publicId(*)',
+  '/properties/:id/images/:publicId(*)',userMiddleware,
   adminMiddleware,
   deletePropertyImage
 );

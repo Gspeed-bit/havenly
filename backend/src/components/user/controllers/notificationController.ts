@@ -1,98 +1,68 @@
 import { Request, Response } from 'express';
 import Notification from '../models/notificationModel';
-import mongoose from 'mongoose';
-import { Server } from 'socket.io';
-import http from 'http';
 
-const server = http.createServer();
-const io = new Server(server);
-
-// Get notifications for a user
 export const getNotifications = async (req: Request, res: Response) => {
+  const userId = req.user.id; // Assuming you have user info in req.user
+  const { isAdmin } = req.user;
+
   try {
-    const notifications = await Notification.find({ userId: req.user._id })
-      .sort({ createdAt: -1 }) // Sort by most recent
-      .exec();
+    const notifications = isAdmin
+      ? await Notification.find().sort({ createdAt: -1 })
+      : await Notification.find({ receiverId: userId }).sort({ createdAt: -1 });
 
-    if (!notifications || notifications.length === 0) {
-      return res.status(200).json({
-        message: 'No notifications available.',
-        notifications: [],
-      });
-    }
-
-    res.status(200).json({
-      message: 'Notifications retrieved successfully.',
-      notifications,
-    });
+    res.status(200).json({ status: 'success', data: notifications });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error fetching notifications:', error);
+    res
+      .status(500)
+      .json({ status: 'error', message: 'Failed to fetch notifications' });
   }
 };
 
-export const markAsRead = async (req: Request, res: Response) => {
+export const markNotificationAsRead = async (req: Request, res: Response) => {
+  const { notificationId } = req.params;
+  const userId = req.user.id; // Assuming you have user info in req.user
+
   try {
-    const { notificationId } = req.params;
-    const notification = await Notification.findById(notificationId);
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, receiverId: userId },
+      { isRead: true },
+      { new: true }
+    );
 
     if (!notification) {
-      return res.status(404).json({ message: 'Notification not found.' });
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Notification not found' });
     }
 
-    notification.read = true;
-    await notification.save();
-
-    res.json({ message: 'Notification marked as read.', notification });
+    res.status(200).json({ status: 'success', data: notification });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error marking notification as read:', error);
+    res
+      .status(500)
+      .json({
+        status: 'error',
+        message: 'Failed to mark notification as read',
+      });
   }
 };
 
-
-
-// Create a notification (utility function for internal use)
-export const createNotification = async (
-  userId: string,
-  inquiryId: string | undefined,
-  message: string,
-  propertySold = false // Add propertySold parameter
+export const sendNotification = async (
+  receiverId: string,
+  type: 'inquiry' | 'response',
+  message: string
 ) => {
   try {
     const notification = await Notification.create({
-      userId,
-      inquiryId,
+      receiverId,
+      type,
       message,
-      propertySold,
+      isRead: false,
     });
-
-    io.to(userId).emit('newNotification', notification); // Emit to the specific user
     return notification;
   } catch (error) {
-    console.error('Error creating notification:', error);
-    throw error;
-  }
-};
-
-// Handle property sale
-export const markPropertyAsSold = async (
-  propertyId: mongoose.Types.ObjectId | string
-) => {
-  const id =
-    typeof propertyId === 'string' ? propertyId : propertyId.toString();
-  try {
-    const notifications = await Notification.find({
-      propertySold: false,
-      inquiryId: { $in: [id] },
-    });
-
-    for (const notification of notifications) {
-      notification.propertySold = true;
-      notification.message = 'The property you inquired about has been sold.';
-      await notification.save();
-    }
-  } catch (error) {
-    console.error('Error marking property as sold:', error);
+    console.error('Error sending notification:', error);
+    throw new Error('Failed to create notification');
   }
 };

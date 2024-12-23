@@ -4,10 +4,15 @@ import {
   createProperty,
   deleteProperty,
   getProperties,
+  getPropertiesUser,
   getPropertyById,
+  getPropertyByIdForUser,
   updateProperty,
 } from '../controllers/propertyController';
-import { adminMiddleware } from '@middleware/protect/protect';
+import {
+  adminMiddleware,
+  userMiddleware,
+} from '@middleware/userAndAdminMiddleware/protect';
 
 const router = express.Router();
 
@@ -349,16 +354,28 @@ const router = express.Router();
  *         description: Internal server error
  */
 
+router.post('/properties', userMiddleware, adminMiddleware, createProperty);
 
-router.post('/properties', adminMiddleware, createProperty);
-router.get('/properties',adminMiddleware, getProperties);
-router.get('/properties/:id',adminMiddleware, getPropertyById);
-router.put('/properties/:id', adminMiddleware, updateProperty);
-router.delete('/properties/:id', adminMiddleware, deleteProperty);
+router.get('/properties', userMiddleware, adminMiddleware, getProperties);
 
+router.get('/property', userMiddleware, getPropertiesUser);
+
+router.get('/properties/:id', userMiddleware, adminMiddleware, getPropertyById);
+
+router.get(
+  '/property/:id',
+  userMiddleware,
+  getPropertyByIdForUser
+);
+
+router.put('/properties/:id', userMiddleware, adminMiddleware, updateProperty);
+
+router.delete(
+  '/properties/:id',
+  userMiddleware,
+  adminMiddleware,
+  deleteProperty
+);
 
 export default router;
-
-  // Cannot DELETE
-  // /image/properties/676156e373f40eb0fb387e19/images/property_images/676156e373f40eb0fb387e19/jvhhrj5wzny6djce29kg
 

@@ -1,35 +1,28 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface INotification extends Document {
-  userId: string;
-  inquiryId: string;
+  receiverId: mongoose.Schema.Types.ObjectId;
+  type: 'inquiry' | 'response';
   message: string;
-  read: boolean;
-  propertySold?: boolean;
+  isRead: boolean;
+  createdAt: Date;
 }
 
-interface NotificationModel extends Model<INotification> {
-  markPropertyAsSold(propertyId: string): Promise<void>;
-}
+const NotificationSchema = new Schema<INotification>(
+  {
+    receiverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    type: { type: String, enum: ['inquiry', 'response',], required: true },
+    message: { type: String, required: true },
+    isRead: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
 
-const NotificationSchema: Schema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  inquiryId: { type: Schema.Types.ObjectId, ref: 'Inquiry', required: true },
-  message: { type: String, required: true },
-  read: { type: Boolean, default: false },
-  propertySold: { type: Boolean, default: false },
-});
-
-NotificationSchema.statics.markPropertyAsSold = async function (
-  propertyId: string
-) {
-  await this.updateMany(
-    { 'inquiryId.propertyId': propertyId },
-    { $set: { propertySold: true } }
-  );
-};
-
-export default mongoose.model<INotification, NotificationModel>(
+export default mongoose.model<INotification>(
   'Notification',
   NotificationSchema
 );

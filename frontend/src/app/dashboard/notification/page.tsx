@@ -1,10 +1,9 @@
-import InquiryForm from '@/components/pages/inquiries/InquiryForm';
 import React from 'react';
 
 const page = () => {
   return (
     <div>
-      <InquiryForm propertyId={''} />
+      <h1>Admin Notifications</h1>
     </div>
   );
 };

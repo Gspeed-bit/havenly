@@ -65,11 +65,24 @@ export const fetchProperties = (
     filters
   );
 };
+export const fetchPropertiesForUser = (
+  filters: Record<string, string>
+): Promise<ApiResponse<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>> => {
+  return apiHandler<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>(
+    '/property',
+    'GET',
+    undefined,
+    filters
+  );
+};
 
 export const fetchPropertyById = (
   id: string
 ): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>(`/properties/${id}`, 'GET');
+};
+export const getPropertyByIdForUser = (id: string): Promise<ApiResponse<Property>> => {
+  return apiHandler<Property>(`/property/${id}`, 'GET');
 };
 
 export const uploadMultipleImages = async (formData: FormData) => {

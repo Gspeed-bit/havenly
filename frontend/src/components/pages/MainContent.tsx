@@ -1,22 +1,40 @@
 'use client';
-import React from 'react';
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import React, { useState } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import Icon from '../icons/Icon';
-import { PropertyCard } from './property/PropertyCard';
 import { TrustBanner } from './TrustBanner';
+import { PropertyListForUser } from './Properties/PropertyListForUser';
+import { PropertyFilters } from './Properties/PropertyFilters';
+import Icon from '../common/icon/icons';
 
 const MainContent = () => {
+  
+  const [filters, setFilters] = useState({
+    city: '',
+    propertyType: '',
+    priceRange: '',
+    rooms: '',
+  });
+
+  const [isAdvancedFilter, setIsAdvancedFilter] = useState(false);
+
+  const handleFilterChange = (name: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Reset filters to initial state
+  const resetFilters = () => {
+    setFilters({
+      city: '',
+      propertyType: '',
+      priceRange: '',
+      rooms: '',
+    });
+  };
+
+  // Check if any filter is applied
+  const isFilterApplied = Object.values(filters).some((value) => value !== '');
+
   return (
     <main className='container mx-auto px-4 mt-16 relative z-10'>
       <div className='grid grid-cols-1 items-center justify-center lg:grid-cols-2 gap-10'>
@@ -74,7 +92,6 @@ const MainContent = () => {
           </div>
         </div>
 
-        {/* Right Section */}
         <div className='relative'>
           <Card className='shadow-lg bg-white border-none relative z-10 rounded-2xl max-w-[35rem] min-h-[400px]'>
             <CardContent className='p-6 space-y-9'>
@@ -82,115 +99,62 @@ const MainContent = () => {
                 defaultValue='sale'
                 className='w-full mb-6 border-b border-b-veryLightGray'
               >
-                <TabsList className='grid w-full grid-cols-2 bg-transparent p-1 '>
+                <TabsList className='grid w-full grid-cols-1 bg-transparent p-1'>
+                  {/* Only the "For Sale" tab */}
                   <TabsTrigger
                     value='sale'
                     className='rounded-full data-[state=active]:bg-primary_main data-[state=active]:text-white'
                   >
                     For Sale
                   </TabsTrigger>
-                  <TabsTrigger
-                    value='rent'
-                    className='rounded-full data-[state=active]:bg-[#3B1C8C] data-[state=active]:text-white'
-                  >
-                    For Rent
-                  </TabsTrigger>
                 </TabsList>
               </Tabs>
+
               <div className='space-y-6'>
-                <Input
-                  type='text'
-                  placeholder='New York, San Francisco, etc'
-                  className='w-full bg-gray-50 rounded-full'
+                <PropertyFilters
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  isAdvancedFilter={isAdvancedFilter}
                 />
-                <Select>
-                  <SelectTrigger className='rounded-full'>
-                    <SelectValue placeholder='Select Property Type' />
-                  </SelectTrigger>
-                  <SelectContent className='border-none'>
-                    <SelectItem value='house'>House</SelectItem>
-                    <SelectItem value='apartment'>Apartment</SelectItem>
-                    <SelectItem value='condo'>Condo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select>
-                  <SelectTrigger className=' rounded-full'>
-                    <SelectValue className='' placeholder='Select Rooms' />
-                  </SelectTrigger>
-                  <SelectContent className='border-none'>
-                    <SelectItem value='1'>1 Room</SelectItem>
-                    <SelectItem value='2'>2 Rooms</SelectItem>
-                    <SelectItem value='3'>3 Rooms</SelectItem>
-                    <SelectItem value='4'>4+ Rooms</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className='text-sm text-[#3B1C8C] font-medium cursor-pointer hover:underline flex gap-2 items-center'>
-                  <Icon
-                    type={'SlidersVertical'}
-                    color={'#3B1C8C'}
-                    strokeWidth={1.75}
-                    className='size-4'
-                  />
-                  <span> Advance Search</span>
-                </div>
-                <Button
-                  className='w-full bg-[#3B1C8C] hover:bg-[#2F1670] text-white rounded-full'
-                  size='lg'
-                >
-                  <Icon
-                    type={'Search'}
-                    color={'#ffffff'}
-                    strokeWidth={1.75}
-                    className='size-4'
-                  />
-                  Search
-                </Button>
               </div>
+
+              {/* Toggle for Advanced Filters */}
+              <div className='mt-4'>
+                <button
+                  onClick={() => setIsAdvancedFilter((prev) => !prev)}
+                  className='text-primary_main font-semibold hover:underline'
+                >
+                  {isAdvancedFilter ? (
+                    'Show Basic Filters'
+                  ) : (
+                    <div className='text-sm text-[#3B1C8C] font-medium cursor-pointer hover:underline flex gap-2 items-center'>
+                      <Icon
+                        type={'SlidersHorizontal'}
+                        color={'#3B1C8C'}
+                        strokeWidth={1.75}
+                        className='size-4'
+                      />
+                      <span> Advance Search</span>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {/* Reset Filters Button */}
+              {isFilterApplied && (
+                <button
+                  onClick={resetFilters}
+                  className='mt-4 text-primary_main font-semibold hover:underline'
+                >
+                  Clear Filters
+                </button>
+              )}
             </CardContent>
           </Card>
-          <div className='hidden lg:flex absolute -right-3 -bottom-8 w-24 h-24 bg-[#4A8CFF] rounded-full opacity-20' />
         </div>
       </div>
       <TrustBanner />
-      {/* Property Cards */}
-      <div className='grid mt-10 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-        <PropertyCard
-          image='/room.png'
-          title='Tranquil Haven in the Woods'
-          price={5970}
-          location='123 Wright Courtberlin, WA 98168'
-          beds={4}
-          baths={3}
-          tag={{ label: 'Popular', variant: 'destructive' }}
-        />
-        <PropertyCard
-          image='/room.png'
-          title='Serene Retreat by the Lake'
-          price={1970}
-          location='1654 Jehovah Drive, VA 22408'
-          beds={3}
-          baths={2}
-          tag={{ label: 'New Listing', variant: 'default' }}
-        />
-        <PropertyCard
-          image='/room.png'
-          title='Charming Cottage in the Meadow'
-          price={3450}
-          location='1608 Centenial Farm RoadPoston, 51537'
-          beds={4}
-          baths={4}
-          tag={{ label: 'Discounted Price', variant: 'secondary' }}
-        />
-        <PropertyCard
-          image='/room.png'
-          title='Grand Estate'
-          price={2389}
-          location='123 Wright Court'
-          beds={4}
-          baths={3}
-          tag={{ label: 'Popular', variant: 'destructive' }}
-        />
-      </div>
+      <PropertyListForUser filters={filters} />
     </main>
   );
 };

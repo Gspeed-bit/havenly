@@ -17,7 +17,10 @@ import {
   requestAdminUpdatePin,
   updateUserProfile,
 } from '@components/user/controllers/userController';
-import { adminMiddleware, userMiddleware } from '@middleware/protect/protect';
+import {
+  adminMiddleware,
+  userMiddleware,
+} from '@middleware/userAndAdminMiddleware/protect';
 import upload from '@middleware/fileUpload/multer';
 
 const router = express.Router();
@@ -103,6 +106,7 @@ router.get('/me', userMiddleware, getUser);
  */
 router.get(
   '/',
+  userMiddleware,
   adminMiddleware,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
@@ -159,6 +163,7 @@ router.get(
  */
 router.get(
   '/admin',
+  userMiddleware,
   adminMiddleware,
   catchApiError(async (req, res) => {
     if (!req.user?.isAdmin) {
@@ -301,7 +306,12 @@ router.put(
  *       500:
  *         description: Server error
  */
-router.post('/request-pin', adminMiddleware, requestAdminUpdatePin);
+router.post(
+  '/request-pin',
+  userMiddleware,
+  adminMiddleware,
+  requestAdminUpdatePin
+);
 
 /**
  * @swagger
@@ -358,7 +368,12 @@ router.post('/request-pin', adminMiddleware, requestAdminUpdatePin);
  *       500:
  *         description: Server error
  */
-router.post('/confirm-update', adminMiddleware, confirmAdminUpdate);
+router.post(
+  '/confirm-update',
+  userMiddleware,
+  adminMiddleware,
+  confirmAdminUpdate
+);
 
 /**
  * @swagger
@@ -434,6 +449,6 @@ router.post('/confirm-update', adminMiddleware, confirmAdminUpdate);
  *                   type: string
  *                   example: An error occurred
  */
-router.post('/confirm-password',userMiddleware, changePassword);
+router.post('/confirm-password', userMiddleware, changePassword);
 
 export default router;
