@@ -10,7 +10,7 @@ router.post('/inquiries/send', userMiddleware, createInquiry);
 router.post(
   '/inquiries/:inquiryId/respond',
   userMiddleware,
-  adminMiddleware,
+
   respondToInquiry
 );
 router.get(

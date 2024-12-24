@@ -18,6 +18,8 @@ const NotificationSection = () => {
       };
     }
   }, [socket]);
+  
+  console.log(notifications)
 
   return (
     <div className='notification-section'>
