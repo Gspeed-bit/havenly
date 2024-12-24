@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import Notification from '../models/notificationModel';
 
+// Get Notifications Handler
 export const getNotifications = async (req: Request, res: Response) => {
-  const userId = req.user.id; // Assuming you have user info in req.user
+  const userId = req.user.id;
   const { isAdmin } = req.user;
 
   try {
@@ -19,9 +20,10 @@ export const getNotifications = async (req: Request, res: Response) => {
   }
 };
 
+// Mark Notification as Read Handler
 export const markNotificationAsRead = async (req: Request, res: Response) => {
   const { notificationId } = req.params;
-  const userId = req.user.id; // Assuming you have user info in req.user
+  const userId = req.user.id;
 
   try {
     const notification = await Notification.findOneAndUpdate(
@@ -48,6 +50,7 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   }
 };
 
+// Send Notification Handler
 export const sendNotification = async (
   receiverId: string,
   type: 'inquiry' | 'response',

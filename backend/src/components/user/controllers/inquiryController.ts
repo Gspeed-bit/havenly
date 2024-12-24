@@ -1,21 +1,22 @@
 import { Request, Response } from 'express';
 import Inquiry from '../models/inquiryModel';
-
 import Property from '../../property/models/propertyModel';
 import { sendNotification } from './notificationController';
 
+
 // Create Inquiry Handler
 export const createInquiry = async (req: Request, res: Response) => {
-  // Assert that req.user is present before accessing
-  if (!req.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  const { propertyId, userEmail, userName, message } = req.body;
+  const userId = req.user.id;
+
+  if (!propertyId || !userId || !userEmail || !userName || !message) {
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'All fields are required' });
   }
 
-  const { propertyId, message } = req.body;
-  const userId = req.user.id; // Now we can safely access req.user
-
   try {
-    // Fetch property and populate company details
+    // Fetch the property and ensure it exists
     const property = await Property.findById(propertyId).populate<{
       company: { _id: string };
     }>('company');
@@ -25,42 +26,49 @@ export const createInquiry = async (req: Request, res: Response) => {
         .json({ status: 'error', message: 'Property not found' });
     }
 
-    // Ensure company ID is a string
-    const companyId = property.company._id as string;
+    // Get the company ID from the property
+    const companyId = property.company._id;
 
-    // Create a new inquiry
-    const inquiry = await Inquiry.create({
-      propertyId,
-      userId,
-      message,
-      isResponded: false,
-    });
+    // Create the inquiry
+     const inquiry = new Inquiry({
+       propertyId,
+       userId,
+       message,
+       userEmail,
+       userName,
+     });
+     await inquiry.save();
+    console.log('Inquiry created:', inquiry); // Debugging log
 
-    // Send notification to the company
+    // Send a notification to the company
     const notificationMessage = `New inquiry for property: ${property.title}`;
     await sendNotification(companyId, 'inquiry', notificationMessage);
 
+    // Emit real-time notification
     const io = req.app.get('io');
     io.to(companyId).emit('newInquiry', {
       inquiryId: inquiry._id,
       message: notificationMessage,
     });
 
-
     res.status(201).json({ status: 'success', data: inquiry });
   } catch (error) {
-    console.error('Error creating inquiry:', error);
+    if (error instanceof Error) {
+      console.error('Error creating inquiry:', error.message, error);
+    } else {
+      console.error('Error creating inquiry:', error);
+    }
     res
       .status(500)
       .json({ status: 'error', message: 'Failed to create inquiry' });
   }
 };
 
+
 // Respond to Inquiry Handler
 export const respondToInquiry = async (req: Request, res: Response) => {
-  // Assert that req.user is present before accessing
   if (!req.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ status: 'error', message: 'Unauthorized' });
   }
 
   const { inquiryId } = req.params;
@@ -83,7 +91,6 @@ export const respondToInquiry = async (req: Request, res: Response) => {
     const notificationMessage = `Your inquiry for property ${inquiry.propertyId} has been answered`;
     await sendNotification(inquiry.userId, 'response', notificationMessage);
 
-    // Emit real-time notification
     const io = req.app.get('io');
     io.to(inquiry.userId.toString()).emit('inquiryResponse', {
       inquiryId,
@@ -99,9 +106,14 @@ export const respondToInquiry = async (req: Request, res: Response) => {
   }
 };
 
+// Get Inquiries for Admin
 export const getInquiriesForAdmin = async (req: Request, res: Response) => {
   try {
-    const inquiries = await Inquiry.find().sort({ createdAt: -1 });
+    const inquiries = await Inquiry.find()
+      .populate('propertyId', 'title') // Populate propertyId with the title field from the Property model
+      .populate('userId', 'lastName firstName email') // Populate userId with name and email fields from the User model
+      .sort({ createdAt: -1 });
+
     res.status(200).json({ status: 'success', data: inquiries });
   } catch (error) {
     console.error('Error fetching inquiries:', error);
@@ -111,11 +123,18 @@ export const getInquiriesForAdmin = async (req: Request, res: Response) => {
   }
 };
 
+
+
+// Get Inquiries for User
 export const getInquiriesForUser = async (req: Request, res: Response) => {
-  const userId = req.user.id; // Assuming you have user info in req.user
+  const userId = req.user.id;
 
   try {
-    const inquiries = await Inquiry.find({ userId }).sort({ createdAt: -1 });
+    const inquiries = await Inquiry.find({ userId })
+      .populate('propertyId', 'title') // Populate the propertyId field with the title from the Property model
+      .populate('userId', 'lastName firstName email') // Populate userId with name and email fields from the User model
+      .sort({ createdAt: -1 });
+
     res.status(200).json({ status: 'success', data: inquiries });
   } catch (error) {
     console.error('Error fetching user inquiries:', error);

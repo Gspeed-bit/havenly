@@ -1,3 +1,4 @@
+'use client';
 import useSocket from '@/lib/socket';
 import React, { useEffect, useState } from 'react';
 

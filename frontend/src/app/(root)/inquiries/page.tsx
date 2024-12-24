@@ -1,3 +1,4 @@
+
 import InquiryForm from '@/components/pages/inquiries/InquiryForm';
 import React from 'react';
 

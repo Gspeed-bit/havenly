@@ -1,4 +1,6 @@
-import NotificationList from '@/components/pages/notification/Notifications';
+import UserInquiries from '@/components/pages/inquiries/InquiriesPage';
+import NotificationSection from '@/components/pages/notification/Notifications';
+
 import React from 'react';
 
 const page = () => {
@@ -6,7 +8,8 @@ const page = () => {
     <div>
       <h1>User Notifications</h1>
 
-      <NotificationList />
+      <NotificationSection />
+      <UserInquiries />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { adminMiddleware, userMiddleware } from '@middleware/userAndAdminMiddlew
 const router = Router();
 
 router.post('/inquiries/send', userMiddleware, createInquiry);
+
 router.post(
   '/inquiries/:inquiryId/respond',
   userMiddleware,

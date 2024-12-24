@@ -4,6 +4,7 @@ const page = () => {
   return (
     <div>
       <h1>Admin Notifications</h1>
+      
     </div>
   );
 };
