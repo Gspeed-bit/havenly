@@ -22,6 +22,7 @@ export interface Property {
     contact: string;
   };
   sold: boolean;
+  adminId: string;
 }
 
 export interface PropertySingleResponse {
@@ -57,23 +58,29 @@ export const deleteProperty = (id: string): Promise<ApiResponse<void>> => {
 
 export const fetchProperties = (
   filters: Record<string, string>
-): Promise<ApiResponse<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>> => {
-  return apiHandler<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>(
-    '/properties',
-    'GET',
-    undefined,
-    filters
-  );
+): Promise<
+  ApiResponse<{
+    data: Property[];
+    pagination: { total: number; currentPage: number; totalPages: number };
+  }>
+> => {
+  return apiHandler<{
+    data: Property[];
+    pagination: { total: number; currentPage: number; totalPages: number };
+  }>('/properties', 'GET', undefined, filters);
 };
 export const fetchPropertiesForUser = (
   filters: Record<string, string>
-): Promise<ApiResponse<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>> => {
-  return apiHandler<{ data: Property[]; pagination: { total: number; currentPage: number; totalPages: number } }>(
-    '/property',
-    'GET',
-    undefined,
-    filters
-  );
+): Promise<
+  ApiResponse<{
+    data: Property[];
+    pagination: { total: number; currentPage: number; totalPages: number };
+  }>
+> => {
+  return apiHandler<{
+    data: Property[];
+    pagination: { total: number; currentPage: number; totalPages: number };
+  }>('/property', 'GET', undefined, filters);
 };
 
 export const fetchPropertyById = (
@@ -81,7 +88,9 @@ export const fetchPropertyById = (
 ): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>(`/properties/${id}`, 'GET');
 };
-export const getPropertyByIdForUser = (id: string): Promise<ApiResponse<Property>> => {
+export const getPropertyByIdForUser = (
+  id: string
+): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>(`/property/${id}`, 'GET');
 };
 
@@ -93,6 +102,12 @@ export const uploadMultipleImages = async (formData: FormData) => {
   );
 };
 
-export const deletePropertyImage = async (propertyId: string, publicId: string) => {
-  return apiHandler<void>(`image/properties/${propertyId}/images/${publicId}`, 'DELETE');
+export const deletePropertyImage = async (
+  propertyId: string,
+  publicId: string
+) => {
+  return apiHandler<void>(
+    `image/properties/${propertyId}/images/${publicId}`,
+    'DELETE'
+  );
 };
