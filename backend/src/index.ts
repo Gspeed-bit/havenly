@@ -7,10 +7,10 @@ import dotenv from 'dotenv';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUI from 'swagger-ui-express';
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { connectToMongoose } from './config/mongoose';
 import { KEYS } from './config/config';
-import userModel from './components/user/models/userModel'; // Import the User model
+import userModel from './components/user/models/userModel';
 
 // Import routes
 import authRoutes from './components/user/routes/authRoutes';
@@ -20,8 +20,6 @@ import companyRoutes from './components/property/routes/companyRoutes';
 import notificationRoutes from './components/user/routes/notificationRoutes';
 import imageRoutes from './components/imageUpload/routes/imageRoutes';
 import chatRoutes from './components/user/routes/chatRoutes';
-import { storeMessage } from '@components/user/controllers/chatController';
-import Chat from '@components/user/models/chatModel';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -33,66 +31,6 @@ const io = new Server(server, {
     origin: 'http://localhost:3000', // Replace with your frontend URL
     methods: ['GET', 'POST'],
   },
-});
-
-
-io.on('connection', (socket) => {
-  console.log('a user connected');
-
-  socket.on('adminJoin', (adminId: string) => {
-    socket.join(`admin:${adminId}`);
-  });
-
-  socket.on('joinChat', (chatId: string) => {
-    socket.join(chatId);
-  });
-
-  socket.on(
-    'sendMessage',
-    async (data: {
-      chatId: string;
-      content: string;
-      sender: 'user' | 'admin';
-    }) => {
-      const { chatId, content, sender } = data;
-
-      try {
-        const newMessage = await storeMessage(chatId, content, sender);
-        io.to(chatId).emit('receiveMessage', newMessage);
-
-        const chat = await Chat.findById(chatId);
-        if (chat && sender === 'user') {
-          io.to(`admin:${chat.adminId}`).emit('newMessageNotification', {
-            message: `New message in chat ${chatId}`,
-            chatId,
-          });
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
-    }
-  );
-
-  socket.on('closeChat', async (chatId: string) => {
-    try {
-      const chat = await Chat.findByIdAndUpdate(
-        chatId,
-        { isClosed: true },
-        { new: true }
-      );
-      if (chat) {
-        io.to(chatId).emit('chatClosed', {
-          message: 'This chat has been closed.',
-        });
-      }
-    } catch (error) {
-      console.error('Error closing chat:', error);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
 });
 
 // Middleware
@@ -111,6 +49,65 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Socket.IO setup
+const adminSockets = new Map<string, Socket>();
+
+io.on('connection', (socket: Socket) => {
+
+const { userId, isAdmin } = socket.handshake.query;
+
+if (isAdmin === 'true' && userId) {
+  socket.join('adminRoom');
+  console.log(`Admin connected: ${userId}`);
+}else{
+   socket.join('UserRoom');
+  console.log(`User connected: ${userId}`);
+  }
+
+  socket.on('joinChat', (chatId: string) => {
+    socket.join(chatId);
+    console.log(`User joined chat: ${chatId}`);
+  });
+
+  socket.on(
+    'sendMessage',
+    async (data: {
+      chatId: string;
+      content: string;
+      sender: string;
+      senderName: string;
+    }) => {
+      const { chatId, content, sender, senderName } = data;
+
+      // Emit the message to all clients in the chat room
+      io.to(chatId).emit('receiveMessage', {
+        sender,
+        content,
+        senderName,
+        timestamp: new Date().toISOString(),
+      });
+
+      // If the sender is not an admin, notify all admins
+      if (sender !== 'Admin') {
+        adminSockets.forEach((adminSocket) => {
+          adminSocket.emit('newMessageNotification', {
+            message: `New message from ${senderName} in chat ${chatId}`,
+            chatId,
+          });
+        });
+      }
+    }
+  );
+
+  socket.on('disconnect', () => {
+    if (isAdmin === 'true' && userId) {
+      adminSockets.delete(userId as string);
+      console.log(`Admin disconnected: ${userId}`);
+    }
+    console.log('A user disconnected');
+  });
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.send('Welcome to the Havenly backend!');
@@ -124,8 +121,8 @@ app.use(
   notificationRoutes,
   chatRoutes(io)
 );
-app.use('/user', userRoutes); // All routes under /user
-app.use('/image', imageRoutes); // All routes under /image
+app.use('/user', userRoutes);
+app.use('/image', imageRoutes);
 
 // MongoDB connection
 connectToMongoose()

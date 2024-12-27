@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getChat } from '@/services/chat/chatServices';
+import { getChat, sendMessage } from '@/services/chat/chatServices';
 import { useUserStore } from '@/store/users';
 import {
   Card,
@@ -18,19 +18,21 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useParams } from 'next/navigation';
 
 interface Message {
-  sender: 'user' | 'admin';
+  sender: string;
   content: string;
   timestamp: string;
+  senderName: string;
 }
 
-const ChatBox: React.FC = () => {
-  const { chatsId: chatIdFromUrl } = useParams(); // Get the chatId from the URL params
+interface ChatBoxProps {
+  initialChatId?: string;
+}
 
-  // Handle cases where chatIdFromUrl is an array
-  const chatId = Array.isArray(chatIdFromUrl)
-    ? chatIdFromUrl[0]
-    : chatIdFromUrl;
-
+const ChatBox: React.FC<ChatBoxProps> = ({ initialChatId }) => {
+  const params = useParams();
+  const chatId =
+    initialChatId ||
+    (Array.isArray(params.chatsId) ? params.chatsId[0] : params.chatsId);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -38,25 +40,24 @@ const ChatBox: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!chatId) {
-      console.error('Chat ID is undefined.');
-      return;
-    }
+    if (!chatId || !user) return;
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io('http://localhost:5000', {
+      query: { userId: user._id, isAdmin: user.isAdmin ? 'true' : 'false' },
+    });
     setSocket(newSocket);
 
-    newSocket.emit('joinChat', chatId); // Use chatId here
+    newSocket.emit('joinChat', chatId);
 
     return () => {
       newSocket.disconnect();
     };
-  }, [chatId]);
+  }, [chatId, user]);
 
   useEffect(() => {
     if (socket && chatId) {
       const fetchChat = async () => {
-        const response = await getChat(chatId); // Use chatId here
+        const response = await getChat(chatId);
         if (response.status === 'success') {
           setMessages(response.data.messages);
         } else {
@@ -85,29 +86,31 @@ const ChatBox: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
-    if (newMessage.trim() && socket && user) {
-      const message: Message = {
-        sender: user.isAdmin ? 'admin' : 'user',
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && chatId && user) {
+      const messageData = {
+        chatId,
         content: newMessage,
-        timestamp: new Date().toISOString(),
+        sender: user.isAdmin ? 'Admin' : 'User',
+        senderName: user.firstName || 'Unknown',
       };
-
-      setMessages((prevMessages) => [...prevMessages, message]);
-
-      socket.emit('sendMessage', {
-        chatId, // Use chatId here
-        content: newMessage,
-        sender: message.sender,
-      });
-
-      setNewMessage('');
+      try {
+        const response = await sendMessage(messageData);
+        if (response.status === 'success') {
+          setNewMessage('');
+          // The message will be added to the state via the socket event
+        } else {
+          console.error('Failed to send message:', response.message);
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
     }
   };
 
   const closeChat = () => {
     if (socket && chatId) {
-      socket.emit('closeChat', chatId); // Use chatId here
+      socket.emit('closeChat', chatId);
     }
   };
 
@@ -122,26 +125,31 @@ const ChatBox: React.FC = () => {
             <div
               key={index}
               className={`flex mb-4 ${
-                message.sender === 'user' ? 'justify-end' : 'justify-start'
+                message.sender === 'User' ? 'justify-end' : 'justify-start'
               }`}
             >
               <div
                 className={`flex items-start ${
-                  message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  message.sender === 'User' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
                 <Avatar className='w-8 h-8'>
                   <AvatarFallback>
-                    {message.sender === 'user' ? 'U' : 'A'}
+                    {message.senderName
+                      ? message.senderName[0].toUpperCase()
+                      : message.sender === 'User'
+                        ? 'U'
+                        : 'A'}
                   </AvatarFallback>
                 </Avatar>
                 <div
                   className={`mx-2 p-3 rounded-lg ${
-                    message.sender === 'user'
+                    message.sender === 'User'
                       ? 'bg-violet text-white'
-                      : 'bg-gray-200'
+                      : 'bg-gray'
                   }`}
                 >
+                  <p className='font-semibold'>{message.senderName}</p>
                   <p>{message.content}</p>
                   <small className='text-xs opacity-50'>
                     {new Date(message.timestamp).toLocaleTimeString()}
@@ -159,9 +167,9 @@ const ChatBox: React.FC = () => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder='Type your message'
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
           />
-          <Button onClick={sendMessage}>Send</Button>
+          <Button onClick={handleSendMessage}>Send</Button>
         </div>
         {user?.isAdmin && (
           <Button variant='destructive' onClick={closeChat}>

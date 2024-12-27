@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
-
 import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ChatBox from '../Chat/ChatBox';
+import ChatBox from '@/components/pages/Chat/ChatBox';
 
 interface Notification {
   type: 'newChat' | 'newMessage';
@@ -15,25 +14,27 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
-  const [, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [activeChats, setActiveChats] = useState<string[]>([]);
   const { user } = useUserStore();
 
   useEffect(() => {
     if (!user || !user.isAdmin) return;
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io('http://localhost:5000', {
+      query: { userId: user._id, isAdmin: 'true' },
+    });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to Socket.io server');
-      newSocket.emit('adminJoin', user._id);
+      console.log('Admin connected to Socket.io server');
     });
 
     newSocket.on(
       'newChatNotification',
       (data: { message: string; chatId: string }) => {
+        console.log('New chat notification received:', data);
         setNotifications((prev) => [...prev, { type: 'newChat', ...data }]);
       }
     );
@@ -41,6 +42,7 @@ const AdminDashboard: React.FC = () => {
     newSocket.on(
       'newMessageNotification',
       (data: { message: string; chatId: string }) => {
+        console.log('New message notification received:', data);
         setNotifications((prev) => [...prev, { type: 'newMessage', ...data }]);
       }
     );
@@ -51,7 +53,7 @@ const AdminDashboard: React.FC = () => {
   }, [user]);
 
   const handleNotificationClick = (chatId: string) => {
-    setActiveChatId(chatId);
+    setActiveChats((prev) => [...prev, chatId]);
     setNotifications((prev) => prev.filter((n) => n.chatId !== chatId));
   };
 
@@ -81,14 +83,13 @@ const AdminDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Active Chat</CardTitle>
+            <CardTitle>Active Chats</CardTitle>
           </CardHeader>
           <CardContent>
-            {activeChatId ? (
-              <ChatBox />
-            ) : (
-              <p>No active chat selected</p>
-            )}
+            {activeChats.map((chatId) => (
+              <ChatBox key={chatId} initialChatId={chatId} />
+            ))}
+            {activeChats.length === 0 && <p>No active chats</p>}
           </CardContent>
         </Card>
       </div>

@@ -1,51 +1,33 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IMessage {
-  sender: 'user' | 'admin';
+  sender: string;
   content: string;
   timestamp: Date;
+  senderName: string;
 }
 
 export interface IChat extends Document {
-  propertyId: mongoose.Schema.Types.ObjectId;
-  users: mongoose.Schema.Types.ObjectId[]; // Array of user IDs
-  adminId: mongoose.Schema.Types.ObjectId;
+  propertyId: mongoose.Types.ObjectId;
+  users: mongoose.Types.ObjectId[];
+  adminId: mongoose.Types.ObjectId;
   messages: IMessage[];
-  isClosed: boolean; // Indicates if the chat is closed
-  createdAt: Date;
-  updatedAt: Date;
+  isClosed: boolean;
 }
 
-const messageSchema = new Schema<IMessage>({
-  sender: { type: String, enum: ['user', 'admin'], required: true },
-  content: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
+const chatSchema = new Schema<IChat>({
+  propertyId: { type: Schema.Types.ObjectId, ref: 'Property', required: true },
+  users: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  adminId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  messages: [
+    {
+      sender: { type: String, required: true },
+      content: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+      senderName: { type: String, required: true },
+    },
+  ],
+  isClosed: { type: Boolean, default: false },
 });
 
-const chatSchema = new Schema<IChat>(
-  {
-    propertyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Property',
-      required: true,
-    },
-    users: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: 'User',
-      required: true,
-    }, // Updated
-
-    adminId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    messages: { type: [messageSchema], default: [] },
-    isClosed: { type: Boolean, default: false },
-  },
-  { timestamps: true }
-);
-
-const Chat = mongoose.model<IChat>('Chat', chatSchema);
-
-export default Chat;
+export default mongoose.model<IChat>('Chat', chatSchema);

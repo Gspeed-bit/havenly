@@ -1,6 +1,6 @@
 import { apiHandler, ApiResponse } from '@/config/server';
 
-const API_BASE = '/chats'; // Adjust as per your API base path
+const API_BASE = '/chats';
 
 export interface ChatResponse {
   data: {
@@ -10,6 +10,7 @@ export interface ChatResponse {
     sender: 'user' | 'admin';
     content: string;
     timestamp: string;
+    senderName: string;
   }>;
   isClosed: boolean;
 }
@@ -18,6 +19,7 @@ export interface MessageResponse {
   sender: 'user' | 'admin';
   content: string;
   timestamp: string;
+  senderName: string;
 }
 
 export const startChat = async ({
@@ -34,13 +36,19 @@ export const startChat = async ({
 export const sendMessage = async ({
   chatId,
   content,
+  sender,
+  senderName,
 }: {
   chatId: string;
   content: string;
+  sender: string;
+  senderName: string;
 }): Promise<ApiResponse<MessageResponse>> => {
   return apiHandler<MessageResponse>(`${API_BASE}/message`, 'POST', {
     chatId,
     content,
+    sender,
+    senderName,
   });
 };
 
@@ -54,7 +62,8 @@ export const getChat = async (
   return apiHandler<ChatResponse>(`${API_BASE}/${chatId}`, 'GET');
 };
 
-export const fetchActiveChats = async (
-): Promise<ApiResponse<ChatResponse>> => {
+export const fetchActiveChats = async (): Promise<
+  ApiResponse<ChatResponse>
+> => {
   return apiHandler<ChatResponse>(`${API_BASE}/active`, 'GET');
 };
