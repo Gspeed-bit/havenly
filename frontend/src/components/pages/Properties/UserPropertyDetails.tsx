@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-
 import {
   getPropertyByIdForUser,
   Property,
 } from '@/services/property/propertyApiHandler';
+import { startChat, getChat } from '@/services/chat/chatServices';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
-
 import { useUserStore } from '@/store/users';
-import { ChatWithAdmin } from '@/components/ChatWithAdmin';
+import { useRouter } from 'next/navigation';
+import ImprovedChatBox from '@/app/(root)/chats/[chatsId]/page';
+
 
 interface AlertState {
   type: 'success' | 'error' | null;
@@ -26,54 +27,97 @@ interface PropertyDetailsProps {
 export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [alertState, setAlertState] = useState<AlertState>({
     type: null,
     message: '',
   });
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false); // Track chat loading state
 
   const user = useUserStore();
   const userId = user.user?._id;
+  const router = useRouter();
 
+  // Fetch property details on component mount
   useEffect(() => {
-    if (!propertyId) {
-      setError('Property ID is missing');
-      setIsLoading(false);
-      return;
-    }
-
-    const loadProperty = async () => {
+    const fetchProperty = async () => {
       setIsLoading(true);
       try {
         const response = await getPropertyByIdForUser(propertyId);
         if (response.status === 'success') {
-          if (response.data) {
-            setProperty(response.data);
-            console.log(response.data);
-          } else {
-            setAlertState({
-              type: 'error',
-              message: 'Failed to load property details',
-            });
-          }
+          setProperty(response.data);
         } else {
-          setAlertState({
-            type: 'error',
-            message: 'Failed to load property details',
-          });
+          setAlertState({ type: 'error', message: response.message });
         }
       } catch {
-        setError('An error occurred while fetching property details');
+        setAlertState({
+          type: 'error',
+          message: 'Failed to fetch property details.',
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadProperty();
-  }, [propertyId, userId]);
+    fetchProperty();
+  }, [propertyId]);
+
+  // Fetch chat details if chat exists
+  useEffect(() => {
+    const fetchChat = async () => {
+      if (!userId || !propertyId) return;
+      setIsChatLoading(true); // Start loading chat
+      try {
+        const response = await getChat(propertyId);
+        if (response.status === 'success') {
+          setChatId(response.data.data._id);
+        }
+      } catch {
+        console.error('No existing chat found.');
+      } finally {
+        setIsChatLoading(false); // Stop loading chat
+      }
+    };
+
+    fetchChat();
+  }, [userId, propertyId]);
+
+  // Start a new chat
+  const handleStartChat = async () => {
+    if (isChatLoading) return; // Prevent multiple requests while loading
+    setIsChatLoading(true);
+    try {
+      const response = await startChat({ propertyId });
+      console.log('Start Chat Response:', response); // Log the full response
+
+      if (response.status === 'success') {
+        const chatId = response.data.data._id; // Ensure this is not undefined
+        console.log(chatId); // Log the chat ID
+        if (chatId) {
+          setChatId(chatId); // Update state with the chat ID
+          router.push(`/chats/${chatId}`); // Navigate to the chat page
+          setAlertState({
+            type: 'success',
+            message: 'Chat started successfully.',
+          });
+        } else {
+          setAlertState({
+            type: 'error',
+            message: 'Failed to retrieve chat ID.',
+          });
+        }
+      } else {
+        setAlertState({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlertState({ type: 'error', message: 'Failed to start chat.' });
+      console.error('Error starting chat:', error);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   if (isLoading) return <p>Loading property details...</p>;
-  if (error) return <p className='text-red-500'>{error}</p>;
   if (!property) return <p>Property not found</p>;
 
   return (
@@ -151,24 +195,36 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
               </div>
             </div>
           )}
-        </CardContent>
-        {alertState.type && (
-          <Alert
-            variant={alertState.type === 'error' ? 'destructive' : 'default'}
-          >
-            {alertState.type === 'error' ? (
-              <AlertCircle className='h-4 w-4' />
+          {alertState.type && (
+            <Alert
+              variant={alertState.type === 'error' ? 'destructive' : 'default'}
+            >
+              {alertState.type === 'error' ? (
+                <AlertCircle className='h-4 w-4' />
+              ) : (
+                <CheckCircle2 className='h-4 w-4' />
+              )}
+              <AlertTitle>
+                {alertState.type === 'error' ? 'Error' : 'Success'}
+              </AlertTitle>
+              <AlertDescription>{alertState.message}</AlertDescription>
+            </Alert>
+          )}
+          <div className='mt-4'>
+            {chatId ? (
+              <ImprovedChatBox />
             ) : (
-              <CheckCircle2 className='h-4 w-4' />
+              <button
+                className='btn btn-primary'
+                onClick={handleStartChat}
+                disabled={isChatLoading} // Disable button while loading
+              >
+                {isChatLoading ? 'Starting chat...' : 'Start a Chat'}
+              </button>
             )}
-            <AlertTitle>
-              {alertState.type === 'error' ? 'Error' : 'Success'}
-            </AlertTitle>
-            <AlertDescription>{alertState.message}</AlertDescription>
-          </Alert>
-        )}
+          </div>
+        </CardContent>
       </Card>
-      {userId && <ChatWithAdmin propertyId={propertyId} userId={userId} />}
     </div>
   );
 }

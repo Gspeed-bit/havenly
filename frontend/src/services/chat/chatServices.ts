@@ -1,68 +1,60 @@
-import { apiHandler } from '@/config/server';
+import { apiHandler, ApiResponse } from '@/config/server';
 
-export interface Chat {
-  _id: string;
-  propertyId: string;
-  userId: string;
-  message: string;
-  createdAt: string;
-}
+const API_BASE = '/chats'; // Adjust as per your API base path
 
 export interface ChatResponse {
-  status: 'success' | 'error';
-  chat: Chat;
+  data: {
+    _id: string;
+  };
+  messages: Array<{
+    sender: 'user' | 'admin';
+    content: string;
+    timestamp: string;
+  }>;
+  isClosed: boolean;
 }
 
-export interface MessagesResponse {
-  status: 'success' | 'error';
-  messages: Message[];
-}
-
-interface Message {
-  id: string;
-  senderId: string;
+export interface MessageResponse {
+  sender: 'user' | 'admin';
   content: string;
   timestamp: string;
 }
 
-// Create a chat
-export const createChat = async (
-  propertyId: string,
-  userId: string,
-  message: string
-): Promise<ChatResponse> => {
-  const response = await apiHandler<ChatResponse>('/chats', 'POST', {
+export const startChat = async ({
+  propertyId,
+}: {
+  propertyId: string;
+}): Promise<ApiResponse<ChatResponse>> => {
+  const response = apiHandler<ChatResponse>(`${API_BASE}/start`, 'POST', {
     propertyId,
-    userId,
-    message,
   });
-  if (response.status === 'error') {
-    throw new Error('Failed to create chat');
-  }
-  return response.data;
+  return response;
 };
 
-// Send a message in a chat
-export const sendMessage = async (
-  chatId: string,
-  senderId: string,
-  message: string
-): Promise<{ status: 'success' | 'error'; message: string }> => {
-  return await apiHandler<{ status: 'success' | 'error'; message: string }>(
-    '/chats/message',
-    'POST',
-    { chatId, senderId, message }
-  );
+export const sendMessage = async ({
+  chatId,
+  content,
+}: {
+  chatId: string;
+  content: string;
+}): Promise<ApiResponse<MessageResponse>> => {
+  return apiHandler<MessageResponse>(`${API_BASE}/message`, 'POST', {
+    chatId,
+    content,
+  });
 };
 
-// Get all messages in a chat
-export const getMessages = async (
+export const closeChat = async (chatId: string): Promise<ApiResponse<null>> => {
+  return apiHandler<null>(`${API_BASE}/${chatId}/close`, 'PUT');
+};
+
+export const getChat = async (
   chatId: string
-): Promise<MessagesResponse> => {
-  const response = await apiHandler<MessagesResponse>(`/chats/${chatId}/messages`, 'GET');
-  if (response.status === 'error') {
-    throw new Error(response.message);
-  }
-  return response.data;
+): Promise<ApiResponse<ChatResponse>> => {
+  return apiHandler<ChatResponse>(`${API_BASE}/${chatId}`, 'GET');
 };
 
+export const fetchActiveChats = async (
+): Promise<ApiResponse<ChatResponse>> => {
+  return apiHandler<ChatResponse>(`${API_BASE}/active`, 'GET');
+};

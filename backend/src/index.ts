@@ -1,103 +1,130 @@
+'use strict';
 import express from 'express';
-import { Request, Response } from 'express';
 import cors from 'cors';
-import cron from 'node-cron';
-import basicAuth from 'express-basic-auth';
+import nodeCron from 'node-cron';
+import expressBasicAuth from 'express-basic-auth';
 import dotenv from 'dotenv';
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-
-import { connectToMongoose } from './config/mongoose'; // Import the mongoose connection function
-import { KEYS } from './config/config';
-import User from '@components/user/models/userModel'; // Import the User model
-import { Server } from 'socket.io';
+import swaggerJSDoc from 'swagger-jsdoc';
+import swaggerUI from 'swagger-ui-express';
 import http from 'http';
-// Routes
+import { Server } from 'socket.io';
+import { connectToMongoose } from './config/mongoose';
+import { KEYS } from './config/config';
+import userModel from './components/user/models/userModel'; // Import the User model
+
+// Import routes
 import authRoutes from './components/user/routes/authRoutes';
 import userRoutes from './components/user/routes/userRoutes';
-import propertyRoutes from 'components/property/routes/propertyRoutes';
-import companyRoutes from 'components/property/routes/companyRoutes';
-import notificationRoutes from '@components/user/routes/notificationRoutes';
-import inquiryRoutes from '@components/user/routes/inquiryRoutes';
-import imageRoutes from '@components/imageUpload/routes/imageRoutes';
+import propertyRoutes from './components/property/routes/propertyRoutes';
+import companyRoutes from './components/property/routes/companyRoutes';
+import notificationRoutes from './components/user/routes/notificationRoutes';
+import imageRoutes from './components/imageUpload/routes/imageRoutes';
+import chatRoutes from './components/user/routes/chatRoutes';
+import { storeMessage } from '@components/user/controllers/chatController';
+import Chat from '@components/user/models/chatModel';
 
+// Load environment variables
 dotenv.config({ path: '.env' });
 
 const app = express();
 const server = http.createServer(app);
-
-// Create Socket.io instance with specific CORS for frontend
 const io = new Server(server, {
   cors: {
-  
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:3000', // Replace with your frontend URL
     methods: ['GET', 'POST'],
-    credentials: true,
   },
 });
 
-// Socket.io setup
+
 io.on('connection', (socket) => {
-  console.log('New client connected');
+  console.log('a user connected');
 
-  const userId = socket.handshake.auth.userId;
-
-  if (userId) {
-    socket.join(userId);
-    console.log(`User ${userId} joined their room`);
-  }
-
-  // Listen for inquiry submission
-  socket.on('newInquiry', (data) => {
-    console.log('New inquiry received:', data);
-    io.emit('inquiryAlert', { ...data }); // Notify all admins
+  socket.on('adminJoin', (adminId: string) => {
+    socket.join(`admin:${adminId}`);
   });
 
-  // Listen for admin responses
-  socket.on('respondToInquiry', (data) => {
-    console.log('Admin responded to inquiry:', data);
-    const { userId } = data; // Ensure data contains userId
-    io.to(userId).emit('responseAlert', data); // Notify the specific user
+  socket.on('joinChat', (chatId: string) => {
+    socket.join(chatId);
+  });
+
+  socket.on(
+    'sendMessage',
+    async (data: {
+      chatId: string;
+      content: string;
+      sender: 'user' | 'admin';
+    }) => {
+      const { chatId, content, sender } = data;
+
+      try {
+        const newMessage = await storeMessage(chatId, content, sender);
+        io.to(chatId).emit('receiveMessage', newMessage);
+
+        const chat = await Chat.findById(chatId);
+        if (chat && sender === 'user') {
+          io.to(`admin:${chat.adminId}`).emit('newMessageNotification', {
+            message: `New message in chat ${chatId}`,
+            chatId,
+          });
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+  );
+
+  socket.on('closeChat', async (chatId: string) => {
+    try {
+      const chat = await Chat.findByIdAndUpdate(
+        chatId,
+        { isClosed: true },
+        { new: true }
+      );
+      if (chat) {
+        io.to(chatId).emit('chatClosed', {
+          message: 'This chat has been closed.',
+        });
+      }
+    } catch (error) {
+      console.error('Error closing chat:', error);
+    }
   });
 
   socket.on('disconnect', () => {
-    if (userId) {
-      socket.leave(userId);
-      console.log(`User ${userId} left their room`);
-    }
-    console.log('Client disconnected');
+    console.log('user disconnected');
   });
 });
-
-// Make io available to your routes
-app.set('io', io);
 
 // Middleware
 app.use(
   cors({
     origin: [
-      'http://localhost:3000',
-      'http://localhost:5000',
-      'https://havenly-chdr.onrender.com',
+      'http://localhost:3000', // Frontend dev server
+      'http://localhost:5000', // Backend dev server
+      'https://havenly-chdr.onrender.com', // Production frontend
     ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true, // Allow cookies or authentication headers
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (req, res) => {
   res.send('Welcome to the Havenly backend!');
 });
+
 app.use(
   '/',
   authRoutes,
   propertyRoutes,
   companyRoutes,
   notificationRoutes,
-  inquiryRoutes
+  chatRoutes(io)
 );
-app.use('/user', userRoutes); // All routes under /user/me
+app.use('/user', userRoutes); // All routes under /user
 app.use('/image', imageRoutes); // All routes under /image
 
 // MongoDB connection
@@ -149,25 +176,26 @@ const swaggerOptions = {
     './src/components/imageUpload/routes/**/*.ts',
   ],
 };
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
+
+const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use(
   '/api-docs',
-  basicAuth({
+  expressBasicAuth({
     users: {
       [KEYS.serverUsername]: KEYS.serverPassword,
     },
     challenge: true,
     realm: 'Protected API',
   }),
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocs)
+  swaggerUI.serve,
+  swaggerUI.setup(swaggerDocs)
 );
 
 // Cron job for cleaning up expired verification codes
-cron.schedule('0 0 * * *', async () => {
+nodeCron.schedule('0 0 * * *', async () => {
   const now = new Date();
   try {
-    await User.updateMany(
+    await userModel.updateMany(
       { verificationCodeExpiration: { $lt: now } },
       { $set: { verificationCode: null, verificationCodeExpiration: null } }
     );
