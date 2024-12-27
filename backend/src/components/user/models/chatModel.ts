@@ -28,6 +28,8 @@ const chatSchema = new Schema<IChat>({
     },
   ],
   isClosed: { type: Boolean, default: false },
+}, {
+  versionKey: false, // Disable versioning for this schema
 });
 
 export default mongoose.model<IChat>('Chat', chatSchema);

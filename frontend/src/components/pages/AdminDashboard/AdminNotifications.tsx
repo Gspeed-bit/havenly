@@ -16,14 +16,16 @@ interface Notification {
 const AdminDashboard: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeChats, setActiveChats] = useState<string[]>([]);
+  const [activeChats, setActiveChats] = useState<string[]>(
+    () => JSON.parse(localStorage.getItem('activeChats') || '[]') // Load from local storage
+  );
   const { user } = useUserStore();
 
   useEffect(() => {
     if (!user || !user.isAdmin) return;
 
     const newSocket = io('http://localhost:5000', {
-      query: { userId: user._id, isAdmin: 'true' },
+      query: { userId: user._id, isAdmin: true },
     });
     setSocket(newSocket);
 
@@ -52,16 +54,25 @@ const AdminDashboard: React.FC = () => {
     };
   }, [user]);
 
+  useEffect(() => {
+    localStorage.setItem('activeChats', JSON.stringify(activeChats)); // Save active chats to local storage
+  }, [activeChats]);
+
   const handleNotificationClick = (chatId: string) => {
-    setActiveChats((prev) => [...prev, chatId]);
+    setActiveChats((prev) => {
+      if (!prev.includes(chatId)) {
+        return [...prev, chatId];
+      }
+      return prev;
+    });
     setNotifications((prev) => prev.filter((n) => n.chatId !== chatId));
   };
 
   return (
     <div className='container mx-auto p-4'>
       <h1 className='text-2xl font-bold mb-4'>Admin Dashboard</h1>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <Card>
+      <div className='grid grid-cols-1 gap-4'>
+        <Card className='h-50'>
           <CardHeader>
             <CardTitle>Notifications</CardTitle>
           </CardHeader>
