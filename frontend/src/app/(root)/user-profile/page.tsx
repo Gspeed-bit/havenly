@@ -4,7 +4,6 @@ import React from 'react';
 import { ChangePassword } from '@/components/pages/userProfile/ChangePassword';
 import ProfileUpdateForm from '@/components/pages/userProfile/updateUserProfile';
 import Authenticated from '@/components/authLayout/Authenticated';
-import ChatBox from '@/components/pages/Chat/ChatBox';
 
 const page = () => {
   return (

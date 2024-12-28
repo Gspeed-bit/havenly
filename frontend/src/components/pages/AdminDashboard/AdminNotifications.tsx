@@ -6,13 +6,7 @@ import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import {
-  Bell,
-  MessageSquare,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-} from 'lucide-react';
+import { Bell, MessageSquare, Menu } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatBox from '../Chat/ChatBox';
@@ -24,6 +18,7 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     // Load notifications from localStorage if available
@@ -53,7 +48,10 @@ const AdminDashboard: React.FC = () => {
       (data: { message: string; chatId: string }) => {
         console.log('New chat notification received:', data);
         setNotifications((prev) => {
-          const updatedNotifications: Notification[] = [...prev, { type: 'newChat', ...data }];
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newChat', ...data },
+          ];
           localStorage.setItem(
             'notifications',
             JSON.stringify(updatedNotifications)

@@ -88,7 +88,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         if (onNotify) {
           onNotify('Chat has been closed');
         }
-        onClose && onClose(chatId);
+        onClose?.(chatId);
       });
 
       return () => {
@@ -157,7 +157,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </Button>
         )}
       </div>
-      <ScrollArea className=' h-[600px] p-2 sm:p-4'>
+      <ScrollArea className='h-[600px] p-2 sm:p-4'>
         {messages.map((message, index) => (
           <div
             key={index}

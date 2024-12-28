@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   Menu,
   Home,
@@ -12,7 +12,6 @@ import {
   Bell,
   HelpCircle,
   ChevronDown,
-  MailCheck,
 } from 'lucide-react';
 import {
   Sidebar,

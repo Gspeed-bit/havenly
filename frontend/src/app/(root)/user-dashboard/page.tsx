@@ -1,17 +1,17 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+
 import ChatBox from '@/components/pages/Chat/ChatBox';
 export default function UserDashboard() {
   const searchParams = useSearchParams();
   const chatId = searchParams.get('chatId');
-  const { toast } = useToast();
 
   const handleNotification = (message: string) => {
-    toast({
-      description: message, 
-      type: 'foreground', 
-      duration: 5000, 
+    toast(message, {
+      position: 'top-right',
+      duration: 3000,
+
     });
   };
 

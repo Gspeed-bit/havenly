@@ -10,7 +10,6 @@ import {
 } from '@/services/property/propertyApiHandler';
 import { startChat } from '@/services/chat/chatServices';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useUserStore } from '@/store/users';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
@@ -33,8 +32,8 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false); // Track chat loading state
 
-  const user = useUserStore();
-  const userId = user.user?._id;
+
+
   const router = useRouter();
 
   // Fetch property details on component mount
@@ -189,19 +188,21 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
             </Alert>
           )}
           <div className='mt-4'>
-            <Button
-              className='btn btn-primary_main'
-              onClick={handleStartChat}
-              disabled={isChatLoading} // Disable button while loading
-            >
-              {isChatLoading
-                ? `Starting chat...... ${property.agent.name}`
-                : `Chat with ${property.agent.name} `}
-            </Button>
+            {!chatId && (
+              <Button
+                className='btn btn-primary_main'
+                onClick={handleStartChat}
+                disabled={isChatLoading} // Disable button while loading
+              >
+                {isChatLoading
+                  ? `Starting chat...... ${property.agent.name}`
+                  : `Chat with ${property.agent.name} `}
+              </Button>
+            )}
+            {}
           </div>
         </CardContent>
       </Card>
-      
     </div>
   );
 }
