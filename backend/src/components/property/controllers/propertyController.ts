@@ -289,3 +289,23 @@ export const getPropertyByIdForUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+// Get property by chatId
+export const getPropertyByChatId = async (req: Request, res: Response) => {
+  try {
+    const { chatId } = req.params; // Extract chatId from URL parameters
+
+    // Fetch the property from the database based on the chatId
+    const property = await Property.findOne({ chatId });
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    // Return the property details
+    return res.status(200).json({ property });
+  } catch (error) {
+    console.error('Error fetching property:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};

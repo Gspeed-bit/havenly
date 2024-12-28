@@ -57,7 +57,6 @@ const propertySchema = new Schema<IProperty>(
       contact: { type: String },
     },
     sold: { type: Boolean, default: false },
-
     adminId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Admin ID who created the property
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields

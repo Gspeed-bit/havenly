@@ -4,8 +4,18 @@ import React, { useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ChatBox from '@/components/pages/Chat/ChatBox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import {
+  Bell,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+} from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ChatBox from '../Chat/ChatBox';
 
 interface Notification {
   type: 'newChat' | 'newMessage';
@@ -15,10 +25,15 @@ interface Notification {
 
 const AdminDashboard: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeChats, setActiveChats] = useState<string[]>(
-    () => JSON.parse(localStorage.getItem('activeChats') || '[]') // Load from local storage
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    // Load notifications from localStorage if available
+    return JSON.parse(localStorage.getItem('notifications') || '[]');
+  });
+  const [activeChats, setActiveChats] = useState<string[]>(() =>
+    JSON.parse(localStorage.getItem('activeChats') || '[]')
   );
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user } = useUserStore();
 
   useEffect(() => {
@@ -37,7 +52,14 @@ const AdminDashboard: React.FC = () => {
       'newChatNotification',
       (data: { message: string; chatId: string }) => {
         console.log('New chat notification received:', data);
-        setNotifications((prev) => [...prev, { type: 'newChat', ...data }]);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [...prev, { type: 'newChat', ...data }];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
       }
     );
 
@@ -45,7 +67,17 @@ const AdminDashboard: React.FC = () => {
       'newMessageNotification',
       (data: { message: string; chatId: string }) => {
         console.log('New message notification received:', data);
-        setNotifications((prev) => [...prev, { type: 'newMessage', ...data }]);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newMessage', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
       }
     );
 
@@ -55,7 +87,7 @@ const AdminDashboard: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('activeChats', JSON.stringify(activeChats)); // Save active chats to local storage
+    localStorage.setItem('activeChats', JSON.stringify(activeChats));
   }, [activeChats]);
 
   const handleNotificationClick = (chatId: string) => {
@@ -65,44 +97,142 @@ const AdminDashboard: React.FC = () => {
       }
       return prev;
     });
-    setNotifications((prev) => prev.filter((n) => n.chatId !== chatId));
+    setNotifications((prev) => {
+      const updatedNotifications = prev.filter((n) => n.chatId !== chatId);
+      localStorage.setItem(
+        'notifications',
+        JSON.stringify(updatedNotifications)
+      );
+      return updatedNotifications;
+    });
+    setSelectedChat(chatId);
+  };
+
+  const handleCloseChat = (chatId: string) => {
+    setActiveChats((prev) => prev.filter((id) => id !== chatId));
+    if (selectedChat === chatId) {
+      setSelectedChat(null);
+    }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
   };
 
   return (
-    <div className='container mx-auto p-4'>
-      <h1 className='text-2xl font-bold mb-4'>Admin Dashboard</h1>
-      <div className='grid grid-cols-1 gap-4'>
-        <Card className='h-50'>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {notifications.map((notification, index) => (
-              <Button
-                key={index}
-                onClick={() => handleNotificationClick(notification.chatId)}
-                className='w-full mb-2'
-                variant={
-                  notification.type === 'newChat' ? 'default' : 'outline'
-                }
-              >
-                {notification.message}
-              </Button>
-            ))}
-            {notifications.length === 0 && <p>No new notifications</p>}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Chats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeChats.map((chatId) => (
-              <ChatBox key={chatId} initialChatId={chatId} />
-            ))}
-            {activeChats.length === 0 && <p>No active chats</p>}
-          </CardContent>
-        </Card>
+    <div className='flex flex-col sm:flex-row h-screen bg-gray-100'>
+      <div
+        className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
+        } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
+      >
+        {isSidebarOpen && (
+          <div className='h-full flex flex-col'>
+            <div className='p-4 bg-primary text-primary-foreground'>
+              <h1 className='text-2xl font-bold'>Admin Dashboard</h1>
+            </div>
+            <div className='flex-1 overflow-hidden'>
+              <div className='p-4'>
+                <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                  <Bell className='h-5 w-5 mr-2' />
+                  Notifications
+                  {notifications.length > 0 && (
+                    <Badge variant='destructive' className='ml-2'>
+                      {notifications.length}
+                    </Badge>
+                  )}
+                </h2>
+                <ScrollArea className='h-40 rounded-md border'>
+                  {notifications.map((notification, index) => (
+                    <Button
+                      key={index}
+                      onClick={() =>
+                        handleNotificationClick(notification.chatId)
+                      }
+                      className='w-full justify-start text-left p-2 hover:bg-gray-100'
+                      variant='ghost'
+                    >
+                      <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
+                      <span className='truncate text-sm'>
+                        {notification.message}
+                      </span>
+                    </Button>
+                  ))}
+                  {notifications.length === 0 && (
+                    <p className='text-muted-foreground text-center py-4'>
+                      No new notifications
+                    </p>
+                  )}
+                </ScrollArea>
+              </div>
+              <Separator />
+              <div className='p-4'>
+                <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                  <MessageSquare className='h-5 w-5 mr-2' />
+                  Active Chats
+                  {activeChats.length > 0 && (
+                    <Badge variant='secondary' className='ml-2'>
+                      {activeChats.length}
+                    </Badge>
+                  )}
+                </h2>
+                <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
+                  {activeChats.map((chatId) => (
+                    <Button
+                      key={chatId}
+                      onClick={() => setSelectedChat(chatId)}
+                      className={`w-full justify-start text-left p-2 mb-2 ${
+                        selectedChat === chatId
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-gray-100'
+                      }`}
+                      variant='ghost'
+                    >
+                      <Avatar className='h-10 w-10 mr-3'>
+                        <AvatarImage
+                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
+                        />
+                        <AvatarFallback>
+                          {chatId.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex flex-col items-start'>
+                        <span className='font-medium'>Chat {chatId}</span>
+                        <span className='text-xs text-muted-foreground'>
+                          Last message...
+                        </span>
+                      </div>
+                    </Button>
+                  ))}
+                  {activeChats.length === 0 && (
+                    <p className='text-muted-foreground text-center py-4'>
+                      No active chats
+                    </p>
+                  )}
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className='flex-1 flex flex-col'>
+        <Button
+          onClick={toggleSidebar}
+          className='absolute top-4 left-4 z-10 sm:hidden'
+          variant='outline'
+          size='icon'
+        >
+          <Menu className='h-4 w-4' />
+        </Button>
+        <div className='flex-1 p-4 overflow-auto'>
+          {selectedChat ? (
+            <ChatBox initialChatId={selectedChat} onClose={handleCloseChat} />
+          ) : (
+            <div className='h-full flex items-center justify-center text-muted-foreground'>
+              Select a chat to start messaging
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

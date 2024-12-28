@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import Icon from '../icons/Icon';
 import Link from 'next/link';
@@ -6,6 +7,9 @@ import Page from '@components/common/links/page';
 import UserMenu from './UserMenu';
 import { useUserStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
+import { useNotificationStore } from '@/store/notification';
+import { Bell } from 'lucide-react';
+import { getChat } from '@/services/chat/chatServices'; // Import getChat service
 
 interface NavigationProps {
   isMobileMenuOpen: boolean;
@@ -16,17 +20,38 @@ const Navigation: React.FC<NavigationProps> = ({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) => {
-  const [activeNav, setActiveNav] = useState('Home'); // Active navigation state
-  const [hydrated, setHydrated] = useState(false); // Hydration state
+  const [activeNav, setActiveNav] = useState('Home');
+  const [hydrated, setHydrated] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(null); // State for chatId
 
-  // Get authentication and admin status from store
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.isAdmin === true;
 
+  // Get notifications from Zustand store
+  const { notifications } = useNotificationStore();
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   useEffect(() => {
     setHydrated(true);
-  }, []);
+
+    // Fetch chatId if authenticated
+    if (isAuthenticated && user) {
+      const fetchChat = async () => {
+        try {
+          if (user._id) {
+            const response = await getChat(user._id); // Fetch chat ID for the user
+            if (response.status === 'success') {
+              setChatId(response.data.data._id); // Set chatId from response
+            }
+          }
+        } catch {
+          console.error('No existing chat found.');
+        }
+      };
+      fetchChat();
+    }
+  }, [isAuthenticated, user]);
 
   if (!hydrated) return null;
 
@@ -61,7 +86,6 @@ const Navigation: React.FC<NavigationProps> = ({
             </div>
             <span className='text-xl font-semibold'>Havenly</span>
           </div>
-
           {/* Desktop Menu */}
           <div className='hidden md:flex items-center space-x-6'>
             {navItems.map(({ label, path }) => (
@@ -82,6 +106,17 @@ const Navigation: React.FC<NavigationProps> = ({
 
           {/* Actions */}
           <div className='hidden md:flex items-center space-x-4'>
+            {/* Bell Notification */}
+          <Link href={`/user-dashboard?chatId=${chatId}`} className="relative">
+          <Bell className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </Link>
+
+            {/* User Menu */}
             {!hydrated ? null : isAuthenticated ? (
               <div className='hidden md:flex items-center space-x-4'>
                 <UserMenu />
@@ -98,7 +133,6 @@ const Navigation: React.FC<NavigationProps> = ({
               </button>
             )}
           </div>
-
           {/* Mobile Menu */}
           <button
             className='md:hidden text-gray-700'

@@ -111,3 +111,9 @@ export const deletePropertyImage = async (
     'DELETE'
   );
 };
+
+export const getPropertyByChatId = (
+  chatId: string
+): Promise<ApiResponse<Property>> => {
+  return apiHandler<Property>(`/property/${chatId}`, 'GET');
+};

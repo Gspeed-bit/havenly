@@ -4,7 +4,7 @@ import {
   sendMessage,
   closeChat,
   getChat,
-
+ 
 } from '../controllers/chatController';
 import {
   adminMiddleware,
@@ -16,7 +16,9 @@ const router = express.Router();
 
 export default (io: Server) => {
   // Start a chat
-  router.post('/chats/start', userMiddleware, (req, res) => startChat(req, res, io));
+  router.post('/chats/start', userMiddleware, (req, res) =>
+    startChat(req, res, io)
+  );
 
   // Send a message
   router.post('/chats/message', userMiddleware, (req, res) =>

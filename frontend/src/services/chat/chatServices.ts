@@ -5,6 +5,11 @@ const API_BASE = '/chats';
 export interface ChatResponse {
   data: {
     _id: string;
+    propertyDetails: {
+      agentName: string;
+      companyName: string;
+      title: string;
+    };
   };
   messages: Array<{
     sender: 'user' | 'admin';
@@ -12,6 +17,7 @@ export interface ChatResponse {
     timestamp: string;
     senderName: string;
   }>;
+
   isClosed: boolean;
 }
 
@@ -62,8 +68,8 @@ export const getChat = async (
   return apiHandler<ChatResponse>(`${API_BASE}/${chatId}`, 'GET');
 };
 
-export const fetchActiveChats = async (): Promise<
-  ApiResponse<ChatResponse>
-> => {
-  return apiHandler<ChatResponse>(`${API_BASE}/active`, 'GET');
+export const getChatByUserAndProperty = async (
+  propertyId: string
+): Promise<ApiResponse<ChatResponse>> => {
+  return apiHandler<ChatResponse>(`chat/${propertyId}`, 'GET');
 };

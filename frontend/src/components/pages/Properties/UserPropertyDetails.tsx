@@ -8,12 +8,11 @@ import {
   getPropertyByIdForUser,
   Property,
 } from '@/services/property/propertyApiHandler';
-import { startChat, getChat } from '@/services/chat/chatServices';
+import { startChat } from '@/services/chat/chatServices';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useUserStore } from '@/store/users';
 import { useRouter } from 'next/navigation';
-import ImprovedChatBox from '@/app/(root)/chats/[chatsId]/page';
-
+import { Button } from '@/components/ui/button';
 
 interface AlertState {
   type: 'success' | 'error' | null;
@@ -62,26 +61,6 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
     fetchProperty();
   }, [propertyId]);
 
-  // Fetch chat details if chat exists
-  useEffect(() => {
-    const fetchChat = async () => {
-      if (!userId || !propertyId) return;
-      setIsChatLoading(true); // Start loading chat
-      try {
-        const response = await getChat(propertyId);
-        if (response.status === 'success') {
-          setChatId(response.data.data._id);
-        }
-      } catch {
-        console.error('No existing chat found.');
-      } finally {
-        setIsChatLoading(false); // Stop loading chat
-      }
-    };
-
-    fetchChat();
-  }, [userId, propertyId]);
-
   // Start a new chat
   const handleStartChat = async () => {
     if (isChatLoading) return; // Prevent multiple requests while loading
@@ -92,7 +71,6 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
 
       if (response.status === 'success') {
         const chatId = response.data.data._id; // Ensure this is not undefined
-        console.log(chatId); // Log the chat ID
         if (chatId) {
           setChatId(chatId); // Update state with the chat ID
           router.push(`/chats/${chatId}`); // Navigate to the chat page
@@ -211,20 +189,19 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
             </Alert>
           )}
           <div className='mt-4'>
-            {chatId ? (
-              <ImprovedChatBox />
-            ) : (
-              <button
-                className='btn btn-primary'
-                onClick={handleStartChat}
-                disabled={isChatLoading} // Disable button while loading
-              >
-                {isChatLoading ? 'Starting chat...' : 'Start a Chat'}
-              </button>
-            )}
+            <Button
+              className='btn btn-primary_main'
+              onClick={handleStartChat}
+              disabled={isChatLoading} // Disable button while loading
+            >
+              {isChatLoading
+                ? `Starting chat...... ${property.agent.name}`
+                : `Chat with ${property.agent.name} `}
+            </Button>
           </div>
         </CardContent>
       </Card>
+      
     </div>
   );
 }

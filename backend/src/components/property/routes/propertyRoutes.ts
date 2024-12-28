@@ -5,6 +5,7 @@ import {
   deleteProperty,
   getProperties,
   getPropertiesUser,
+  getPropertyByChatId,
   getPropertyById,
   getPropertyByIdForUser,
   updateProperty,
@@ -376,6 +377,7 @@ router.delete(
   adminMiddleware,
   deleteProperty
 );
-
+  router.get('/property/:chatId', userMiddleware, getPropertyByChatId);
+  
 export default router;
 

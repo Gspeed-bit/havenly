@@ -1,7 +1,7 @@
 // Chat Controller (chatController.ts)
 import { Request, Response } from 'express';
 import Chat, { IMessage } from '../models/chatModel';
-import Property from '@components/property/models/propertyModel';
+import Property, { IProperty } from '@components/property/models/propertyModel';
 import { Server } from 'socket.io';
 
 export const startChat = async (req: Request, res: Response, io: Server) => {
@@ -33,6 +33,11 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
     // Emit to all admin sockets
     io.to('adminRoom').emit('newChatNotification', {
       message: 'A new chat has been started with a user.',
+      chatId: chat._id,
+    });
+    // Notify user that the chat was started
+    io.to(userId).emit('chatStartedNotification', {
+      message: 'Your chat with the admin has started.',
       chatId: chat._id,
     });
 
@@ -80,6 +85,17 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
       });
     }
 
+    // Notify the user that a new message has been received
+    if (sender !== 'Admin') {
+      io.to(chat.users.filter((user) => user !== sender).join(',')).emit(
+        'newMessageNotification',
+        {
+          message: `New message from ${senderName} in your chat.`,
+          chatId: chat._id,
+        }
+      );
+    }
+
     return res.status(200).json({ status: 'success', data: newMessage });
   } catch (error) {
     console.error(error);
@@ -118,6 +134,7 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
   }
 };
 
+
 export const getChat = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params;
@@ -128,13 +145,37 @@ export const getChat = async (req: Request, res: Response) => {
     const chat = await Chat.findById(chatId)
       .populate('users')
       .populate('adminId')
+      .populate({
+        path: 'propertyId', // Populate the property details
+        select: 'title agent company', // Select the fields you want from the property
+        populate: {
+          path: 'company', // Populate the company details
+          select: 'name', // Only select the company name
+        },
+      })
       .exec();
 
     if (!chat) return res.status(404).json({ message: 'Chat not found' });
 
+    // Check if property is populated and cast it to IProperty type
+    const property = chat.propertyId as unknown as IProperty;
+
+    if (!property)
+      return res.status(404).json({ message: 'Property not found' });
+
+    // Extract the relevant property details
+    const propertyDetails = {
+      title: property.title,
+      agentName: property.agent?.name,
+      companyName: property.company?.name,
+    };
+
     res.status(200).json({
       status: 'success',
-      data: chat,
+      data: {
+        chat,
+        propertyDetails, // Include property details in the response
+      },
       messages: chat.messages,
       isClosed: chat.isClosed,
     });
@@ -144,30 +185,3 @@ export const getChat = async (req: Request, res: Response) => {
   }
 };
 
-// Function to store a message
-export const storeMessage = async (
-  chatId: string,
-  content: string,
-  sender: string,
-): Promise<IMessage> => {
-  // Create the new message
-  const newMessage: IMessage = {
-    sender,
-    content,
-    timestamp: new Date(),
-    senderName: '',
-  };
-
-  // Find the chat and push the new message to the messages array
-  const chat = await Chat.findById(chatId);
-
-  if (!chat) {
-    throw new Error('Chat not found');
-  }
-
-  // Add the new message to the messages array
-  chat.messages.push(newMessage);
-  await chat.save();
-
-  return newMessage;
-};
