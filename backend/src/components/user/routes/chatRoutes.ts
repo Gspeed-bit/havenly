@@ -4,7 +4,6 @@ import {
   sendMessage,
   closeChat,
   getChat,
- 
 } from '../controllers/chatController';
 import {
   adminMiddleware,
@@ -25,15 +24,12 @@ export default (io: Server) => {
     sendMessage(req, res, io)
   );
 
-  // Close a chat (admin-only)
-  router.put(
-    '/chats/:chatId/close',
-    userMiddleware,
-    adminMiddleware,
-    (req, res) => closeChat(req, res, io)
-  );
 
   router.get('/chats/:chatId', userMiddleware, getChat);
 
+  // Allow both admin and user to close the chat
+  router.put('/chats/:chatId/close', userMiddleware,adminMiddleware, (req, res) =>
+    closeChat(req, res, io)
+  );
   return router;
 };

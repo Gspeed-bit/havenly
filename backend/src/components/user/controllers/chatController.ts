@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import Chat, { IMessage } from '../models/chatModel';
 import Property, { IProperty } from '@components/property/models/propertyModel';
 import { Server } from 'socket.io';
+import { sendChatSummaryEmail } from 'utils/emailUtils';
 
 export const startChat = async (req: Request, res: Response, io: Server) => {
   try {
@@ -103,37 +104,6 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
   }
 };
 
-export const closeChat = async (req: Request, res: Response, io: Server) => {
-  try {
-    const { chatId } = req.params;
-    const userId = req.user?._id;
-
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const chat = await Chat.findById(chatId);
-    if (!chat) return res.status(404).json({ message: 'Chat not found.' });
-    if (chat.adminId.toString() !== userId.toString())
-      return res.status(403).json({ message: 'Access denied.' });
-
-    chat.isClosed = true;
-    await chat.save();
-
-    io.to(chatId).emit('chatClosed', { message: 'This chat has been closed.' });
-
-    io.to(chat.adminId.toString()).emit('chatClosedNotification', {
-      message: 'The chat has been closed.',
-      chatId,
-    });
-
-    res
-      .status(200)
-      .json({ status: 'success', message: 'Chat closed successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Server error' });
-  }
-};
-
 
 export const getChat = async (req: Request, res: Response) => {
   try {
@@ -185,3 +155,46 @@ export const getChat = async (req: Request, res: Response) => {
   }
 };
 
+
+export const closeChat = async (req: Request, res: Response, io: Server) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user?._id;
+
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const chat = await Chat.findById(chatId)
+      .populate('users', 'email firstName lastName')
+      .populate('adminId', 'email firstName lastName');
+
+    if (!chat) return res.status(404).json({ message: 'Chat not found.' });
+
+    if (
+      !chat.users.some((u) => u._id.toString() === userId.toString()) &&
+      chat.adminId._id.toString() !== userId.toString()
+    ) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    if (chat.isClosed)
+      return res.status(400).json({ message: 'Chat already closed.' });
+
+    // Mark the chat as closed
+    chat.isClosed = true;
+    await chat.save();
+
+    // Notify clients
+    io.to(chatId).emit('chatClosed', { message: 'This chat has been closed.' });
+
+    // Send email summary to participants
+    await sendChatSummaryEmail(chat);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Chat closed successfully and summary sent.',
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};

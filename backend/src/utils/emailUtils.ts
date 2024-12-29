@@ -1,3 +1,4 @@
+import { IUser } from '@components/user/models/userModel';
 import { KEYS } from 'config/config';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
@@ -307,5 +308,65 @@ export const sendAdminUpdatePinEmail = async (
   };
 
   // Send the email
+  await transporter.sendMail(mailOptions);
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sendChatSummaryEmail = async (chat: any) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: KEYS.email,
+      pass: KEYS.emailPassword,
+    },
+  });
+
+  // Chat participants
+  const userEmails = chat.users
+    .map((user: IUser) => `${user.firstName} ${user.lastName} <${user.email}>`)
+    .join(', ');
+  const adminEmail = `${chat.adminId.firstName} ${chat.adminId.lastName} <${chat.adminId.email}>`;
+
+  // Format messages
+  const messageList = chat.messages
+    .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (msg: any) => `
+      <p><strong>${msg.senderName}</strong> (${new Date(
+        msg.timestamp
+      ).toLocaleString()}):</p>
+      <p>${msg.content}</p>
+      <hr />`
+    )
+    .join('');
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+      <h1 style="color: #3A0CA3; text-align: center;">Chat Summary</h1>
+      <p>The chat has been closed. Below is the summary:</p>
+      <h2>Participants:</h2>
+      <ul>
+        <li><strong>Admin:</strong> ${adminEmail}</li>
+        <li><strong>Users:</strong> ${userEmails}</li>
+      </ul>
+      <h2>Messages:</h2>
+      ${messageList}
+      <p>If you have further inquiries, feel free to contact us.</p>
+      <footer style="margin-top: 20px; text-align: center; color: #999; font-size: 14px;">
+        <p>Havenly Inc., 1234 Street Name, City, State, ZIP Code</p>
+        <p>Need help? <a href="mailto:support@yourdomain.com">Contact Support</a></p>
+        <p>© 2024 Havenly. All rights reserved.</p>
+      </footer>
+    </div>
+  `;
+
+  // Send emails to all participants
+  const mailOptions = {
+    from: KEYS.email,
+    to: [adminEmail, ...chat.users.map((user: IUser) => user.email)],
+    subject: 'Chat Summary - Havenly',
+    html: emailContent,
+  };
+
   await transporter.sendMail(mailOptions);
 };
