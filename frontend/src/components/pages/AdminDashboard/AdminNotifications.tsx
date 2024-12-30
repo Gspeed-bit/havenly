@@ -10,6 +10,8 @@ import { Bell, MessageSquare, Menu } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatBox from '../Chat/ChatBox';
+import { toast } from 'sonner';
+import { apiHandler } from '@/config/server';
 
 interface Notification {
   type: 'newChat' | 'newMessage';
@@ -18,10 +20,8 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
-    // Load notifications from localStorage if available
     return JSON.parse(localStorage.getItem('notifications') || '[]');
   });
   const [activeChats, setActiveChats] = useState<string[]>(() =>
@@ -41,6 +41,13 @@ const AdminDashboard: React.FC = () => {
 
     newSocket.on('connect', () => {
       console.log('Admin connected to Socket.io server');
+    });
+
+    newSocket.on('chatClosed', (data: { chatId: string }) => {
+      console.log(
+        `Chat closed notification received for chatId: ${data.chatId}`
+      );
+      handleCloseChat(data.chatId);
     });
 
     newSocket.on(
@@ -106,22 +113,50 @@ const AdminDashboard: React.FC = () => {
     setSelectedChat(chatId);
   };
 
-  const handleCloseChat = (chatId: string) => {
-    setActiveChats((prev) => prev.filter((id) => id !== chatId));
-    if (selectedChat === chatId) {
-      setSelectedChat(null);
+const handleCloseChat = async (chatId: string) => {
+  try {
+    // Make the API call to close the chat using the apiHandler
+    const response = await apiHandler<{
+      agentName: string;
+      agentContact: string;
+    }>(`/chats/${chatId}/close`, 'PUT');
+
+    if (response.status === 'success') {
+      // Successfully closed the chat
+      setActiveChats((prev) => {
+        const updatedChats = prev.filter((id) => id !== chatId);
+        localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+        return updatedChats;
+      });
+
+      if (selectedChat === chatId) {
+        setSelectedChat(null); // Clear selected chat if it was the one being closed
+      }
+
+      toast(`Chat ${chatId} has been closed successfully.`, {
+        duration: 3000,
+      });
+
+      console.log(`Chat ${chatId} has been closed and cleanup is done.`);
+    } else {
+      toast.error('Failed to close the chat.');
     }
-  };
+  } catch (error) {
+    toast.error('An error occurred while closing the chat.');
+    console.error('Error closing chat:', error);
+  }
+};
+
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
   return (
-    <div className='flex flex-col sm:flex-row h-screen bg-gray-100'>
+    <div className='flex h-screen bg-gray-100'>
       <div
         className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
+          isSidebarOpen ? 'w-80' : 'w-0'
         } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
       >
         {isSidebarOpen && (
@@ -174,7 +209,7 @@ const AdminDashboard: React.FC = () => {
                     </Badge>
                   )}
                 </h2>
-                <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
+                <ScrollArea className='h-[calc(100vh-280px)]'>
                   {activeChats.map((chatId) => (
                     <Button
                       key={chatId}
@@ -194,10 +229,13 @@ const AdminDashboard: React.FC = () => {
                           {chatId.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
+
                       <div className='flex flex-col items-start'>
-                        <span className='font-medium'>Chat {chatId}</span>
+                        <span className='font-medium'>
+                          Chat {chatId.slice(0, 8)}...
+                        </span>
                         <span className='text-xs text-muted-foreground'>
-                          Last message...
+                          Active
                         </span>
                       </div>
                     </Button>

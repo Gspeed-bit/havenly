@@ -8,7 +8,7 @@ import { StatusCodes } from 'utils/apiResponse';
 import sendResetPasswordEmail, {
   generateVerificationCode,
   sendVerificationEmail,
-} from 'utils/emailUtils';
+} from 'utils/email/emailUtils';
 import { sanitizeUser } from 'utils/sanitizeUser';
 
 // Usage in the registration logic

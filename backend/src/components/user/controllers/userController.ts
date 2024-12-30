@@ -5,7 +5,7 @@ import { sanitizeUser } from 'utils/sanitizeUser';
 import {
   generateVerificationCode,
   sendAdminUpdatePinEmail,
-} from 'utils/emailUtils';
+} from 'utils/email/emailUtils';
 import { uploadImageToCloudinary } from 'utils/cloudinary';
 import bcrypt from 'bcrypt';
 import { v2 as cloudinary } from 'cloudinary';

@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import Chat, { IMessage } from '../models/chatModel';
 import Property, { IProperty } from '@components/property/models/propertyModel';
 import { Server } from 'socket.io';
-import { sendChatSummaryEmail } from 'utils/emailUtils';
+import { sendChatSummaryEmail } from 'utils/email/emailUtils';
 
 export const startChat = async (req: Request, res: Response, io: Server) => {
   try {
@@ -16,13 +16,15 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
     if (!property)
       return res.status(404).json({ message: 'Property not found.' });
 
-    let chat = await Chat.findOneAndUpdate(
-      { propertyId, users: userId, isClosed: false },
-      { $setOnInsert: { adminId: property.adminId, messages: [] } },
-      { upsert: true, new: true }
-    );
+    // Check if the user already has an active chat with the same property
+    let chat = await Chat.findOne({
+      propertyId,
+      users: userId,
+      isClosed: false,
+    });
 
     if (!chat) {
+      // If no active chat, create a new chat
       chat = await Chat.create({
         propertyId,
         users: [userId],
@@ -36,6 +38,7 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
       message: 'A new chat has been started with a user.',
       chatId: chat._id,
     });
+
     // Notify user that the chat was started
     io.to(userId).emit('chatStartedNotification', {
       message: 'Your chat with the admin has started.',
@@ -104,7 +107,6 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
   }
 };
 
-
 export const getChat = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params;
@@ -155,7 +157,6 @@ export const getChat = async (req: Request, res: Response) => {
   }
 };
 
-
 export const closeChat = async (req: Request, res: Response, io: Server) => {
   try {
     const { chatId } = req.params;
@@ -165,8 +166,11 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
 
     const chat = await Chat.findById(chatId)
       .populate('users', 'email firstName lastName')
-      .populate('adminId', 'email firstName lastName');
-
+      .populate('adminId', 'email ')
+      .populate({
+        path: 'propertyId',
+        select: 'agent',
+      });
     if (!chat) return res.status(404).json({ message: 'Chat not found.' });
 
     if (
@@ -188,10 +192,17 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
 
     // Send email summary to participants
     await sendChatSummaryEmail(chat);
+    const property = chat.propertyId as unknown as IProperty;
+    const agent = property.agent;
+
+    // Delete the chat after sending the notification
+    await Chat.findByIdAndDelete(chatId);
 
     res.status(200).json({
       status: 'success',
       message: 'Chat closed successfully and summary sent.',
+      agentName: agent?.name || 'No agent assigned',
+      agentContact: agent?.contact || 'No contact available',
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,8 @@
 'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useRouter } from 'next/navigation';
 import {
   ChatResponse,
   getChat,
@@ -11,8 +13,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, X } from 'lucide-react';
+import { Send, X, AlertTriangle, MoreVertical } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 interface Message {
   sender: string;
@@ -35,11 +55,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
-  // Store property agent
   const { user } = useUserStore();
   const [propertyData, setPropertyData] = useState<ChatResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isChatClosed, setIsChatClosed] = useState(false);
   const params = useParams();
+  const router = useRouter();
+
   const chatId =
     initialChatId ||
     (Array.isArray(params.chatsId) ? params.chatsId[0] : params.chatsId);
@@ -63,14 +85,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     if (socket && chatId) {
       const fetchChat = async () => {
         const response = await getChat(chatId);
-        console.log(response);
         if (response.status === 'success') {
           setMessages(response.data.messages);
           setPropertyData({
-            ...response.data, // This will spread all the data (messages, isClosed, etc.)
+            ...response.data,
           });
         } else {
           console.error(response.message);
+          router.push('/');
         }
       };
 
@@ -84,11 +106,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       });
 
       socket.on('chatClosed', (data: { message: string }) => {
-        alert(data.message);
+        setIsChatClosed(true);
         if (onNotify) {
           onNotify('Chat has been closed');
         }
-        onClose?.(chatId);
+        toast.message('Chat Closed', {
+          description: 'This chat has been closed by the admin.',
+          duration: 5000,
+        });
+        setTimeout(() => {
+          router.push('/');
+        }, 5000);
       });
 
       return () => {
@@ -96,7 +124,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         socket.off('chatClosed');
       };
     }
-  }, [socket, chatId, onClose, onNotify]);
+  }, [socket, chatId, onClose, onNotify, router]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,11 +132,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && chatId && user) {
+      let senderName = '';
+      senderName =
+        propertyData?.data.propertyDetails.agentName || 'Unknown Agent';
+      if (!user.isAdmin) {
+        senderName = user.firstName + ' ' + user.lastName;
+      }
+
       const messageData = {
         chatId,
         content: newMessage,
         sender: user.isAdmin ? 'Admin' : 'User',
-        senderName: user.firstName || 'Unknown',
+        senderName,
       };
       try {
         const response = await sendMessage(messageData);
@@ -126,53 +161,85 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const closeChat = () => {
     if (socket && chatId) {
       socket.emit('closeChat', chatId);
+      if (onClose) {
+        onClose(chatId);
+      }
     }
   };
 
   return (
-    <div className='flex flex-col h-full w-full max-w-2xl mx-auto'>
-      <div className='bg-primary text-primary-foreground p-2 sm:p-4 flex justify-between items-center'>
-        <h2 className='text-lg sm:text-xl font-semibold'>
-          {/* Display property details inside a div */}
-          {propertyData ? (
-            <>
-              <div>Agent: {propertyData?.data.propertyDetails.agentName}</div>
-              <div>
-                Company: {propertyData?.data.propertyDetails.companyName}
-              </div>
-              <div>Title: {propertyData?.data.propertyDetails.title}</div>
-            </>
-          ) : (
-            <div>Loading property details...</div>
-          )}
-        </h2>
+    <div className='flex flex-col h-full w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden'>
+      <div className='bg-primary text-primary-foreground p-4 flex justify-between items-center'>
+        <div>
+          <h2 className='text-xl font-semibold'>
+            {propertyData?.data.propertyDetails.title || 'Chat'}
+          </h2>
+          <p className='text-sm opacity-80'>
+            {propertyData?.data.propertyDetails.agentName} -{' '}
+            {propertyData?.data.propertyDetails.companyName}
+          </p>
+        </div>
         {user?.isAdmin && (
-          <Button
-            variant='ghost'
-            size='icon'
-            onClick={closeChat}
-            className='text-primary-foreground hover:bg-primary/90'
-          >
-            <X className='h-4 w-4 sm:h-5 sm:w-5' />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='icon'>
+                <MoreVertical className='h-5 w-5' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Close Chat
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently close
+                      the chat and notify all participants.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={closeChat}>
+                      Close Chat
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
-      <ScrollArea className='h-[600px] p-2 sm:p-4'>
+
+      {isChatClosed && (
+        <div className='p-4 text-center text-destructive bg-destructive/10 flex items-center justify-center'>
+          <AlertTriangle className='mr-2 h-4 w-4' />
+          This chat has been closed. You will be redirected to the homepage
+          shortly.
+        </div>
+      )}
+
+      <ScrollArea className='flex-grow p-4'>
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex mb-2 sm:mb-4 ${
+            className={`flex mb-4 ${
               message.sender === 'User' ? 'justify-end' : 'justify-start'
             }`}
           >
             <div
-              className={`flex items-end space-x-1 sm:space-x-2 ${
+              className={`flex items-end space-x-2 ${
                 message.sender === 'User'
-                  ? 'flex-row-reverse space-x-reverse sm:space-x-reverse'
+                  ? 'flex-row-reverse space-x-reverse'
                   : 'flex-row'
               }`}
             >
-              <Avatar className='w-6 h-6 sm:w-8 sm:h-8'>
+              <Avatar className='w-8 h-8'>
                 <AvatarImage
                   src={`https://api.dicebear.com/6.x/initials/svg?seed=${message.senderName}`}
                 />
@@ -183,15 +250,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 </AvatarFallback>
               </Avatar>
               <div
-                className={`max-w-[70%] p-2 sm:p-3 rounded-lg text-sm ${
+                className={`max-w-[70%] p-3 rounded-lg ${
                   message.sender === 'User'
                     ? 'bg-primary text-primary-foreground rounded-br-none'
                     : 'bg-secondary text-secondary-foreground rounded-bl-none'
                 }`}
               >
-                <p className='font-semibold text-xs sm:text-sm'>
-                  {message.senderName}
-                </p>
+                <p className='font-semibold text-sm'>{message.senderName}</p>
                 <p className='mt-1'>{message.content}</p>
                 <p className='text-xs opacity-70 mt-1 text-right'>
                   {new Date(message.timestamp).toLocaleTimeString([], {
@@ -205,7 +270,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         ))}
         <div ref={messagesEndRef} />
       </ScrollArea>
-      <div className='p-2 sm:p-4 bg-background'>
+
+      <div className='p-4 bg-background border-t'>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -218,11 +284,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder='Type your message'
             className='flex-grow'
+            disabled={isChatClosed}
           />
           <Button
             type='submit'
             size='icon'
             className='bg-primary text-primary-foreground hover:bg-primary/90'
+            disabled={isChatClosed}
           >
             <Send className='h-4 w-4' />
           </Button>
