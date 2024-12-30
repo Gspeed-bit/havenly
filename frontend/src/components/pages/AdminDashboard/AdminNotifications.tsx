@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, MessageSquare, Menu } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import ChatBox from '../Chat/ChatBox';
 import { toast } from 'sonner';
+import ChatBox from '../Chat/ChatBox';
 import { apiHandler } from '@/config/server';
 
 interface Notification {
@@ -113,50 +113,47 @@ const AdminDashboard: React.FC = () => {
     setSelectedChat(chatId);
   };
 
-const handleCloseChat = async (chatId: string) => {
-  try {
-    // Make the API call to close the chat using the apiHandler
-    const response = await apiHandler<{
-      agentName: string;
-      agentContact: string;
-    }>(`/chats/${chatId}/close`, 'PUT');
+  const handleCloseChat = async (chatId: string) => {
+    try {
+      // Make the API call to close the chat using the apiHandler
+      const response = await apiHandler<{
+        agentName: string;
+        agentContact: string;
+      }>(`/chats/${chatId}/close`, 'PUT');
 
-    if (response.status === 'success') {
-      // Successfully closed the chat
-      setActiveChats((prev) => {
-        const updatedChats = prev.filter((id) => id !== chatId);
-        localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-        return updatedChats;
-      });
+      if (response.status === 'success') {
+        setActiveChats((prev) => {
+          const updatedChats = prev.filter((id) => id !== chatId);
+          localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+          return updatedChats;
+        });
 
-      if (selectedChat === chatId) {
-        setSelectedChat(null); // Clear selected chat if it was the one being closed
+        if (selectedChat === chatId) {
+          setSelectedChat(null);
+        }
+
+        toast.message('Chat Closed', {
+          description: `Chat ${chatId} has been closed successfully.`,
+          duration: 1000,
+        });
+
+        console.log(`Chat ${chatId} has been closed and cleanup is done.`);
       }
-
-      toast(`Chat ${chatId} has been closed successfully.`, {
-        duration: 3000,
-      });
-
-      console.log(`Chat ${chatId} has been closed and cleanup is done.`);
-    } else {
-      toast.error('Failed to close the chat.');
+    } catch (error) {
+      toast.error('An error occurred while closing the chat.');
+      console.error('Error closing chat:', error);
     }
-  } catch (error) {
-    toast.error('An error occurred while closing the chat.');
-    console.error('Error closing chat:', error);
-  }
-};
-
+  };
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
   return (
-    <div className='flex h-screen bg-gray-100'>
+    <div className='flex flex-col sm:flex-row h-screen bg-gray-100'>
       <div
         className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? 'w-80' : 'w-0'
+          isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
         } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
       >
         {isSidebarOpen && (
@@ -209,7 +206,7 @@ const handleCloseChat = async (chatId: string) => {
                     </Badge>
                   )}
                 </h2>
-                <ScrollArea className='h-[calc(100vh-280px)]'>
+                <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
                   {activeChats.map((chatId) => (
                     <Button
                       key={chatId}
@@ -232,10 +229,10 @@ const handleCloseChat = async (chatId: string) => {
 
                       <div className='flex flex-col items-start'>
                         <span className='font-medium'>
-                          Chat {chatId.slice(0, 8)}...
+                          {user?.firstName || 'User'}
                         </span>
                         <span className='text-xs text-muted-foreground'>
-                          Active
+                          Last message...
                         </span>
                       </div>
                     </Button>

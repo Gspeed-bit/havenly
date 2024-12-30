@@ -50,18 +50,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Socket.IO setup
-const adminSockets = new Map<string, Socket>();
 
 io.on('connection', (socket: Socket) => {
+  const { userId, isAdmin } = socket.handshake.query;
 
-const { userId, isAdmin } = socket.handshake.query;
-
-if (isAdmin === 'true' && userId) {
-  socket.join('adminRoom');
-  console.log(`Admin connected: ${userId}`);
-}else{
-   socket.join('UserRoom');
-  console.log(`User connected: ${userId}`);
+  if (isAdmin === 'true' && userId) {
+    socket.join(`admin-${userId}`);
+    console.log(`Admin connected: ${userId}`);
+  } else {
+    console.log(`User connected: ${userId}`);
   }
 
   socket.on('joinChat', (chatId: string) => {
@@ -76,8 +73,9 @@ if (isAdmin === 'true' && userId) {
       content: string;
       sender: string;
       senderName: string;
+      recipientAdminId?: string;
     }) => {
-      const { chatId, content, sender, senderName } = data;
+      const { chatId, content, sender, senderName, recipientAdminId } = data;
 
       // Emit the message to all clients in the chat room
       io.to(chatId).emit('receiveMessage', {
@@ -87,23 +85,17 @@ if (isAdmin === 'true' && userId) {
         timestamp: new Date().toISOString(),
       });
 
-      // If the sender is not an admin, notify all admins
-      if (sender !== 'Admin') {
-        adminSockets.forEach((adminSocket) => {
-          adminSocket.emit('newMessageNotification', {
-            message: `New message from ${senderName} in chat ${chatId}`,
-            chatId,
-          });
+      // If the sender is not an admin, notify the specific admin
+      if (sender !== 'Admin' && recipientAdminId) {
+        io.to(`admin-${recipientAdminId}`).emit('newMessageNotification', {
+          message: `New message from ${senderName} in chat ${chatId}`,
+          chatId,
         });
       }
     }
   );
 
   socket.on('disconnect', () => {
-    if (isAdmin === 'true' && userId) {
-      adminSockets.delete(userId as string);
-      console.log(`Admin disconnected: ${userId}`);
-    }
     console.log('A user disconnected');
   });
 });
