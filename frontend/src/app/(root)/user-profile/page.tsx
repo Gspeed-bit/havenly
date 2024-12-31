@@ -13,7 +13,6 @@ const page = () => {
           <div className='w-full space-y-8'>
             <ProfileUpdateForm />
             <ChangePassword />
-        
           </div>
         </div>
       </div>

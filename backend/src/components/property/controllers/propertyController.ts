@@ -282,7 +282,6 @@ export const getPropertyByIdForUser = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Property not found.' });
     }
 
-   
     res.json(property);
   } catch (error) {
     console.error(error);
@@ -290,7 +289,6 @@ export const getPropertyByIdForUser = async (req: Request, res: Response) => {
   }
 };
 
-// Get property by chatId
 export const getPropertyByChatId = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params; // Extract chatId from URL parameters

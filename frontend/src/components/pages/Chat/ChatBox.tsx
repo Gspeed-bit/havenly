@@ -224,7 +224,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         </div>
       )}
 
-      <ScrollArea className='flex-grow p-4'>
+      <ScrollArea className='h-[calc(100vh-200px)] overflow-auto'>
         {messages.map((message, index) => (
           <div
             key={index}

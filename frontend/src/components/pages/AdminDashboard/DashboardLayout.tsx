@@ -11,6 +11,7 @@ import {
   Bell,
   Search,
   ChevronDown,
+  Building,
   Building2,
 } from 'lucide-react';
 import {
@@ -63,13 +64,16 @@ export default function DashboardLayout({
     const title = pathname.split('/').pop();
     if (pathname.includes('/update-profile')) {
       setPageTitle('Profile');
+    } else if (pathname.includes('/dashboard/companies/')) {
+      setPageTitle('Company'); // Set page title to "Company" for company routes
+    } else if (pathname.includes('/dashboard/property/')) {
+      setPageTitle('Property'); // Set page title to "Property" for property routes
     } else {
       setPageTitle(
         title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard'
       );
     }
   }, [pathname]);
-
   const menuItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/update-profile', icon: UserCog, label: 'Profile' },
@@ -81,10 +85,9 @@ export default function DashboardLayout({
     },
     { href: '/dashboard/admins', icon: UserCog, label: 'Admins' },
     { href: '/dashboard/companies', icon: Building2, label: 'Companies' },
-    { href: '/dashboard/inquiries', icon: Building2, label: 'Inquiry' },
     {
       href: '/dashboard/property',
-      icon: Building2,
+      icon: Building,
       label: 'property',
     },
   ];
@@ -188,10 +191,12 @@ export default function DashboardLayout({
                   className='pl-10 w-[200px] lg:w-[300px] bg-muted'
                 />
               </div>
-              <Button variant='ghost' size='icon' className='relative'>
-                <Bell className='h-5 w-5' />
-                <span className='absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full'></span>
-              </Button>
+              <Link href={'/dashboard/notification'}>
+                <Button variant='ghost' size='icon' className='relative'>
+                  <Bell className='h-5 w-5' />
+                  <span className='absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full'></span>
+                </Button>
+              </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

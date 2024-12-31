@@ -88,11 +88,31 @@ export const fetchPropertyById = (
 ): Promise<ApiResponse<Property>> => {
   return apiHandler<Property>(`/properties/${id}`, 'GET');
 };
-export const getPropertyByIdForUser = (
+
+export const getPropertyByIdForUser = async (
   id: string
 ): Promise<ApiResponse<Property>> => {
-  return apiHandler<Property>(`/property/${id}`, 'GET');
+  try {
+    const response = await apiHandler<Property>(`/property/${id}`, 'GET');
+
+    if (response.status === 'success') {
+      return response;
+    } else {
+      console.error('Error fetching property:', response.message);
+      return {
+        status: 'error',
+        message: response.message || 'Unable to fetch property details.',
+      };
+    }
+  } catch (error) {
+    console.error('Unexpected error fetching property:', error);
+    return {
+      status: 'error',
+      message: 'An unexpected error occurred while fetching property details.',
+    };
+  }
 };
+
 
 export const uploadMultipleImages = async (formData: FormData) => {
   return apiHandler<{ secure_url: string; public_id: string }[]>(

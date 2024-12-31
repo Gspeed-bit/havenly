@@ -8,7 +8,6 @@ import { PropertyFilters } from './Properties/PropertyFilters';
 import Icon from '../common/icon/icons';
 
 const MainContent = () => {
-  
   const [filters, setFilters] = useState({
     city: '',
     propertyType: '',
@@ -154,6 +153,7 @@ const MainContent = () => {
         </div>
       </div>
       <TrustBanner />
+
       <PropertyListForUser filters={filters} />
     </main>
   );

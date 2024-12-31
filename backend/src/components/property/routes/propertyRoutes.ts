@@ -359,7 +359,7 @@ router.post('/properties', userMiddleware, adminMiddleware, createProperty);
 
 router.get('/properties', userMiddleware, adminMiddleware, getProperties);
 
-router.get('/property', userMiddleware, getPropertiesUser);
+router.get('/property', getPropertiesUser);
 
 router.get('/properties/:id', userMiddleware, adminMiddleware, getPropertyById);
 
@@ -380,4 +380,3 @@ router.delete(
   router.get('/property/:chatId', userMiddleware, getPropertyByChatId);
   
 export default router;
-

@@ -7,6 +7,8 @@ import {
   fetchPropertiesForUser,
   Property,
 } from '@/services/property/propertyApiHandler';
+import { useAuthStore } from '@/store/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PropertyListForUserProps {
   filters: {
@@ -23,6 +25,7 @@ export function PropertyListForUser({ filters }: PropertyListForUserProps) {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -47,7 +50,15 @@ export function PropertyListForUser({ filters }: PropertyListForUserProps) {
 
     loadProperties();
   }, [filters]);
-console.log(properties);
+
+  const handlePropertyClick = (propertyId: string) => {
+    if (!isAuthenticated) {
+      router.push(`/auth/login?redirect=/property/${propertyId}`);
+    } else {
+      router.push(`/property/${propertyId}`);
+    }
+  };
+
   return (
     <Card className='w-full'>
       <CardHeader>
@@ -55,7 +66,19 @@ console.log(properties);
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p>Loading properties...</p>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {[...Array(6)].map((_, index) => (
+              <Card key={index} className='w-full'>
+                <CardContent className='p-4'>
+                  <Skeleton className='h-[7rem] w-full mb-4' />
+                  <Skeleton className='h-4 w-3/4 mb-2' />
+                  <Skeleton className='h-4 w-1/2 mb-2' />
+                  <Skeleton className='h-4 w-1/4 mb-2' />
+                  <Skeleton className='h-4 w-2/3' />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : error ? (
           <p className='text-red-500'>{error}</p>
         ) : (
@@ -64,13 +87,11 @@ console.log(properties);
               <Card
                 key={property._id}
                 className='cursor-pointer hover:shadow-lg transition-shadow'
+                onClick={() =>
+                  property._id && handlePropertyClick(property._id)
+                }
               >
-                <CardContent
-                  className='p-4'
-                  onClick={() =>
-                    router.push(`/property/${property._id}`)
-                  }
-                >
+                <CardContent className='p-4'>
                   {property.images && property.images.length > 0 && (
                     <picture>
                       <img

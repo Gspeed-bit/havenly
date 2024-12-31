@@ -42,7 +42,7 @@ instance.interceptors.response.use(
       useUserStore.getState().clearUser();
 
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+        window.location.href = '/';
       }
     }
     return Promise.reject(error);
