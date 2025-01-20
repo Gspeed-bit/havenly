@@ -44,7 +44,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
-import { logOutUser } from '@/services/auth/auth';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { useUserStore } from '@/store/users';
 
@@ -204,13 +203,7 @@ export default function UserDashboardLayout({
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={logOutUser}
-                    className='text-destructive'
-                  >
-                    Log out
-                  </DropdownMenuItem>
+                 
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

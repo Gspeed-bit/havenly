@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, X, AlertTriangle, MoreVertical } from 'lucide-react';
+import { Send, AlertTriangle, MoreVertical } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import {
   AlertDialog,
@@ -105,6 +105,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       socket.on('chatClosed', (data: { message: string }) => {
         setIsChatClosed(true);
         if (onNotify) {

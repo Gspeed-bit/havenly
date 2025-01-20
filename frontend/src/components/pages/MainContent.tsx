@@ -6,6 +6,7 @@ import { TrustBanner } from './TrustBanner';
 import { PropertyListForUser } from './Properties/PropertyListForUser';
 import { PropertyFilters } from './Properties/PropertyFilters';
 import Icon from '../common/icon/icons';
+import { useUserStore } from '@/store/users';
 
 const MainContent = () => {
   const [filters, setFilters] = useState({
@@ -21,7 +22,6 @@ const MainContent = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Reset filters to initial state
   const resetFilters = () => {
     setFilters({
       city: '',
@@ -31,36 +31,38 @@ const MainContent = () => {
     });
   };
 
-  // Check if any filter is applied
   const isFilterApplied = Object.values(filters).some((value) => value !== '');
 
+  const user = useUserStore((state) => state.user);
+  const isAdmin = user?.isAdmin === true;
+
   return (
-    <main className='container mx-auto px-4 mt-16 relative z-10'>
-      <div className='grid grid-cols-1 items-center justify-center lg:grid-cols-2 gap-10'>
+    <main className='container mx-auto px-4 mt-8 sm:mt-16 relative z-10'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center'>
         {/* Left Section */}
-        <div>
+        <div className='order-2 lg:order-1'>
           <h2 className='text-primary_main text-sm font-semibold tracking-wider mb-4'>
             REAL ESTATE
           </h2>
-          <h1 className='text-5xl font-bold leading-tight mb-6'>
+          <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6'>
             Find a perfect
             <br />
             home you love..!
           </h1>
           <p className='text-gray-600 mb-8 leading-relaxed'>
             Etiam eget elementum elit. Aenean dignissim dapibus vestibulum.
-            <br />
+            <br className='hidden sm:block' />
             Integer a dolor eu sapien sodales vulputate ac in purus.
           </p>
-          <div className='relative'>
-            <div className='relative z-10 rounded-2xl overflow-hidden max-w-xl'>
+          <div className='relative max-w-xl mx-auto lg:mx-0'>
+            <div className='relative z-10 rounded-2xl overflow-hidden'>
               {/* Carousel Navigation Buttons */}
-              <div className='absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-10 flex items-center justify-center shadow-lg cursor-pointer'>
+              <div className='absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
                 <Icon
                   type={'ChevronLeft'}
                   color={'#3A0CA3'}
                   strokeWidth={1.75}
-                  className='size-5'
+                  className='size-4 sm:size-5'
                 />
               </div>
 
@@ -73,33 +75,33 @@ const MainContent = () => {
               </picture>
 
               {/* Carousel Navigation Buttons */}
-              <div className='absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-10 flex items-center justify-center shadow-lg cursor-pointer'>
+              <div className='absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
                 <Icon
                   type={'ChevronRight'}
                   color={'#3A0CA3'}
                   strokeWidth={1.75}
-                  className='size-5'
+                  className='size-4 sm:size-5'
                 />
               </div>
               {/* Carousel Indicators */}
               <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2'>
-                <div className='w-8 h-1 bg-primary_main rounded-full' />
-                <div className='w-8 h-1 bg-veryLightGray rounded-full' />
-                <div className='w-8 h-1 bg-veryLightGray rounded-full' />
+                <div className='w-6 sm:w-8 h-1 bg-primary_main rounded-full' />
+                <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
+                <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
               </div>
             </div>
           </div>
         </div>
 
-        <div className='relative'>
-          <Card className='shadow-lg bg-white border-none relative z-10 rounded-2xl max-w-[35rem] min-h-[400px]'>
-            <CardContent className='p-6 space-y-9'>
+        {/* Right Section */}
+        <div className='order-1 lg:order-2'>
+          <Card className='shadow-lg bg-white border-none relative z-10 rounded-2xl max-w-[35rem] mx-auto lg:ml-auto min-h-[400px]'>
+            <CardContent className='p-4 sm:p-6 space-y-6 sm:space-y-9'>
               <Tabs
                 defaultValue='sale'
-                className='w-full mb-6 border-b border-b-veryLightGray'
+                className='w-full mb-4 sm:mb-6 border-b border-b-veryLightGray'
               >
                 <TabsList className='grid w-full grid-cols-1 bg-transparent p-1'>
-                  {/* Only the "For Sale" tab */}
                   <TabsTrigger
                     value='sale'
                     className='rounded-full data-[state=active]:bg-primary_main data-[state=active]:text-white'
@@ -109,7 +111,7 @@ const MainContent = () => {
                 </TabsList>
               </Tabs>
 
-              <div className='space-y-6'>
+              <div className='space-y-4 sm:space-y-6'>
                 <PropertyFilters
                   filters={filters}
                   onFilterChange={handleFilterChange}
@@ -154,7 +156,7 @@ const MainContent = () => {
       </div>
       <TrustBanner />
 
-      <PropertyListForUser filters={filters} />
+      {!isAdmin && <PropertyListForUser filters={filters} />}
     </main>
   );
 };

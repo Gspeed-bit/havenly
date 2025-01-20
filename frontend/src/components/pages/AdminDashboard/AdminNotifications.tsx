@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     return JSON.parse(localStorage.getItem('notifications') || '[]');
@@ -30,6 +32,38 @@ const AdminDashboard: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user } = useUserStore();
+
+  const handleCloseChat = useCallback(
+    async (chatId: string) => {
+      try {
+        const response = await apiHandler<{
+          agentName: string;
+          agentContact: string;
+        }>(`/chats/${chatId}/close`, 'PUT');
+
+        if (response.status === 'success') {
+          setActiveChats((prev) => {
+            const updatedChats = prev.filter((id) => id !== chatId);
+            localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+            return updatedChats;
+          });
+
+          if (selectedChat === chatId) {
+            setSelectedChat(null);
+          }
+
+          toast.message('Chat Closed', {
+            description: `Chat ${chatId} has been closed successfully.`,
+            duration: 1000,
+          });
+        }
+      } catch (error) {
+        toast.error('An error occurred while closing the chat.');
+        console.error('Error closing chat:', error);
+      }
+    },
+    [selectedChat]
+  );
 
   useEffect(() => {
     if (!user || !user.isAdmin) return;
@@ -89,7 +123,7 @@ const AdminDashboard: React.FC = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user, handleCloseChat]);
 
   useEffect(() => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
@@ -111,38 +145,6 @@ const AdminDashboard: React.FC = () => {
       return updatedNotifications;
     });
     setSelectedChat(chatId);
-  };
-
-  const handleCloseChat = async (chatId: string) => {
-    try {
-      // Make the API call to close the chat using the apiHandler
-      const response = await apiHandler<{
-        agentName: string;
-        agentContact: string;
-      }>(`/chats/${chatId}/close`, 'PUT');
-
-      if (response.status === 'success') {
-        setActiveChats((prev) => {
-          const updatedChats = prev.filter((id) => id !== chatId);
-          localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-          return updatedChats;
-        });
-
-        if (selectedChat === chatId) {
-          setSelectedChat(null);
-        }
-
-        toast.message('Chat Closed', {
-          description: `Chat ${chatId} has been closed successfully.`,
-          duration: 1000,
-        });
-
-        console.log(`Chat ${chatId} has been closed and cleanup is done.`);
-      }
-    } catch (error) {
-      toast.error('An error occurred while closing the chat.');
-      console.error('Error closing chat:', error);
-    }
   };
 
   const toggleSidebar = () => {

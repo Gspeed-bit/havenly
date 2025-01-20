@@ -1,10 +1,8 @@
 'use client';
-
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
-
 
 interface NotAuthenticatedProps {
   children: React.ReactNode;
@@ -17,15 +15,15 @@ const NotAuthenticated: React.FC<NotAuthenticatedProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (isAuthenticated && user) {
-        router.push('/');
+    if (isAuthenticated && user) {
+      if (user.isAdmin) {
+        router.push('/dashboard'); // Redirect admin to admin dashboard
       } else {
-        setIsLoading(false);
+        router.push('/'); // Redirect user to homepage
       }
-    };
-
-    checkAuth();
+    } else {
+      setIsLoading(false);
+    }
   }, [isAuthenticated, user, router]);
 
   if (isLoading) {

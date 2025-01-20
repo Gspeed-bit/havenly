@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuthLayout from '@/components/pages/AuthLayout';
 import Login from '@/components/pages/login/Login';
 import Signup from '@/components/pages/SignUp/Signup';
-import NotAuthenticated from '@/components/authLayout/NotAuthenticated';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -22,7 +21,7 @@ export default function AuthPage() {
   }, [pathname]);
 
   return (
-    <NotAuthenticated>
+    <>
       <AuthLayout
         title='Welcome to Havenly'
         description='Enter your email below to create your account or log in'
@@ -47,6 +46,6 @@ export default function AuthPage() {
           </TabsContent>
         </Tabs>
       </AuthLayout>
-    </NotAuthenticated>
+    </>
   );
 }

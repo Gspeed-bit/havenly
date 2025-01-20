@@ -8,7 +8,7 @@ import { getLoggedInUser } from '@/services/user/userApi';
 
 interface AuthenticatedProps {
   children: React.ReactNode;
-  accessLevel?: 'user' | 'admin' | 'non-admin';
+  accessLevel?: 'user' | 'admin';
 }
 
 const Authenticated: React.FC<AuthenticatedProps> = ({
@@ -52,9 +52,9 @@ const Authenticated: React.FC<AuthenticatedProps> = ({
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
       if (accessLevel === 'admin' && !user.isAdmin) {
-        router.push('/');
-      } else if (accessLevel === 'non-admin' && user.isAdmin) {
-        router.push('/');
+        router.push('/'); // Redirect non-admin users trying to access admin routes
+      } else if (accessLevel === 'user' && user.isAdmin) {
+        router.push('/dashboard'); // Redirect admin users trying to access user routes
       }
     }
   }, [loading, isAuthenticated, user, accessLevel, router]);

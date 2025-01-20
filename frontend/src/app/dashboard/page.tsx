@@ -32,6 +32,7 @@ interface Notification {
 }
 
 const DashboardPage = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     if (typeof window !== 'undefined') {
@@ -39,6 +40,7 @@ const DashboardPage = () => {
     }
     return [];
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useUserStore();
   const router = useRouter();
