@@ -73,3 +73,9 @@ export const getChatByUserAndProperty = async (
 ): Promise<ApiResponse<ChatResponse>> => {
   return apiHandler<ChatResponse>(`chat/${propertyId}`, 'GET');
 };
+
+export const getChatsByUser = async (): Promise<
+  ApiResponse<ChatResponse[]>
+> => {
+  return apiHandler<ChatResponse[]>('/chats/user', 'GET');
+};

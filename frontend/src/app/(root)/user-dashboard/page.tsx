@@ -12,6 +12,7 @@ import ChatBox from '@/components/pages/Chat/ChatBox';
 import { apiHandler } from '@/config/server';
 import { io, Socket } from 'socket.io-client';
 import { useUserStore } from '@/store/users';
+import { getChatsByUser } from '@/services/chat/chatServices';
 
 interface Notification {
   type: 'newMessage';
@@ -48,20 +49,14 @@ const UserDashboardContent = () => {
   // Fetch active chats for the user
 const fetchActiveChats = useCallback(async () => {
   try {
-    const response = await apiHandler<{ chats: string[] }>(
-      '/chats/user',
-      'GET'
-    );
+    const response = await getChatsByUser();
     if (response.status === 'success') {
-      setActiveChats(response.data.chats);
-      localStorage.setItem('activeChats', JSON.stringify(response.data.chats));
-    } else {
-      console.error('Failed to fetch active chats:', response.message);
-      toast.error('Failed to fetch active chats. Please try again later.');
+      const chatIds = response.data.map((chat) => chat.data._id);
+      setActiveChats(chatIds);
+      localStorage.setItem('activeChats', JSON.stringify(chatIds));
     }
   } catch (error) {
     console.error('Error fetching active chats:', error);
-    toast.error('An error occurred while fetching active chats.');
   }
 }, []);
 
