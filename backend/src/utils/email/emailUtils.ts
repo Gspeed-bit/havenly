@@ -89,7 +89,7 @@ export const sendVerificationEmail = async (email: string, code: string) => {
       If you didn't create this account, you can safely ignore this email.
     </p>
     <div style="text-align: center; margin-top: 30px;">
-      <a href="http://localhost:5000/api/auth/verify?email=${email}&code=${code}" style="${emailStyles.button}">Verify Email</a>
+      <a href="https://havenly-chdr.onrender.com/api/auth/verify?email=${email}&code=${code}" style="${emailStyles.button}">Verify Email</a>
     </div>
     <footer style="${emailStyles.footer}">
       <p>

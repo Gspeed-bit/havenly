@@ -28,7 +28,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000', // Replace with your frontend URL
+    origin: 'https://havenly-alpha.vercel.app/', // Replace with your frontend URL
     methods: ['GET', 'POST'],
   },
 });
@@ -39,6 +39,7 @@ app.use(
     origin: [
       'http://localhost:3000', // Frontend dev server
       'http://localhost:5000', // Backend dev server
+      'https://havenly-alpha.vercel.app', // Production frontend URL
       'https://havenly-chdr.onrender.com', // Production frontend
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
