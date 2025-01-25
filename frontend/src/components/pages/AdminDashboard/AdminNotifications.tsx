@@ -20,6 +20,7 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     return JSON.parse(localStorage.getItem('notifications') || '[]');
@@ -31,51 +32,50 @@ const AdminDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user } = useUserStore();
 
-  // Handle closing a chat
-  const handleCloseChat = useCallback(
-    async (chatId: string) => {
-      try {
-        const response = await apiHandler<{
-          agentName: string;
-          agentContact: string;
-        }>(`/chats/${chatId}/close`, 'PUT');
+const handleCloseChat = useCallback(
+  async (chatId: string) => {
+    try {
+      const response = await apiHandler<{
+        agentName: string;
+        agentContact: string;
+      }>(`/chats/${chatId}/close`, 'PUT');
 
-        if (response.status === 'success') {
-          setActiveChats((prev) => {
-            const updatedChats = prev.filter((id) => id !== chatId);
-            localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-            return updatedChats;
-          });
+      if (response.status === 'success') {
+        setActiveChats((prev) => {
+          const updatedChats = prev.filter((id) => id !== chatId);
 
-          setNotifications((prev) => {
-            const updatedNotifications = prev.filter(
-              (n) => n.chatId !== chatId
-            );
-            localStorage.setItem(
-              'notifications',
-              JSON.stringify(updatedNotifications)
-            );
-            return updatedNotifications;
-          });
+          // Remove from local storage when chat is closed
+          localStorage.setItem('activeChats', JSON.stringify(updatedChats));
 
-          if (selectedChat === chatId) {
-            setSelectedChat(null);
-          }
+          return updatedChats;
+        });
 
-          toast.message('Chat Closed', {
-            description: `Chat ${chatId} has been closed successfully.`,
-            duration: 1000,
-          });
+        setNotifications((prev) => {
+          const updatedNotifications = prev.filter((n) => n.chatId !== chatId);
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+
+        if (selectedChat === chatId) {
+          setSelectedChat(null);
         }
-      } catch (error) {
-        toast.error('An error occurred while closing the chat.');
-        console.error('Error closing chat:', error);
-      }
-    },
-    [selectedChat]
-  );
 
-  // Initialize socket connection
+        toast.message('Chat Closed', {
+          description: `Chat ${chatId} has been closed successfully.`,
+          duration: 1000,
+        });
+      }
+    } catch (error) {
+      toast.error('An error occurred while closing the chat.');
+      console.error('Error closing chat:', error);
+    }
+  },
+  [selectedChat]
+);
+
   useEffect(() => {
     if (!user || !user.isAdmin) return;
 
@@ -136,12 +136,10 @@ const AdminDashboard: React.FC = () => {
     };
   }, [user, handleCloseChat]);
 
-  // Update local storage when active chats change
   useEffect(() => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
   }, [activeChats]);
 
-  // Handle notification click
   const handleNotificationClick = (chatId: string) => {
     setActiveChats((prev) => {
       if (!prev.includes(chatId)) {
@@ -160,114 +158,111 @@ const AdminDashboard: React.FC = () => {
     setSelectedChat(chatId);
   };
 
-  // Toggle sidebar visibility
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
   return (
     <div className='flex flex-col sm:flex-row h-screen bg-gray-100'>
-      {/* Sidebar */}
       <div
         className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
           isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
         } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
+        aria-hidden={isSidebarOpen ? 'false' : 'true'} // Consider replacing with inert
+        tabIndex={isSidebarOpen ? undefined : -1} // Adding or removing tabIndex for focus management
       >
         {isSidebarOpen && (
           <div className='h-full flex flex-col'>
-            {/* Sidebar Header */}
             <div className='p-4 bg-primary_main text-primary-foreground'>
               <h1 className='text-2xl font-bold'>Admin Dashboard</h1>
             </div>
-
-            {/* Notifications Section */}
-            <div className='p-4'>
-              <h2 className='text-lg font-semibold mb-2 flex items-center'>
-                <Bell className='h-5 w-5 mr-2' />
-                Notifications
-                {notifications.length > 0 && (
-                  <Badge variant='destructive' className='ml-2'>
-                    {notifications.length}
-                  </Badge>
-                )}
-              </h2>
-              <ScrollArea className='h-40 rounded-md border'>
-                {notifications.map((notification, index) => (
-                  <Button
-                    key={index}
-                    onClick={() => handleNotificationClick(notification.chatId)}
-                    className='w-full justify-start text-left p-2 hover:bg-gray-100'
-                    variant='ghost'
-                  >
-                    <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
-                    <span className='truncate text-sm'>
-                      {notification.message}
-                    </span>
-                  </Button>
-                ))}
-                {notifications.length === 0 && (
-                  <p className='text-muted-foreground text-center py-4'>
-                    No new notifications
-                  </p>
-                )}
-              </ScrollArea>
-            </div>
-
-            <Separator />
-
-            {/* Active Chats Section */}
-            <div className='p-4'>
-              <h2 className='text-lg font-semibold mb-2 flex items-center'>
-                <MessageSquare className='h-5 w-5 mr-2' />
-                Active Chats
-                {activeChats.length > 0 && (
-                  <Badge variant='secondary' className='ml-2'>
-                    {activeChats.length}
-                  </Badge>
-                )}
-              </h2>
-              <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
-                {activeChats.map((chatId) => (
-                  <Button
-                    key={chatId}
-                    onClick={() => setSelectedChat(chatId)}
-                    className={`w-full justify-start text-left p-2 mb-2 ${
-                      selectedChat === chatId
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-gray-100'
-                    }`}
-                    variant='ghost'
-                  >
-                    <Avatar className='h-10 w-10 mr-3'>
-                      <AvatarImage
-                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
-                      />
-                      <AvatarFallback>
-                        {chatId.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='flex flex-col items-start'>
-                      <span className='font-medium'>
-                        {user?.firstName || 'User'}
+            <div className='flex-1 overflow-hidden'>
+              <div className='p-4'>
+                <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                  <Bell className='h-5 w-5 mr-2' />
+                  Notifications
+                  {notifications.length > 0 && (
+                    <Badge variant='destructive' className='ml-2'>
+                      {notifications.length}
+                    </Badge>
+                  )}
+                </h2>
+                <ScrollArea className='h-40 rounded-md border'>
+                  {notifications.map((notification, index) => (
+                    <Button
+                      key={index}
+                      onClick={() =>
+                        handleNotificationClick(notification.chatId)
+                      }
+                      className='w-full justify-start text-left p-2 hover:bg-gray-100'
+                      variant='ghost'
+                    >
+                      <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
+                      <span className='truncate text-sm'>
+                        {notification.message}
                       </span>
-                      <span className='text-xs text-muted-foreground'>
-                        Last message...
-                      </span>
-                    </div>
-                  </Button>
-                ))}
-                {activeChats.length === 0 && (
-                  <p className='text-muted-foreground text-center py-4'>
-                    No active chats
-                  </p>
-                )}
-              </ScrollArea>
+                    </Button>
+                  ))}
+                  {notifications.length === 0 && (
+                    <p className='text-muted-foreground text-center py-4'>
+                      No new notifications
+                    </p>
+                  )}
+                </ScrollArea>
+              </div>
+              <Separator />
+              <div className='p-4'>
+                <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                  <MessageSquare className='h-5 w-5 mr-2' />
+                  Active Chats
+                  {activeChats.length > 0 && (
+                    <Badge variant='secondary' className='ml-2'>
+                      {activeChats.length}
+                    </Badge>
+                  )}
+                </h2>
+                <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
+                  {activeChats.map((chatId) => (
+                    <Button
+                      key={chatId}
+                      onClick={() => setSelectedChat(chatId)}
+                      className={`w-full justify-start text-left p-2 mb-2 ${
+                        selectedChat === chatId
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-gray-100'
+                      }`}
+                      variant='ghost'
+                    >
+                      <Avatar className='h-10 w-10 mr-3'>
+                        <AvatarImage
+                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
+                        />
+                        <AvatarFallback>
+                          {chatId.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className='flex flex-col items-start'>
+                        <span className='font-medium'>
+                          {user?.firstName || 'User'}
+                        </span>
+                        <span className='text-xs text-muted-foreground'>
+                          Last message...
+                        </span>
+                      </div>
+                    </Button>
+                  ))}
+                  {activeChats.length === 0 && (
+                    <p className='text-muted-foreground text-center py-4'>
+                      No active chats
+                    </p>
+                  )}
+                </ScrollArea>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Main Content */}
       <div className='flex-1 flex flex-col'>
         <Button
           onClick={toggleSidebar}
