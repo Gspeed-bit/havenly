@@ -1,3 +1,4 @@
+import { IProperty } from '@components/property/models/propertyModel';
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IMessage {
@@ -8,7 +9,7 @@ export interface IMessage {
 }
 
 export interface IChat extends Document {
-  propertyId: mongoose.Types.ObjectId;
+  propertyId: mongoose.Types.ObjectId | IProperty; 
   users: mongoose.Types.ObjectId[];
   adminId: mongoose.Types.ObjectId;
   messages: IMessage[];

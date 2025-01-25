@@ -194,33 +194,55 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
 };
 
 
+
+
 export const getChatsByUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
 
     if (!userId) {
-      console.error('Unauthorized: User ID is missing');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    console.log(`Fetching chats for user: ${userId}`);
-
+    // Fetch all chats where the user is a participant
     const chats = await Chat.find({ users: userId, isClosed: false })
       .populate('users', 'firstName lastName')
       .populate('adminId', 'firstName lastName')
       .populate({
         path: 'propertyId',
         select: 'title agent company',
-        populate: {
-          path: 'company',
-          select: 'name',
-        },
+        populate: [
+          {
+            path: 'agent',
+            select: 'name contact',
+          },
+          {
+            path: 'company',
+            select: 'name',
+          },
+        ],
       })
       .exec();
 
-    console.log(`Found ${chats.length} chats for user: ${userId}`);
+    // Map the response to match the frontend's expected structure
+    const formattedChats = chats.map((chat) => {
+      const property = chat.propertyId as unknown as IProperty;
 
-    res.status(200).json({ status: 'success', data: chats });
+      return {
+        data: {
+          _id: chat._id,
+          propertyDetails: {
+            title: property.title,
+            agentName: property.agent?.name || 'Unknown Agent',
+            companyName: property.company?.name || 'Unknown Company',
+          },
+        },
+        messages: chat.messages,
+        isClosed: chat.isClosed,
+      };
+    });
+
+    res.status(200).json({ status: 'success', data: formattedChats });
   } catch (error) {
     console.error('Error fetching chats by user:', error);
     res.status(500).json({ status: 'error', message: 'Server error' });
