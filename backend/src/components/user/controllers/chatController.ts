@@ -192,3 +192,33 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
+
+
+export const getChatsByUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Fetch all chats where the user is a participant
+    const chats = await Chat.find({ users: userId, isClosed: false })
+      .populate('users', 'firstName lastName')
+      .populate('adminId', 'firstName lastName')
+      .populate({
+        path: 'propertyId',
+        select: 'title agent company',
+        populate: {
+          path: 'company',
+          select: 'name',
+        },
+      })
+      .exec();
+
+    res.status(200).json({ status: 'success', data: chats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
