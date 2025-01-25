@@ -28,8 +28,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://havenly-alpha.vercel.app/', // Replace with your frontend URL
+    origin: 'https://havenly-alpha.vercel.app', // Replace with your frontend URL
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -39,7 +40,7 @@ app.use(
     origin: [
       'http://localhost:3000', // Frontend dev server
       'http://localhost:5000', // Backend dev server
-      'https://havenly-alpha.vercel.app/', // Production frontend URL
+      'https://havenly-alpha.vercel.app', // Production frontend URL
       'https://havenly-chdr.onrender.com',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -51,7 +52,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Socket.IO setup
-
 io.on('connection', (socket: Socket) => {
   const { userId, isAdmin } = socket.handshake.query;
 
