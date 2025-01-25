@@ -1,9 +1,11 @@
 'use client';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import ChatBox from '@/components/pages/Chat/ChatBox';
-export default function UserDashboard() {
+
+const UserDashboardContent = () => {
   const searchParams = useSearchParams();
   const chatId = searchParams.get('chatId');
 
@@ -15,14 +17,20 @@ export default function UserDashboard() {
   };
 
   return (
-    <>
-      <div className='container mx-auto p-4'>
-        {chatId ? (
-          <ChatBox initialChatId={chatId} onNotify={handleNotification} />
-        ) : (
-          <p>Select a chat to start messaging.</p>
-        )}
-      </div>
-    </>
+    <div className='container mx-auto p-4'>
+      {chatId ? (
+        <ChatBox initialChatId={chatId} onNotify={handleNotification} />
+      ) : (
+        <p>Select a chat to start messaging.</p>
+      )}
+    </div>
+  );
+};
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
