@@ -9,7 +9,7 @@ import { useUserStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notification';
 import { Bell } from 'lucide-react';
-import { getChat } from '@/services/chat/chatServices'; // Import getChat service
+import { getChat } from '@/services/chat/chatServices';
 
 interface NavigationProps {
   isMobileMenuOpen: boolean;
@@ -22,27 +22,25 @@ const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [activeNav, setActiveNav] = useState('Home');
   const [hydrated, setHydrated] = useState(false);
-  const [chatId, setChatId] = useState<string | null>(null); // State for chatId
+  const [chatId, setChatId] = useState<string | null>(null);
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.isAdmin === true;
 
-  // Get notifications from Zustand store
   const { notifications } = useNotificationStore();
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     setHydrated(true);
 
-    // Fetch chatId if authenticated
     if (isAuthenticated && user) {
       const fetchChat = async () => {
         try {
           if (user._id) {
-            const response = await getChat(user._id); // Fetch chat ID for the user
+            const response = await getChat(user._id);
             if (response.status === 'success') {
-              setChatId(response.data.data._id); // Set chatId from response
+              setChatId(response.data.data._id);
             }
           }
         } catch {
@@ -75,8 +73,8 @@ const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <nav className='bg-white'>
-      <div className='container mx-auto px-4'>
-        <div className='flex items-center py-4 justify-between'>
+      <div className='container mx-auto px-4 '>
+        <div className='flex items-center justify-between py-4'>
           {/* Logo */}
           <div className='flex items-center space-x-2'>
             <div className='w-10 h-10 bg-primary_main rounded-full flex items-center justify-center'>
@@ -86,54 +84,73 @@ const Navigation: React.FC<NavigationProps> = ({
             </div>
             <span className='text-xl font-semibold'>Havenly</span>
           </div>
+
           {/* Desktop Menu */}
           <div className='hidden md:flex items-center space-x-6'>
-            {navItems.map(({ label, path }) => (
-              <Link
-                key={label}
-                href={path}
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeNav === label
-                    ? 'bg-blue text-darkGray rounded-full'
-                    : 'text-darkGray hover:text-blue-700'
-                }`}
-                onClick={() => setActiveNav(label)}
-              >
-                {label}
-              </Link>
-            ))}
+            {navItems
+              .filter(
+                (item) => item.label !== 'Listings' && item.label !== 'Services'
+              )
+              .map(({ label, path }) => (
+                <Link
+                  key={label}
+                  href={path}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    activeNav === label
+                      ? 'bg-blue text-darkGray rounded-full'
+                      : 'text-darkGray hover:text-blue-700'
+                  }`}
+                  onClick={() => setActiveNav(label)}
+                >
+                  {label}
+                </Link>
+              ))}
           </div>
 
           {/* Actions */}
           <div className='hidden md:flex items-center space-x-4'>
-            {/* Bell Notification */}
-          <Link href={`/user-dashboard?chatId=${chatId}`} className="relative">
-          <Bell className="h-6 w-6" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </Link>
+            {/* Notification Bell */}
+            
+            {isAuthenticated ? (
+              <Link
+                href={`/user-dashboard?chatId=${chatId}`}
+                className='relative'
+              >
+                <Bell className='h-6 w-6' />
+                {unreadCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <div className='relative cursor-not-allowed text-gray-400'>
+                <Bell className='h-6 w-6' />
+                {unreadCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-gray-300 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* User Menu */}
-            {!hydrated ? null : isAuthenticated ? (
-              <div className='hidden md:flex items-center space-x-4'>
-                <UserMenu />
-              </div>
+            {isAuthenticated ? (
+              <UserMenu />
             ) : (
-              <button className='text-sm font-medium text-gray-600 flex items-center space-x-2'>
+              <button className='text-sm font-medium text-gray-600 flex items-center'>
                 <Icon
                   type='CircleUserRound'
                   color='#3A0CA3'
                   strokeWidth={1.75}
-                  className='size-6'
+                  className='w-5 h-5 mr-2'
                 />
                 <Link href={Page.getLogin()}>Login/Register</Link>
               </button>
             )}
           </div>
-          {/* Mobile Menu */}
+
+          {/* Mobile Menu Toggle */}
           <button
             className='md:hidden text-gray-700'
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -160,6 +177,50 @@ const Navigation: React.FC<NavigationProps> = ({
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className='md:hidden bg-white border-t'>
+          {/* Mobile Actions */}
+          <div className='flex items-center justify-between px-6 py-4 border-b'>
+            {/* Notification Bell */}
+           
+            {isAuthenticated ? (
+              <Link
+                href={`/user-dashboard?chatId=${chatId}`}
+                className='relative'
+              >
+                <Bell className='h-6 w-6' />
+                {unreadCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <div className='relative cursor-not-allowed text-gray-400'>
+                <Bell className='h-6 w-6' />
+                {unreadCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-gray-300 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Login/Register or User Menu */}
+            {isAuthenticated ? (
+              <UserMenu />
+            ) : (
+              <button className='text-sm font-medium text-gray-600 flex items-center'>
+                <Icon
+                  type='CircleUserRound'
+                  color='#3A0CA3'
+                  strokeWidth={1.75}
+                  className='w-5 h-5 mr-2'
+                />
+                <Link href={Page.getLogin()}>Login/Register</Link>
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Navigation Links */}
           <div className='flex flex-col space-y-4 py-4 px-6'>
             {navItems.map(({ label, path }) => (
               <Link

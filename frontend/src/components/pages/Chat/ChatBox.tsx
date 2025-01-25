@@ -59,6 +59,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [propertyData, setPropertyData] = useState<ChatResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isChatClosed, setIsChatClosed] = useState(false);
+  const [isNotificationVisible, setIsNotificationVisible] = useState(true);
+
   const params = useParams();
   const router = useRouter();
 
@@ -104,16 +106,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           onNotify(`New message from ${message.senderName}`);
         }
       });
-
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       socket.on('chatClosed', (data: { message: string }) => {
         setIsChatClosed(true);
+        setIsNotificationVisible(true); // Show notification initially
         if (onNotify) {
           onNotify('Chat has been closed');
         }
         toast.message('Chat Closed', {
           description: 'This chat has been closed by the admin.',
           duration: 5000,
+          onAutoClose: () => setIsNotificationVisible(false), // Auto-hide notification
         });
         setTimeout(() => {
           router.push('/');
@@ -169,8 +172,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   };
 
   return (
-    <div className='flex flex-col h-full w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden'>
-      <div className='bg-primary text-primary-foreground p-4 flex justify-between items-center'>
+    <div
+      className='flex flex-col h-full w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden'
+      aria-hidden={isChatClosed ? 'true' : 'false'}
+    >
+   
+      <div className='bg-primary_main text-primary-foreground p-4 flex justify-between items-center'>
         <div>
           <h2 className='text-xl font-semibold'>
             {propertyData?.data.propertyDetails.title || 'Chat'}
@@ -196,7 +203,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>
+                    <AlertDialogTitle className='text-destructive'>
                       Are you absolutely sure?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
@@ -206,7 +213,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={closeChat}>
+                    <AlertDialogAction
+                      onClick={closeChat}
+                      className='bg-destructive'
+                    >
                       Close Chat
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -216,15 +226,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </DropdownMenu>
         )}
       </div>
-
-      {isChatClosed && (
-        <div className='p-4 text-center text-destructive bg-destructive/10 flex items-center justify-center'>
-          <AlertTriangle className='mr-2 h-4 w-4' />
-          This chat has been closed. You will be redirected to the homepage
-          shortly.
+      {isChatClosed && isNotificationVisible && (
+        <div className='p-4 text-center text-destructive bg-destructive/10 flex items-center justify-between'>
+          <div className='flex items-center'>
+            <AlertTriangle className='mr-2 h-4 w-4' />
+            <span>
+              This chat has been closed. You will be redirected to the homepage
+              shortly.
+            </span>
+          </div>
+          <button
+            onClick={() => setIsNotificationVisible(false)}
+            className='text-sm font-semibold underline'
+          >
+            Dismiss
+          </button>
         </div>
       )}
-
       <ScrollArea className='h-[calc(100vh-200px)] overflow-auto'>
         {messages.map((message, index) => (
           <div
@@ -271,7 +289,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         ))}
         <div ref={messagesEndRef} />
       </ScrollArea>
-
       <div className='p-4 bg-background border-t'>
         <form
           onSubmit={(e) => {
@@ -290,7 +307,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           <Button
             type='submit'
             size='icon'
-            className='bg-primary text-primary-foreground hover:bg-primary/90'
+            className='bg-primary_main text-primary-foreground hover:bg-primary/90'
             disabled={isChatClosed}
           >
             <Send className='h-4 w-4' />

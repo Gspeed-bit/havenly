@@ -54,47 +54,48 @@ const MainContent = () => {
             <br className='hidden sm:block' />
             Integer a dolor eu sapien sodales vulputate ac in purus.
           </p>
-          <div className='relative max-w-xl mx-auto lg:mx-0'>
-            <div className='relative z-10 rounded-2xl overflow-hidden'>
-              {/* Carousel Navigation Buttons */}
-              <div className='absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
-                <Icon
-                  type={'ChevronLeft'}
-                  color={'#3A0CA3'}
-                  strokeWidth={1.75}
-                  className='size-4 sm:size-5'
-                />
-              </div>
+        </div>
+      </div>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center'>
+        <div className='relative max-w-xl mx-auto lg:mx-0'>
+          <div className='relative z-10 rounded-2xl overflow-hidden'>
+            {/* Carousel Navigation Buttons */}
+            <div className='absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
+              <Icon
+                type={'ChevronLeft'}
+                color={'#3A0CA3'}
+                strokeWidth={1.75}
+                className='size-4 sm:size-5'
+              />
+            </div>
 
-              <picture>
-                <img
-                  src='/hero_image.png'
-                  alt='Luxury Bedroom'
-                  className='w-full h-auto object-cover rounded-2xl'
-                />
-              </picture>
+            <picture>
+              <img
+                src='/hero_image.png'
+                alt='Luxury Bedroom'
+                className='w-full h-auto object-cover rounded-2xl'
+              />
+            </picture>
 
-              {/* Carousel Navigation Buttons */}
-              <div className='absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
-                <Icon
-                  type={'ChevronRight'}
-                  color={'#3A0CA3'}
-                  strokeWidth={1.75}
-                  className='size-4 sm:size-5'
-                />
-              </div>
-              {/* Carousel Indicators */}
-              <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2'>
-                <div className='w-6 sm:w-8 h-1 bg-primary_main rounded-full' />
-                <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
-                <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
-              </div>
+            {/* Carousel Navigation Buttons */}
+            <div className='absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
+              <Icon
+                type={'ChevronRight'}
+                color={'#3A0CA3'}
+                strokeWidth={1.75}
+                className='size-4 sm:size-5'
+              />
+            </div>
+            {/* Carousel Indicators */}
+            <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2'>
+              <div className='w-6 sm:w-8 h-1 bg-primary_main rounded-full' />
+              <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
+              <div className='w-6 sm:w-8 h-1 bg-veryLightGray rounded-full' />
             </div>
           </div>
         </div>
-
         {/* Right Section */}
-        <div className='order-1 lg:order-2'>
+        <div className=''>
           <Card className='shadow-lg bg-white border-none relative z-10 rounded-2xl max-w-[35rem] mx-auto lg:ml-auto min-h-[400px]'>
             <CardContent className='p-4 sm:p-6 space-y-6 sm:space-y-9'>
               <Tabs

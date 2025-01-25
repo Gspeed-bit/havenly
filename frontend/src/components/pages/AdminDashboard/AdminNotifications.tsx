@@ -20,7 +20,6 @@ interface Notification {
 }
 
 const AdminDashboard: React.FC = () => {
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(() => {
@@ -33,37 +32,49 @@ const AdminDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user } = useUserStore();
 
-  const handleCloseChat = useCallback(
-    async (chatId: string) => {
-      try {
-        const response = await apiHandler<{
-          agentName: string;
-          agentContact: string;
-        }>(`/chats/${chatId}/close`, 'PUT');
+const handleCloseChat = useCallback(
+  async (chatId: string) => {
+    try {
+      const response = await apiHandler<{
+        agentName: string;
+        agentContact: string;
+      }>(`/chats/${chatId}/close`, 'PUT');
 
-        if (response.status === 'success') {
-          setActiveChats((prev) => {
-            const updatedChats = prev.filter((id) => id !== chatId);
-            localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-            return updatedChats;
-          });
+      if (response.status === 'success') {
+        setActiveChats((prev) => {
+          const updatedChats = prev.filter((id) => id !== chatId);
 
-          if (selectedChat === chatId) {
-            setSelectedChat(null);
-          }
+          // Remove from local storage when chat is closed
+          localStorage.setItem('activeChats', JSON.stringify(updatedChats));
 
-          toast.message('Chat Closed', {
-            description: `Chat ${chatId} has been closed successfully.`,
-            duration: 1000,
-          });
+          return updatedChats;
+        });
+
+        setNotifications((prev) => {
+          const updatedNotifications = prev.filter((n) => n.chatId !== chatId);
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+
+        if (selectedChat === chatId) {
+          setSelectedChat(null);
         }
-      } catch (error) {
-        toast.error('An error occurred while closing the chat.');
-        console.error('Error closing chat:', error);
+
+        toast.message('Chat Closed', {
+          description: `Chat ${chatId} has been closed successfully.`,
+          duration: 1000,
+        });
       }
-    },
-    [selectedChat]
-  );
+    } catch (error) {
+      toast.error('An error occurred while closing the chat.');
+      console.error('Error closing chat:', error);
+    }
+  },
+  [selectedChat]
+);
 
   useEffect(() => {
     if (!user || !user.isAdmin) return;
@@ -157,10 +168,12 @@ const AdminDashboard: React.FC = () => {
         className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
           isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
         } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
+        aria-hidden={isSidebarOpen ? 'false' : 'true'} // Consider replacing with inert
+        tabIndex={isSidebarOpen ? undefined : -1} // Adding or removing tabIndex for focus management
       >
         {isSidebarOpen && (
           <div className='h-full flex flex-col'>
-            <div className='p-4 bg-primary text-primary-foreground'>
+            <div className='p-4 bg-primary_main text-primary-foreground'>
               <h1 className='text-2xl font-bold'>Admin Dashboard</h1>
             </div>
             <div className='flex-1 overflow-hidden'>
