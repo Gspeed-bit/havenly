@@ -199,10 +199,12 @@ export const getChatsByUser = async (req: Request, res: Response) => {
     const userId = req.user?._id;
 
     if (!userId) {
+      console.error('Unauthorized: User ID is missing');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Fetch all chats where the user is a participant
+    console.log(`Fetching chats for user: ${userId}`);
+
     const chats = await Chat.find({ users: userId, isClosed: false })
       .populate('users', 'firstName lastName')
       .populate('adminId', 'firstName lastName')
@@ -216,9 +218,11 @@ export const getChatsByUser = async (req: Request, res: Response) => {
       })
       .exec();
 
+    console.log(`Found ${chats.length} chats for user: ${userId}`);
+
     res.status(200).json({ status: 'success', data: chats });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching chats by user:', error);
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
