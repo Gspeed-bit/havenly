@@ -46,23 +46,24 @@ const UserDashboardContent = () => {
   }, []);
 
   // Fetch active chats for the user
-  const fetchActiveChats = useCallback(async () => {
-    try {
-      const response = await apiHandler<{ chats: string[] }>(
-        '/chats/user',
-        'GET'
-      );
-      if (response.status === 'success') {
-        setActiveChats(response.data.chats);
-        localStorage.setItem(
-          'activeChats',
-          JSON.stringify(response.data.chats)
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching active chats:', error);
+const fetchActiveChats = useCallback(async () => {
+  try {
+    const response = await apiHandler<{ chats: string[] }>(
+      '/chats/user',
+      'GET'
+    );
+    if (response.status === 'success') {
+      setActiveChats(response.data.chats);
+      localStorage.setItem('activeChats', JSON.stringify(response.data.chats));
+    } else {
+      console.error('Failed to fetch active chats:', response.message);
+      toast.error('Failed to fetch active chats. Please try again later.');
     }
-  }, []);
+  } catch (error) {
+    console.error('Error fetching active chats:', error);
+    toast.error('An error occurred while fetching active chats.');
+  }
+}, []);
 
   useEffect(() => {
     fetchActiveChats();
