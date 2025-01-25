@@ -7,7 +7,7 @@ import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Bell, MessageSquare, Menu } from 'lucide-react';
+import { Bell, MessageSquare, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ const AdminDashboard: React.FC = () => {
     JSON.parse(localStorage.getItem('activeChats') || '[]')
   );
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user } = useUserStore();
 
   const handleCloseChat = useCallback(
@@ -156,23 +156,34 @@ const AdminDashboard: React.FC = () => {
       return updatedNotifications;
     });
     setSelectedChat(chatId);
+    setIsMobileSidebarOpen(false);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen((prev) => !prev);
   };
 
   return (
-    <div className='flex flex-col sm:flex-row h-screen bg-gray-100 overflow-hidden'>
+    <div className='flex flex-col md:flex-row h-screen bg-gray-100'>
+      {/* Sidebar */}
       <div
-        className={`bg-white shadow-lg transition-all duration-300 ease-in-out overflow-hidden ${
-          isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
-        } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
-        aria-hidden={!isSidebarOpen}
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          md:relative md:translate-x-0
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
       >
         <div className='h-full flex flex-col'>
-          <div className='p-4 bg-primary_main text-primary-foreground'>
-            <h1 className='text-2xl font-bold'>Admin Dashboard</h1>
+          <div className='p-4 bg-primary_main text-primary-foreground flex justify-between items-center'>
+            <h1 className='text-xl font-bold'>Admin Dashboard</h1>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='md:hidden'
+              onClick={toggleMobileSidebar}
+            >
+              <X className='h-6 w-6' />
+            </Button>
           </div>
           <div className='flex-1 overflow-hidden'>
             <div className='p-4 space-y-4'>
@@ -217,11 +228,14 @@ const AdminDashboard: React.FC = () => {
                   </Badge>
                 )}
               </h2>
-              <ScrollArea className='h-[calc(100vh-360px)] sm:h-[calc(100vh-400px)] pr-2'>
+              <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
                 {activeChats.map((chatId) => (
                   <Button
                     key={chatId}
-                    onClick={() => setSelectedChat(chatId)}
+                    onClick={() => {
+                      setSelectedChat(chatId);
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
                       selectedChat === chatId
                         ? 'bg-primary text-primary-foreground'
@@ -229,7 +243,7 @@ const AdminDashboard: React.FC = () => {
                     }`}
                     variant='ghost'
                   >
-                    <Avatar className='h-5 w-5 mr-3'>
+                    <Avatar className='h-10 w-10 mr-3'>
                       <AvatarImage
                         src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
                       />
@@ -257,16 +271,16 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className='flex-1 flex flex-col relative'>
-        <Button
-          onClick={toggleSidebar}
-          className='absolute top-4 left-4 z-10 sm:hidden'
-          variant='outline'
-          size='icon'
-        >
-          <Menu className='h-4 w-4' />
-        </Button>
-        <div className='flex-1 p-4 overflow-auto bg-white m-4 rounded-lg shadow-md'>
+
+      {/* Main Content */}
+      <div className='flex-1 flex flex-col'>
+        <div className='p-4 bg-white shadow-sm flex justify-between items-center md:hidden'>
+          <h1 className='text-xl font-bold'>Admin Dashboard</h1>
+          <Button variant='outline' size='icon' onClick={toggleMobileSidebar}>
+            <MessageSquare className='h-6 w-6' />
+          </Button>
+        </div>
+        <div className='flex-1 p-4 overflow-auto'>
           {selectedChat ? (
             <ChatBox initialChatId={selectedChat} onClose={handleCloseChat} />
           ) : (
