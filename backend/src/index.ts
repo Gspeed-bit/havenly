@@ -37,7 +37,10 @@ const io = new Server(server, {
 app.use(
   cors({
     origin: [
-      '*'
+      'http://localhost:3000', // Frontend dev server
+      'http://localhost:5000', // Backend dev server
+      'https://havenly-alpha.vercel.app/', // Production frontend URL
+      'https://havenly-chdr.onrender.com',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true, // Allow cookies or authentication headers
