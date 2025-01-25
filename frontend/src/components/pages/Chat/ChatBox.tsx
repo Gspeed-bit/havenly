@@ -107,6 +107,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           onNotify(`New message from ${message.senderName}`);
         }
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
       socket.on('chatClosed', (data: { message: string }) => {
         setIsChatClosed(true);
