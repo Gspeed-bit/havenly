@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { io, type Socket } from 'socket.io-client';
 import { useRouter } from 'next/navigation';
 import {
-  ChatResponse,
+  type ChatResponse,
   getChat,
   sendMessage,
 } from '@/services/chat/chatServices';
@@ -106,17 +107,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           onNotify(`New message from ${message.senderName}`);
         }
       });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       socket.on('chatClosed', (data: { message: string }) => {
         setIsChatClosed(true);
-        setIsNotificationVisible(true); // Show notification initially
+        setIsNotificationVisible(true);
         if (onNotify) {
           onNotify('Chat has been closed');
         }
         toast.message('Chat Closed', {
           description: 'This chat has been closed by the admin.',
           duration: 5000,
-          onAutoClose: () => setIsNotificationVisible(false), // Auto-hide notification
+          onAutoClose: () => setIsNotificationVisible(false),
         });
         setTimeout(() => {
           router.push('/');
@@ -128,7 +129,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         socket.off('chatClosed');
       };
     }
-  }, [socket, chatId, onClose, onNotify, router]);
+  }, [socket, chatId, onNotify, router]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -171,12 +172,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   };
 
+  const shortenName = (name: string, maxLength = 15) => {
+    if (name.length <= maxLength) return name;
+    return `${name.substring(0, maxLength)}...`;
+  };
+
   return (
-    <div
-      className='flex flex-col h-full w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden'
-      aria-hidden={isChatClosed ? 'true' : 'false'}
-    >
-   
+    <div className='flex flex-col h-full w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden'>
       <div className='bg-primary_main text-primary-foreground p-4 flex justify-between items-center'>
         <div>
           <h2 className='text-xl font-semibold'>
@@ -243,22 +245,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </button>
         </div>
       )}
-      <ScrollArea className='h-[calc(100vh-200px)] overflow-auto'>
+      <ScrollArea className='flex-grow p-4 space-y-4'>
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex mb-4 ${
-              message.sender === 'User' ? 'justify-end' : 'justify-start'
-            }`}
+            className={`flex ${message.sender === 'User' ? 'justify-end' : 'justify-start'} mb-4`}
           >
             <div
-              className={`flex items-end space-x-2 ${
+              className={`flex items-end space-x-2 max-w-[80%] ${
                 message.sender === 'User'
                   ? 'flex-row-reverse space-x-reverse'
                   : 'flex-row'
               }`}
             >
-              <Avatar className='w-8 h-8'>
+              <Avatar className='w-8 h-8 flex-shrink-0'>
                 <AvatarImage
                   src={`https://api.dicebear.com/6.x/initials/svg?seed=${message.senderName}`}
                 />
@@ -269,15 +269,19 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 </AvatarFallback>
               </Avatar>
               <div
-                className={`max-w-[70%] p-3 rounded-lg ${
+                className={`p-3 rounded-2xl shadow-sm ${
                   message.sender === 'User'
                     ? 'bg-primary text-primary-foreground rounded-br-none'
                     : 'bg-secondary text-secondary-foreground rounded-bl-none'
                 }`}
               >
-                <p className='font-semibold text-sm'>{message.senderName}</p>
-                <p className='mt-1'>{message.content}</p>
-                <p className='text-xs opacity-70 mt-1 text-right'>
+                <p className='text-xs font-medium mb-1 opacity-75'>
+                  {shortenName(message.senderName)}
+                </p>
+                <p className='text-sm break-words leading-snug'>
+                  {message.content}
+                </p>
+                <p className='text-[10px] opacity-50 mt-1 text-right'>
                   {new Date(message.timestamp).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
