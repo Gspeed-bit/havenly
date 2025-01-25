@@ -194,8 +194,6 @@ export const closeChat = async (req: Request, res: Response, io: Server) => {
 };
 
 
-
-
 export const getChatsByUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
@@ -241,6 +239,8 @@ export const getChatsByUser = async (req: Request, res: Response) => {
         isClosed: chat.isClosed,
       };
     });
+
+    console.log('Formatted chats:', formattedChats); // Log the formatted chats
 
     res.status(200).json({ status: 'success', data: formattedChats });
   } catch (error) {
