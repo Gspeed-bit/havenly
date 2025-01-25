@@ -25,7 +25,7 @@ export default (io: Server) => {
     sendMessage(req, res, io)
   );
 
-  router.get('/user', userMiddleware, getChatsByUser);
+  router.get('/chats/user', userMiddleware, getChatsByUser);
 
   router.get('/chats/:chatId', userMiddleware, getChat);
 
