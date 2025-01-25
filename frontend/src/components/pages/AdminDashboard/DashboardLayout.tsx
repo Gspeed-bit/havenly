@@ -172,7 +172,7 @@ export default function DashboardLayout({
               </SheetTrigger>
               <SheetContent
                 side='left'
-                className='w-[280px] sm:w-[350px] bg-background'
+                className='w-[280px] sm:w-[350px]  bg-background'
               >
                 {sidebarContent}
               </SheetContent>
@@ -188,7 +188,7 @@ export default function DashboardLayout({
                 <Input
                   type='search'
                   placeholder='Search...'
-                  className='pl-10 w-[200px] lg:w-[300px] bg-muted'
+                  className='pl-10 w-[600px] md:w-800px] bg-muted'
                 />
               </div>
               <Link href={'/dashboard/notification'}>

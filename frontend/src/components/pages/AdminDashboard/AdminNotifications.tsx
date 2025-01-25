@@ -168,7 +168,7 @@ const AdminDashboard: React.FC = () => {
       {/* Sidebar */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-[24rem] bg-white shadow-lg transform transition-transform duration-300 ease-in-out
           md:relative md:translate-x-0
           ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
