@@ -63,7 +63,7 @@ const Navigation: React.FC<NavigationProps> = ({
   ];
 
   const adminNavItems = [
-    { label: 'Dashboard', path: '/dashboard/admins' },
+    { label: 'Dashboard', path: '/dashboard' },
     { label: 'Manage Admins', path: '/dashboard/admins' },
     { label: 'Manage Users', path: '/dashboard/users' },
     { label: 'Profile', path: '/dashboard/update-profile' },
