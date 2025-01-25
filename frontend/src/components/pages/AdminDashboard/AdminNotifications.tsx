@@ -229,7 +229,7 @@ const AdminDashboard: React.FC = () => {
                     }`}
                     variant='ghost'
                   >
-                    <Avatar className='h-10 w-10 mr-3'>
+                    <Avatar className='h-5 w-5 mr-3'>
                       <AvatarImage
                         src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
                       />
