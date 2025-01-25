@@ -36,8 +36,8 @@ const sendResetPasswordEmail = async (
     </p>
     <footer style="${emailStyles.footer}">
       <p>
-        Havenly Inc., 1234 Street Name, City, State, ZIP Code<br />
-        Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
+        Havenly Inc., Musterstraße 123 45127 Dortmund, Deutschland<br />
+        Need help? <a href="mailto:support@havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
       </p>
       <p>© 2024 Havenly. All rights reserved.</p>
     </footer>
@@ -93,8 +93,8 @@ export const sendVerificationEmail = async (email: string, code: string) => {
     </div>
     <footer style="${emailStyles.footer}">
       <p>
-        Havenly Inc., 1234 Street Name, City, State, ZIP Code<br />
-        Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
+        Havenly Inc.,Musterstraße 123 45127 Dortmund, Deutschland<br />
+        Need help? <a href="mailto:support@havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
       </p>
       <p>© 2024 Havenly. All rights reserved.</p>
     </footer>
@@ -175,8 +175,8 @@ export const sendInquiryEmail = async (
     </p>
     <footer style="${emailStyles.footer}">
       <p>
-        Havenly Inc., 1234 Street Name, City, State, ZIP Code<br />
-        Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
+        Havenly Inc., Musterstraße 123 45127 Dortmund, Deutschland<br />
+        Need help? <a href="mailto:support@havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
       </p>
       <p>© 2024 Havenly. All rights reserved.</p>
     </footer>
@@ -225,8 +225,8 @@ export const sendInquiryEmail = async (
     </p>
     <footer style="${emailStyles.footer}">
       <p>
-        Havenly Inc., 1234 Street Name, City, State, ZIP Code<br />
-        Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
+        Havenly Inc., Musterstraße 123 45127 Dortmund, Deutschland<br />
+        Need help? <a href="mailto:support@Havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
       </p>
       <p>© 2024 Havenly. All rights reserved.</p>
     </footer>
@@ -282,8 +282,8 @@ export const sendAdminUpdatePinEmail = async (
     </p>
     <footer style="${emailStyles.footer}">
       <p>
-        Havenly Inc., 1234 Street Name, City, State, ZIP Code<br />
-        Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
+        Havenly Inc., Musterstraße 123 45127 Dortmund, Deutschland<br />
+        Need help? <a href="mailto:support@havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a>
       </p>
       <p>© 2024 Havenly. All rights reserved.</p>
     </footer>
@@ -369,8 +369,8 @@ export const sendChatSummaryEmail = async (chat: any) => {
       <p style="${emailStyles.paragraph}">If you have further inquiries, feel free to contact us.</p>
       
       <footer style="${emailStyles.chatSummary.footer}">
-        <p>Havenly Inc., 1234 Street Name, City, State, ZIP Code</p>
-        <p>Need help? <a href="mailto:support@yourdomain.com" style="color: #3A0CA3; text-decoration: none;">Contact Support</a></p>
+        <p>Havenly Inc., Musterstraße 123 45127 Dortmund, Deutschland</p>
+        <p>Need help? <a href="mailto:support@havenly.de" style="color: #3A0CA3; text-decoration: none;">Contact Support</a></p>
         <p>© 2024 Havenly. All rights reserved.</p>
       </footer>
     </div>
