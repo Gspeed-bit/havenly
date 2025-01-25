@@ -46,29 +46,30 @@ const UserDashboardContent = () => {
   }, []);
 
   // Fetch active chats for the user
-  const fetchActiveChats = useCallback(async () => {
-    try {
-      console.log('Fetching active chats...');
-      const response = await getChatsByUser();
-      console.log('Response from backend:', response); // Log the response
+const fetchActiveChats = useCallback(async () => {
+  try {
+    console.log('Fetching active chats...');
+    const response = await getChatsByUser();
+    console.log('Response from backend:', response); // Log the response
 
-      if (response.status === 'success') {
-        // Ensure response.data is an array
-        if (Array.isArray(response.data)) {
-          const chatIds = response.data.map((chat) => chat.data._id);
-          console.log(`Found ${chatIds.length} active chats`);
-          setActiveChats(chatIds);
-          localStorage.setItem('activeChats', JSON.stringify(chatIds));
-        } else {
-          console.error('Unexpected response format:', response.data);
-        }
+    if (response.status === 'success') {
+      // Ensure response.data is an array
+      if (Array.isArray(response.data)) {
+        console.log('Response data is an array:', response.data);
+        const chatIds = response.data.map((chat) => chat.data._id);
+        console.log(`Found ${chatIds.length} active chats`);
+        setActiveChats(chatIds);
+        localStorage.setItem('activeChats', JSON.stringify(chatIds));
       } else {
-        console.error('Failed to fetch active chats:', response.message);
+        console.error('Unexpected response format:', response.data);
       }
-    } catch (error) {
-      console.error('Error fetching active chats:', error);
+    } else {
+      console.error('Failed to fetch active chats:', response.message);
     }
-  }, []);
+  } catch (error) {
+    console.error('Error fetching active chats:', error);
+  }
+}, []);
 
   useEffect(() => {
     fetchActiveChats();
@@ -169,36 +170,33 @@ const UserDashboardContent = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-200px)] pr-2'>
-                {activeChats.map((chatId) => {
-                  console.log('Rendering chat:', chatId); // Log each chat ID
-                  return (
-                    <Button
-                      key={chatId}
-                      onClick={() => handleNotificationClick(chatId)}
-                      className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
-                        selectedChat === chatId
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-gray-100'
-                      }`}
-                      variant='ghost'
-                    >
-                      <Avatar className='h-5 w-5 mr-3'>
-                        <AvatarImage
-                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
-                        />
-                        <AvatarFallback>
-                          {chatId.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='flex flex-col items-start'>
-                        <span className='font-medium'>Chat {chatId}</span>
-                        <span className='text-xs text-muted-foreground'>
-                          Last message...
-                        </span>
-                      </div>
-                    </Button>
-                  );
-                })}
+                {activeChats.map((chatId) => (
+                  <Button
+                    key={chatId}
+                    onClick={() => handleNotificationClick(chatId)}
+                    className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
+                      selectedChat === chatId
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-gray-100'
+                    }`}
+                    variant='ghost'
+                  >
+                    <Avatar className='h-5 w-5 mr-3'>
+                      <AvatarImage
+                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
+                      />
+                      <AvatarFallback>
+                        {chatId.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='flex flex-col items-start'>
+                      <span className='font-medium'>Chat {chatId}</span>
+                      <span className='text-xs text-muted-foreground'>
+                        Last message...
+                      </span>
+                    </div>
+                  </Button>
+                ))}
                 {activeChats.length === 0 && (
                   <p className='text-muted-foreground text-center py-4'>
                     No active chats
