@@ -48,11 +48,15 @@ const UserDashboardContent = () => {
   // Fetch active chats for the user
 const fetchActiveChats = useCallback(async () => {
   try {
+    console.log('Fetching active chats...');
     const response = await getChatsByUser();
     if (response.status === 'success') {
       const chatIds = response.data.map((chat) => chat.data._id);
+      console.log(`Found ${chatIds.length} active chats`);
       setActiveChats(chatIds);
       localStorage.setItem('activeChats', JSON.stringify(chatIds));
+    } else {
+      console.error('Failed to fetch active chats:', response.message);
     }
   } catch (error) {
     console.error('Error fetching active chats:', error);
