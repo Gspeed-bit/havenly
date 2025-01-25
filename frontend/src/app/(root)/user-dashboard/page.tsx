@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { MessageSquare, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatBox from '@/components/pages/Chat/ChatBox';
-import { apiHandler } from '@/config/server';
 import { io, Socket } from 'socket.io-client';
 import { useUserStore } from '@/store/users';
 import { getChatsByUser } from '@/services/chat/chatServices';
