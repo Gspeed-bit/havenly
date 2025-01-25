@@ -48,7 +48,7 @@ const DashboardPage = () => {
   useEffect(() => {
     if (!user || !user.isAdmin) return;
 
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io('https://havenly-chdr.onrender.com', {
       query: { userId: user._id, isAdmin: true },
     });
     setSocket(newSocket);

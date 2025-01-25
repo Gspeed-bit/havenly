@@ -71,7 +71,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   useEffect(() => {
     if (!chatId || !user) return;
 
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io('https://havenly-chdr.onrender.com', {
       query: { userId: user._id, isAdmin: user.isAdmin ? 'true' : 'false' },
     });
     setSocket(newSocket);
