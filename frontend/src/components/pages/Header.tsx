@@ -14,11 +14,13 @@ const Header = () => {
               strokeWidth={1.75}
               className='size-4'
             />
-            <span className='text-sm'>Havenly, 18 Grattan St, Brooklyn</span>
+            <span className='text-sm'>
+              Havenly, Musterstraße 123 45127 Dortmund, Deutschland
+            </span>
           </div>
           <div className='hidden md:flex items-center space-x-6'>
-            <span className='text-sm'>+1 206-214-2298</span>
-            <span className='text-sm'>support@rezilla.com</span>
+            <span className='text-sm'>+49 206-214-2298</span>
+            <span className='text-sm'>support@havenly.de</span>
           </div>
         </div>
       </div>

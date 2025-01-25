@@ -18,7 +18,7 @@ export default {
         
         black: '#000000',
         darkGray: '#333333',
-        gray: '#7A7A7A',
+       
         lightGray: '#6D6A75',
         veryLightGray: '#F5F5F5',
         background: 'hsl(var(--background))',
