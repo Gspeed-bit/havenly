@@ -108,7 +108,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         }
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-
       socket.on('chatClosed', (data: { message: string }) => {
         setIsChatClosed(true);
         setIsNotificationVisible(true);
