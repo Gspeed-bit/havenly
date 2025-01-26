@@ -67,7 +67,7 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
       console.log('Start Chat Response:', response);
 
       if (response.status === 'success') {
-        const chatId = response.data.data._id;
+        const chatId = response.data._id;
         if (chatId) {
           setChatId(chatId);
           router.push(`/chats/${chatId}`);
