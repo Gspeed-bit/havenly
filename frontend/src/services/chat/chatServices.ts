@@ -34,10 +34,22 @@ export const startChat = async ({
 }: {
   propertyId: string;
 }): Promise<ApiResponse<ChatResponse>> => {
-  const response = apiHandler<ChatResponse>(`${API_BASE}/start`, 'POST', {
+  const response = await apiHandler<ChatResponse>(`${API_BASE}/start`, 'POST', {
     propertyId,
   });
-  return response;
+
+  // Log the response for debugging
+  console.log('Start Chat Response:', response);
+
+  if (response.status === 'success') {
+    return {
+      status: 'success',
+      message: response.message,
+      data: response.data, // Ensure this matches the backend response
+    };
+  } else {
+    throw new Error(response.message || 'Failed to start chat');
+  }
 };
 
 export const sendMessage = async ({

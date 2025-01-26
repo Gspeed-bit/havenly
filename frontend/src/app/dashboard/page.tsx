@@ -34,17 +34,21 @@ interface Notification {
 const DashboardPage = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>(() => {
-    if (typeof window !== 'undefined') {
-      return JSON.parse(localStorage.getItem('notifications') || '[]');
-    }
-    return [];
-  });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useUserStore();
   const router = useRouter();
 
+  // Load notifications from localStorage on component mount
+  useEffect(() => {
+    const storedNotifications = JSON.parse(
+      localStorage.getItem('notifications') || '[]'
+    );
+    setNotifications(storedNotifications);
+  }, []);
+
+  // Initialize socket connection
   useEffect(() => {
     if (!user || !user.isAdmin) return;
 
@@ -73,25 +77,13 @@ const DashboardPage = () => {
       }
     );
 
-    // Simulating other types of notifications
-    setTimeout(
-      () => addNotification('addProperty', 'New property added'),
-      1000
-    );
-    setTimeout(
-      () => addNotification('addCompany', 'New company registered'),
-      2000
-    );
-    setTimeout(
-      () => addNotification('updateProfile', 'User profile updated'),
-      3000
-    );
-
+    // Cleanup socket connection on component unmount
     return () => {
       newSocket.disconnect();
     };
   }, [user]);
 
+  // Add a new notification and update localStorage
   const addNotification = (
     type: Notification['type'],
     message: string,
@@ -103,29 +95,53 @@ const DashboardPage = () => {
       chatId,
       date: new Date().toLocaleString(),
     };
+
     setNotifications((prev) => {
-      const updatedNotifications = [newNotification, ...prev].slice(0, 10); // Keep only the latest 10 notifications
+      // Separate chat notifications from other notifications
+      const chatNotifications = prev.filter(
+        (n) => n.type === 'newChat' || n.type === 'newMessage'
+      );
+      const otherNotifications = prev.filter(
+        (n) => n.type !== 'newChat' && n.type !== 'newMessage'
+      );
+
+      // Add the new notification to the appropriate list
+      if (type === 'newChat' || type === 'newMessage') {
+        chatNotifications.unshift(newNotification); // Add to the top of chat notifications
+      } else {
+        otherNotifications.unshift(newNotification); // Add to the top of other notifications
+      }
+
+      // Combine the lists and keep only the latest 10 notifications
+      const updatedNotifications = [
+        ...chatNotifications,
+        ...otherNotifications,
+      ].slice(0, 10);
+
+      // Save to localStorage
       localStorage.setItem(
         'notifications',
         JSON.stringify(updatedNotifications)
       );
+
       return updatedNotifications;
     });
   };
 
+  // Handle notification click
   const handleNotificationClick = (notification: Notification) => {
     if (notification.chatId) {
-      router.push(
-        `/dashboard/notification?chatId=${notification.chatId}`
-      );
+      router.push(`/dashboard/notification?chatId=${notification.chatId}`);
     }
     // Handle other notification types if needed
   };
 
+  // Toggle sidebar (for mobile view)
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
+  // Get notification icon based on type
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'newChat':
@@ -143,7 +159,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className='flex flex-col h-screen bg-gray-100'>
+    <div className='flex flex-col h-screen '>
       <div className='flex-1 p-4 overflow-auto'>
         <div className='flex justify-between items-center mb-6'>
           <h1 className='text-3xl font-bold'>Welcome to the Admin Dashboard</h1>

@@ -59,38 +59,42 @@ export function UserPropertyDetails({ propertyId }: PropertyDetailsProps) {
     fetchProperty();
   }, [propertyId]);
 
-  const handleStartChat = async () => {
-    if (isChatLoading) return;
-    setIsChatLoading(true);
-    try {
-      const response = await startChat({ propertyId });
-      console.log('Start Chat Response:', response);
+const handleStartChat = async () => {
+  if (isChatLoading) return;
+  setIsChatLoading(true);
+  try {
+    const response = await startChat({ propertyId });
+    console.log('Start Chat Response:', response); // Log the full response
 
-      if (response.status === 'success') {
-        const chatId = response.data._id;
-        if (chatId) {
-          setChatId(chatId);
-          router.push(`/chats/${chatId}`);
-          setAlertState({
-            type: 'success',
-            message: 'Chat started successfully.',
-          });
-        } else {
-          setAlertState({
-            type: 'error',
-            message: 'Failed to retrieve chat ID.',
-          });
-        }
+    if (response.status === 'success') {
+      // Access the chatId from the correct nested structure
+      const chatId = response.data._id || response.data.data?._id; // Handle both cases
+      if (chatId) {
+        setChatId(chatId);
+        // Redirect to the user dashboard with the chatId in the URL
+        router.push(`/user-dashboard?chatId=${chatId}`);
+        setAlertState({
+          type: 'success',
+          message: 'Chat started successfully.',
+        });
       } else {
-        setAlertState({ type: 'error', message: response.message });
+        console.error('Chat ID is missing in the response:', response);
+        setAlertState({
+          type: 'error',
+          message: 'Failed to retrieve chat ID.',
+        });
       }
-    } catch (error) {
-      setAlertState({ type: 'error', message: 'Failed to start chat.' });
-      console.error('Error starting chat:', error);
-    } finally {
-      setIsChatLoading(false);
+    } else {
+      console.error('Failed to start chat:', response.message);
+      setAlertState({ type: 'error', message: response.message });
     }
-  };
+  } catch (error) {
+    console.error('Error starting chat:', error);
+    setAlertState({ type: 'error', message: 'Failed to start chat.' });
+  } finally {
+    setIsChatLoading(false);
+  }
+};
 
   const renderContent = () => {
     if (isLoading) {

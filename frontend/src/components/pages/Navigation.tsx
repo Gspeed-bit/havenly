@@ -8,8 +8,8 @@ import UserMenu from './UserMenu';
 import { useUserStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notification';
-import { Bell } from 'lucide-react';
-import { getChat } from '@/services/chat/chatServices';
+import { Mail } from 'lucide-react'; // Changed from Bell to Mail
+import { ChatResponse, getChatsByUser } from '@/services/chat/chatServices';
 
 interface NavigationProps {
   isMobileMenuOpen: boolean;
@@ -22,7 +22,7 @@ const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [activeNav, setActiveNav] = useState('Home');
   const [hydrated, setHydrated] = useState(false);
-  const [chatId, setChatId] = useState<string | null>(null);
+  const [chats, setChats] = useState<ChatResponse[]>([]);
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useUserStore((state) => state.user);
@@ -35,19 +35,17 @@ const Navigation: React.FC<NavigationProps> = ({
     setHydrated(true);
 
     if (isAuthenticated && user) {
-      const fetchChat = async () => {
+      const fetchChats = async () => {
         try {
-          if (user._id) {
-            const response = await getChat(user._id);
-            if (response.status === 'success') {
-              setChatId(response.data._id);
-            }
+          const response = await getChatsByUser();
+          if (response.status === 'success') {
+            setChats(response.data);
           }
-        } catch {
-          console.error('No existing chat found.');
+        } catch (error) {
+          console.error('Failed to fetch chats:', error);
         }
       };
-      fetchChat();
+      fetchChats();
     }
   }, [isAuthenticated, user]);
 
@@ -73,7 +71,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <nav className='bg-white'>
-      <div className='container mx-auto px-4 '>
+      <div className='container mx-auto px-4'>
         <div className='flex items-center justify-between py-4'>
           {/* Logo */}
           <div className='flex items-center space-x-2'>
@@ -109,29 +107,19 @@ const Navigation: React.FC<NavigationProps> = ({
 
           {/* Actions */}
           <div className='hidden md:flex items-center space-x-4'>
-            {/* Notification Bell */}
-            
-            {isAuthenticated ? (
+            {/* Notification Icon (Mail for Users, None for Admins) */}
+            {isAuthenticated && !isAdmin && (
               <Link
-                href={`/user-dashboard?chatId=${chatId}`}
+                href={`/user-dashboard?chatId=${chats[0]?._id || ''}`}
                 className='relative'
               >
-                <Bell className='h-6 w-6' />
+                <Mail className='h-6 w-6' />
                 {unreadCount > 0 && (
                   <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
                     {unreadCount}
                   </span>
                 )}
               </Link>
-            ) : (
-              <div className='relative cursor-not-allowed text-gray-400'>
-                <Bell className='h-6 w-6' />
-                {unreadCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-gray-300 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
-                    {unreadCount}
-                  </span>
-                )}
-              </div>
             )}
 
             {/* User Menu */}
@@ -179,29 +167,19 @@ const Navigation: React.FC<NavigationProps> = ({
         <div className='md:hidden bg-white border-t'>
           {/* Mobile Actions */}
           <div className='flex items-center justify-between px-6 py-4 border-b'>
-            {/* Notification Bell */}
-           
-            {isAuthenticated ? (
+            {/* Notification Icon (Mail for Users, None for Admins) */}
+            {isAuthenticated && !isAdmin && (
               <Link
-                href={`/user-dashboard?chatId=${chatId}`}
+                href={`/user-dashboard?chatId=${chats[0]?._id || ''}`}
                 className='relative'
               >
-                <Bell className='h-6 w-6' />
+                <Mail className='h-6 w-6' />
                 {unreadCount > 0 && (
                   <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
                     {unreadCount}
                   </span>
                 )}
               </Link>
-            ) : (
-              <div className='relative cursor-not-allowed text-gray-400'>
-                <Bell className='h-6 w-6' />
-                {unreadCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-gray-300 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center'>
-                    {unreadCount}
-                  </span>
-                )}
-              </div>
             )}
 
             {/* Login/Register or User Menu */}
