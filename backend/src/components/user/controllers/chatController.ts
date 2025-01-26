@@ -43,7 +43,19 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
       chatId: chat._id,
     });
 
-    res.status(201).json({ status: 'success', data: chat });
+    // Return the chat data in the expected format
+    res.status(201).json({
+      status: 'success',
+      message: 'Request successful',
+      data: {
+        _id: chat._id, // Ensure this field is included
+        propertyId: chat.propertyId,
+        users: chat.users,
+        adminId: chat.adminId,
+        messages: chat.messages,
+        isClosed: chat.isClosed,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: 'error', message: 'Server error' });
