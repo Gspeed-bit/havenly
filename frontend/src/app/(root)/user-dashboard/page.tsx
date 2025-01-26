@@ -53,16 +53,15 @@ const fetchActiveChats = useCallback(async () => {
     console.log('Response from backend:', response); // Log the response
 
     if (response.status === 'success') {
-      // Access the `data` field from the response
-      const chats = response.data;
-      if (Array.isArray(chats)) {
-        console.log('Response data is an array:', chats);
-        const chatIds = chats.map((chat) => chat._id); // Use chat._id directly
+      // Ensure response.data is an array
+      if (Array.isArray(response.data)) {
+        console.log('Response data is an array:', response.data);
+        const chatIds = response.data.map((chat) => chat._id); // Use chat._id directly
         console.log(`Found ${chatIds.length} active chats`);
         setActiveChats(chatIds);
         localStorage.setItem('activeChats', JSON.stringify(chatIds));
       } else {
-        console.error('Unexpected response format:', chats);
+        console.error('Unexpected response format:', response.data);
       }
     } else {
       console.error('Failed to fetch active chats:', response.message);

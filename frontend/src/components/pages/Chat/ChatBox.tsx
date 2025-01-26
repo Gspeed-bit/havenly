@@ -138,8 +138,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const handleSendMessage = async () => {
     if (newMessage.trim() && chatId && user) {
       let senderName = '';
-      senderName =
-        propertyData?.propertyDetails.agentName || 'Unknown Agent';
+      senderName = propertyData?.propertyDetails.agentName || 'Unknown Agent';
       if (!user.isAdmin) {
         senderName = user.firstName + ' ' + user.lastName;
       }
