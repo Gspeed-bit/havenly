@@ -227,13 +227,11 @@ export const getChatsByUser = async (req: Request, res: Response) => {
       const property = chat.propertyId as unknown as IProperty;
 
       return {
-        data: {
-          _id: chat._id,
-          propertyDetails: {
-            title: property.title,
-            agentName: property.agent?.name || 'Unknown Agent',
-            companyName: property.company?.name || 'Unknown Company',
-          },
+        _id: chat._id, // Move _id to the top level
+        propertyDetails: {
+          title: property.title,
+          agentName: property.agent?.name || 'Unknown Agent',
+          companyName: property.company?.name || 'Unknown Company',
         },
         messages: chat.messages,
         isClosed: chat.isClosed,
@@ -242,6 +240,7 @@ export const getChatsByUser = async (req: Request, res: Response) => {
 
     console.log('Formatted chats:', formattedChats); // Log the formatted chats
 
+    // Return the response with data as an array
     res.status(200).json({ status: 'success', data: formattedChats });
   } catch (error) {
     console.error('Error fetching chats by user:', error);
