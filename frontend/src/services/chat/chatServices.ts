@@ -4,13 +4,14 @@ const API_BASE = '/chats';
 
 export interface ChatResponse {
   _id: string; // Add this field
-
-  propertyDetails: {
-    agentName: string;
-    companyName: string;
-    title: string;
+  data: {
+    _id: string;
+    propertyDetails: {
+      agentName: string;
+      companyName: string;
+      title: string;
+    };
   };
-
   messages: Array<{
     sender: 'user' | 'admin';
     content: string;
