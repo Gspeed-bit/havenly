@@ -240,8 +240,8 @@ export const getChatsByUser = async (req: Request, res: Response) => {
 
     console.log('Formatted chats:', formattedChats); // Log the formatted chats
 
-    // Return the response with data as an array
-    res.status(200).json({ status: 'success', data: formattedChats });
+    // Return the response with data as an array directly
+    res.status(200).json(formattedChats); // Remove the `status` and `data` wrapper
   } catch (error) {
     console.error('Error fetching chats by user:', error);
     res.status(500).json({ status: 'error', message: 'Server error' });
