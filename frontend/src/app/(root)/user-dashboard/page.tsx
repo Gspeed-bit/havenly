@@ -121,7 +121,7 @@ const fetchActiveChats = useCallback(async () => {
   const handleNotificationClick = (chatId: string) => {
     setSelectedChat(chatId);
     setIsMobileSidebarOpen(false);
-    router.push(`/chats/${chatId}`);
+    router.push(`/dashboard?chatId=${chatId}`);
   };
 
   // Toggle mobile sidebar
