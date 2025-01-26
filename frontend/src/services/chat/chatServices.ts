@@ -3,13 +3,11 @@ import { apiHandler, ApiResponse } from '@/config/server';
 const API_BASE = '/chats';
 
 export interface ChatResponse {
-  data: {
-    _id: string;
-    propertyDetails: {
-      agentName: string;
-      companyName: string;
-      title: string;
-    };
+  _id: string; // _id is at the top level
+  propertyDetails: {
+    title: string;
+    agentName: string;
+    companyName: string;
   };
   messages: Array<{
     sender: 'user' | 'admin';
@@ -17,7 +15,6 @@ export interface ChatResponse {
     timestamp: string;
     senderName: string;
   }>;
-
   isClosed: boolean;
 }
 

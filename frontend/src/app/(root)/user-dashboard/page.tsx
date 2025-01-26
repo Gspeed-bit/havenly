@@ -56,7 +56,7 @@ const fetchActiveChats = useCallback(async () => {
       // Ensure response.data is an array
       if (Array.isArray(response.data)) {
         console.log('Response data is an array:', response.data);
-        const chatIds = response.data.map((chat) => chat.data._id);
+        const chatIds = response.data.map((chat) => chat._id); // Use chat._id directly
         console.log(`Found ${chatIds.length} active chats`);
         setActiveChats(chatIds);
         localStorage.setItem('activeChats', JSON.stringify(chatIds));

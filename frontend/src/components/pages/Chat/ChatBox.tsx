@@ -139,7 +139,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     if (newMessage.trim() && chatId && user) {
       let senderName = '';
       senderName =
-        propertyData?.data.propertyDetails.agentName || 'Unknown Agent';
+        propertyData?.propertyDetails.agentName || 'Unknown Agent';
       if (!user.isAdmin) {
         senderName = user.firstName + ' ' + user.lastName;
       }
@@ -182,11 +182,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       <div className='bg-primary_main text-primary-foreground p-4 flex justify-between items-center'>
         <div>
           <h2 className='text-xl font-semibold'>
-            {propertyData?.data.propertyDetails.title || 'Chat'}
+            {propertyData?.propertyDetails.title || 'Chat'}
           </h2>
           <p className='text-sm opacity-80'>
-            {propertyData?.data.propertyDetails.agentName} -{' '}
-            {propertyData?.data.propertyDetails.companyName}
+            {propertyData?.propertyDetails.agentName} -{' '}
+            {propertyData?.propertyDetails.companyName}
           </p>
         </div>
         {user?.isAdmin && (

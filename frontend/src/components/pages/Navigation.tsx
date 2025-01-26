@@ -40,7 +40,7 @@ const Navigation: React.FC<NavigationProps> = ({
           if (user._id) {
             const response = await getChat(user._id);
             if (response.status === 'success') {
-              setChatId(response.data.data._id);
+              setChatId(response.data._id);
             }
           }
         } catch {
