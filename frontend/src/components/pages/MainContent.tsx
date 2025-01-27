@@ -10,6 +10,8 @@ import { useUserStore } from '@/store/users';
 import { Testimonials } from './Testimonials';
 import { BecomeAgent } from './userProfile/BecomeAgent';
 import { Footer } from './Footer';
+import OurTeam from './Our-team';
+import WhoAreWe from './WhoWeAre';
 
 const MainContent = () => {
   const [filters, setFilters] = useState({
@@ -40,23 +42,24 @@ const MainContent = () => {
   const isAdmin = user?.isAdmin === true;
 
   return (
-<>
+    <>
       <main className='container mx-auto px-4 mt-8 sm:mt-16 relative z-10'>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center'>
           {/* Left Section */}
           <div className='order-2 lg:order-1'>
             <h2 className='text-primary_main text-sm font-semibold tracking-wider mb-4'>
-              REAL ESTATE
+              DREAM HOMES AWAIT
             </h2>
             <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6'>
-              Find a perfect
+              Discover Your Perfect
               <br />
-              home you love..!
+              Living Space Today!
             </h1>
             <p className='text-gray-600 mb-8 leading-relaxed'>
-              Etiam eget elementum elit. Aenean dignissim dapibus vestibulum.
+              Start your journey to finding a home that fits your lifestyle.
               <br className='hidden sm:block' />
-              Integer a dolor eu sapien sodales vulputate ac in purus.
+              Whether you're looking for a cozy apartment or a spacious villa,
+              we have something for you.
             </p>
           </div>
         </div>
@@ -72,7 +75,7 @@ const MainContent = () => {
                   className='size-4 sm:size-5'
                 />
               </div>
-  
+
               <picture>
                 <img
                   src='/hero_image.png'
@@ -80,7 +83,7 @@ const MainContent = () => {
                   className='w-full h-auto object-cover rounded-2xl'
                 />
               </picture>
-  
+
               {/* Carousel Navigation Buttons */}
               <div className='absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full aspect-square w-8 sm:w-10 flex items-center justify-center shadow-lg cursor-pointer'>
                 <Icon
@@ -115,7 +118,7 @@ const MainContent = () => {
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
-  
+
                 <div className='space-y-4 sm:space-y-6'>
                   <PropertyFilters
                     filters={filters}
@@ -123,7 +126,7 @@ const MainContent = () => {
                     isAdvancedFilter={isAdvancedFilter}
                   />
                 </div>
-  
+
                 {/* Toggle for Advanced Filters */}
                 <div className='mt-4'>
                   <button
@@ -145,7 +148,7 @@ const MainContent = () => {
                     )}
                   </button>
                 </div>
-  
+
                 {/* Reset Filters Button */}
                 {isFilterApplied && (
                   <button
@@ -160,14 +163,15 @@ const MainContent = () => {
           </div>
         </div>
         <TrustBanner />
-  
+
         {!isAdmin && <PropertyListForUser filters={filters} />}
-  
       </main>
-        <Testimonials />
-        <BecomeAgent />
-        <Footer />
-</>
+      <WhoAreWe />
+      <OurTeam />
+      <Testimonials />
+      <BecomeAgent />
+      <Footer />
+    </>
   );
 };
 

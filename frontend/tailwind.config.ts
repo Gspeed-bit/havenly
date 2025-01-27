@@ -12,7 +12,6 @@ export default {
       colors: {
         primary_main: '#3A0CA3',
         purple: '#260D6A',
-        blue: '#d9dffb',
         violet: '#782BA5',
         pink: '#E14B7E',
         
