@@ -82,7 +82,7 @@ export function Testimonials() {
                 <img src='/design.png' alt='icon' className='w-10 h-6 mb-4' />
               </picture>
               <p className='text-lg text-gray-700 mb-6'>
-                "{testimonials[currentIndex].content}"
+                &quot;{testimonials[currentIndex].content}&quot;{' '}
               </p>
               <div className='flex items-center gap-4'>
                 <div className='rounded-full overflow-hidden'>

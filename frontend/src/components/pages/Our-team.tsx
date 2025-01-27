@@ -27,7 +27,7 @@ export default function OurTeam() {
   ];
 
   return (
-   <div className='bg-gray-100'>
+    <div className='bg-gray-100'>
       <section className='container mx-auto px-4 py-12 md:py-15 '>
         <div className='text-center mb-12'>
           <h2 className='text-blue-600 font-medium tracking-wide mb-2'>
@@ -37,16 +37,18 @@ export default function OurTeam() {
             Our Team of Experts
           </h3>
         </div>
-  
+
         <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
           {team.map((member, index) => (
             <div key={index} className='flex flex-col items-center'>
               <div className='w-48 h-94 rounded-3xl overflow-hidden mb-4'>
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className='w-full h-full object-cover'
-                />
+                <picture>
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className='w-full h-full object-cover'
+                  />
+                </picture>
               </div>
               <h4 className='text-xl font-bold mb-2'>{member.name}</h4>
               <p className={`${member.roleColor} font-medium`}>{member.role}</p>
@@ -54,6 +56,6 @@ export default function OurTeam() {
           ))}
         </div>
       </section>
-   </div>
+    </div>
   );
 }

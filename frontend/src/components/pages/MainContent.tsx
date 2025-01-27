@@ -58,8 +58,8 @@ const MainContent = () => {
             <p className='text-gray-600 mb-8 leading-relaxed'>
               Start your journey to finding a home that fits your lifestyle.
               <br className='hidden sm:block' />
-              Whether you're looking for a cozy apartment or a spacious villa,
-              we have something for you.
+              Whether you&apos;re looking for a cozy apartment or a spacious
+              villa, we have something for you.
             </p>
           </div>
         </div>

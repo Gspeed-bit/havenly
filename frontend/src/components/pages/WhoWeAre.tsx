@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, Users } from 'lucide-react';
 
@@ -18,7 +17,7 @@ export default function Page() {
 
           <p className='text-gray-600 text-base sm:text-lg'>
             At Havenly, we simplify the real estate journey by connecting buyers
-            with their dream homes. Whether you're searching for a cozy
+            with their dream homes. Whether you&apos;re searching for a cozy
             apartment or a luxury villa, our platform ensures a seamless
             experience tailored to your needs.
           </p>
