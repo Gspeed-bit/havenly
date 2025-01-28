@@ -17,6 +17,7 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
+  senderName: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -104,7 +105,10 @@ const AdminDashboard: React.FC = () => {
         setNotifications((prev) => {
           const updatedNotifications: Notification[] = [
             ...prev,
-            { type: 'newChat', ...data },
+            {
+              type: 'newChat', ...data,
+              senderName: ''
+            },
           ];
           localStorage.setItem(
             'notifications',
@@ -115,23 +119,17 @@ const AdminDashboard: React.FC = () => {
       }
     );
 
-    newSocket.on(
-      'newMessageNotification',
-      (data: { message: string; chatId: string }) => {
-        console.log('New message notification received:', data);
-        setNotifications((prev) => {
-          const updatedNotifications: Notification[] = [
-            ...prev,
-            { type: 'newMessage', ...data },
-          ];
-          localStorage.setItem(
-            'notifications',
-            JSON.stringify(updatedNotifications)
-          );
-          return updatedNotifications;
-        });
-      }
-    );
+ newSocket.on('newMessageNotification', (data: { message: string; chatId: string, senderName: string }) => {
+  console.log('New message notification received:', data);
+  setNotifications((prev) => {
+    const updatedNotifications: Notification[] = [
+      ...prev,
+      { type: 'newMessage', ...data },
+    ];
+    localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+    return updatedNotifications;
+  });
+});
 
     return () => {
       newSocket.disconnect();
@@ -201,7 +199,8 @@ const AdminDashboard: React.FC = () => {
                     >
                       <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
                       <span className='truncate text-sm'>
-                        {notification.message}
+                        {notification.message} -{' '}
+                        <strong>{notification.senderName}</strong>
                       </span>
                     </Button>
                   ))}
@@ -246,7 +245,8 @@ const AdminDashboard: React.FC = () => {
 
                       <div className='flex flex-col items-start'>
                         <span className='font-medium'>
-                          {user?.firstName || 'User'}
+                          {/* Use the sender's name */}
+                          {notifications.find(n => n.chatId === chatId)?.senderName || 'User'}
                         </span>
                         <span className='text-xs text-muted-foreground'>
                           Last message...
