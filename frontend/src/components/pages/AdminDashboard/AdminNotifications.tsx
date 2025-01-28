@@ -229,38 +229,42 @@ const AdminDashboard: React.FC = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
-                {activeChats.map((chatId) => (
-                  <Button
-                    key={chatId}
-                    onClick={() => {
-                      setSelectedChat(chatId);
-                      setIsMobileSidebarOpen(false);
-                    }}
-                    className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
-                      selectedChat === chatId
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-gray-100'
-                    }`}
-                    variant='ghost'
-                  >
-                    <Avatar className='h-5 w-5 mr-3'>
-                      <AvatarImage
-                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
-                      />
-                      <AvatarFallback>
-                        {chatId.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='flex flex-col items-start'>
-                      <span className='font-medium'>
-                        {user?.firstName || 'User'}
-                      </span>
-                      <span className='text-xs text-muted-foreground'>
-                        Last message...
-                      </span>
-                    </div>
-                  </Button>
-                ))}
+                {activeChats.map((chatId) => {
+                  // Retrieve sender information dynamically
+                  const chat = notifications.find((n) => n.chatId === chatId);
+                  const senderName = chat?.message.split(':')[0] || 'User'; // Assuming format is "Sender: Message"
+
+                  return (
+                    <Button
+                      key={chatId}
+                      onClick={() => {
+                        setSelectedChat(chatId);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                      className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
+                        selectedChat === chatId
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-gray-100'
+                      }`}
+                      variant='ghost'
+                    >
+                      <Avatar className='h-5 w-5 mr-3'>
+                        <AvatarImage
+                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${senderName}`}
+                        />
+                        <AvatarFallback>
+                          {senderName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex flex-col items-start'>
+                        <span className='font-medium'>{senderName}</span>
+                        <span className='text-xs text-muted-foreground'>
+                          Last message...
+                        </span>
+                      </div>
+                    </Button>
+                  );
+                })}
                 {activeChats.length === 0 && (
                   <p className='text-muted-foreground text-center py-4'>
                     No active chats
