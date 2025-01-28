@@ -173,7 +173,7 @@ const AdminDashboard: React.FC = () => {
           md:relative md:translate-x-0
           ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
-          >
+      >
         <div className='h-full flex flex-col'>
           <div className='p-4 bg-primary_main text-primary-foreground flex justify-between items-center'>
             <h1 className='text-xl font-bold'>Admin Dashboard</h1>
@@ -182,7 +182,7 @@ const AdminDashboard: React.FC = () => {
               size='icon'
               className='md:hidden'
               onClick={toggleMobileSidebar}
-              >
+            >
               <X className='h-6 w-6' />
             </Button>
           </div>
@@ -200,10 +200,10 @@ const AdminDashboard: React.FC = () => {
               <ScrollArea className='h-40 rounded-md border p-2'>
                 {notifications.map((notification, index) => (
                   <Button
-                  key={index}
-                  onClick={() => handleNotificationClick(notification.chatId)}
-                  className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
-                  variant='ghost'
+                    key={index}
+                    onClick={() => handleNotificationClick(notification.chatId)}
+                    className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
+                    variant='ghost'
                   >
                     <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0 text-primary' />
                     <span className='truncate text-sm'>
@@ -231,12 +231,20 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
                 {activeChats.map((chatId) => {
-                  // Retrieve sender information dynamically
+                  // Find the notification for the current chat
                   const chat = notifications.find((n) => n.chatId === chatId);
-                 const senderName =
-                   (chat?.message.split(':')[0]?.trim() || 'User') ?? 'User';// Assuming format is "Sender: Message"
-                  
-                  console.log('Sender Name:', senderName);
+                  // Extract the sender name from the message content
+                  const senderName = (() => {
+                    if (chat?.message) {
+                      // Try to extract the sender's name before the first colon
+                      const parts = chat.message.split(':');
+                      return parts.length > 1 ? parts[0].trim() : 'User'; // Use the part before the colon, fallback to 'User'
+                    }
+                    return 'User'; // Fallback if no message is found
+                  })();
+
+                  console.log('Sender Name:', senderName); // Debugging to see the extracted sender name
+
                   return (
                     <Button
                       key={chatId}
