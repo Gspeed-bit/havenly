@@ -232,7 +232,8 @@ const AdminDashboard: React.FC = () => {
                 {activeChats.map((chatId) => {
                   // Retrieve sender information dynamically
                   const chat = notifications.find((n) => n.chatId === chatId);
-                  const senderName = chat?.message.split(':')[0] || 'User'; // Assuming format is "Sender: Message"
+                  const senderName =
+                    chat?.message.split(':')[0].trim() || 'User'; // Assuming format is "Sender: Message"
 
                   return (
                     <Button
