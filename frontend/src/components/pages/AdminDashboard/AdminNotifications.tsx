@@ -18,6 +18,7 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
+  senderName: string; // Add senderName property
 }
 
 const AdminDashboard: React.FC = () => {
@@ -230,11 +231,11 @@ const AdminDashboard: React.FC = () => {
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
                 {activeChats.map((chatId) => {
                   const chat = notifications.find((n) => n.chatId === chatId);
-                  const message = chat?.message || '';
-                  const senderName = message.includes(':')
-                    ? message.split(':')[0].trim()
-                    : 'Unknown Sender';
 
+                  // Ensure the chat has the senderName from the notification
+                  const senderName = chat?.senderName || 'Unknown Sender'; // Use senderName directly from the notification payload
+
+                  console.log('Sender Name:', senderName); // For debugging
                   return (
                     <Button
                       key={chatId}
