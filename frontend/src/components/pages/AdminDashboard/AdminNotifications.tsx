@@ -1,4 +1,5 @@
- 'use client';
+
+'use client';
 
 import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
@@ -95,41 +96,41 @@ const AdminDashboard: React.FC = () => {
       handleCloseChat(data.chatId);
     });
 
- newSocket.on(
-   'newChatNotification',
-   (data: { message: string; chatId: string; senderName: string }) => {
-     console.log('New chat notification received:', data);
-     setNotifications((prev) => {
-       const updatedNotifications: Notification[] = [
-         ...prev,
-         { type: 'newChat', ...data },
-       ];
-       localStorage.setItem(
-         'notifications',
-         JSON.stringify(updatedNotifications)
-       );
-       return updatedNotifications;
-     });
-   }
- );
+    newSocket.on(
+      'newChatNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New chat notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newChat', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
- newSocket.on(
-   'newMessageNotification',
-   (data: { message: string; chatId: string; senderName: string }) => {
-     console.log('New message notification received:', data);
-     setNotifications((prev) => {
-       const updatedNotifications: Notification[] = [
-         ...prev,
-         { type: 'newMessage', ...data },
-       ];
-       localStorage.setItem(
-         'notifications',
-         JSON.stringify(updatedNotifications)
-       );
-       return updatedNotifications;
-     });
-   }
- );
+    newSocket.on(
+      'newMessageNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New message notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newMessage', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
     return () => {
       newSocket.disconnect();
@@ -172,7 +173,7 @@ const AdminDashboard: React.FC = () => {
           md:relative md:translate-x-0
           ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
-      >
+          >
         <div className='h-full flex flex-col'>
           <div className='p-4 bg-primary_main text-primary-foreground flex justify-between items-center'>
             <h1 className='text-xl font-bold'>Admin Dashboard</h1>
@@ -181,7 +182,7 @@ const AdminDashboard: React.FC = () => {
               size='icon'
               className='md:hidden'
               onClick={toggleMobileSidebar}
-            >
+              >
               <X className='h-6 w-6' />
             </Button>
           </div>
@@ -199,10 +200,10 @@ const AdminDashboard: React.FC = () => {
               <ScrollArea className='h-40 rounded-md border p-2'>
                 {notifications.map((notification, index) => (
                   <Button
-                    key={index}
-                    onClick={() => handleNotificationClick(notification.chatId)}
-                    className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
-                    variant='ghost'
+                  key={index}
+                  onClick={() => handleNotificationClick(notification.chatId)}
+                  className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
+                  variant='ghost'
                   >
                     <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0 text-primary' />
                     <span className='truncate text-sm'>
@@ -230,15 +231,12 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
                 {activeChats.map((chatId) => {
+                  // Retrieve sender information dynamically
                   const chat = notifications.find((n) => n.chatId === chatId);
-
-                  // Make sure the message exists and follows the expected format
-                  const message = chat?.message || '';
-                  const senderName = message.includes(':')
-                    ? message.split(':')[0].trim() // Get the part before ':'
-                    : 'Unknown Sender'; // If message doesn't follow the format
-
-                  console.log('Sender Name:', senderName); // For debugging
+                  const senderName =
+                  chat?.message.split(':')[0].trim() || 'User'; // Assuming format is "Sender: Message"
+                  
+                  console.log('Sender Name:', senderName);
                   return (
                     <Button
                       key={chatId}
