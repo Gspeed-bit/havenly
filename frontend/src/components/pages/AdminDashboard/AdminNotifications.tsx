@@ -18,6 +18,7 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
+  senderName: string;
 }
 
 const AdminDashboard: React.FC = () => {
