@@ -230,7 +230,7 @@ const AdminDashboard: React.FC = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
-                // Inside the Active Chats section:
+                
                 {activeChats.map((chatId) => {
                   const chat = notifications.find((n) => n.chatId === chatId);
 
