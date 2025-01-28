@@ -92,7 +92,7 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
     if (sender !== chat.adminId.toString()) {
       io.to(`admin-${chat.adminId}`).emit('newMessageNotification', {
         type: 'newMessage',
-        message: `New message from ${senderName} .`,
+        message: `New message from ${senderName}.`,
         chatId: chat._id,
         userId: sender, // Ensure admin knows who sent the message
       });
