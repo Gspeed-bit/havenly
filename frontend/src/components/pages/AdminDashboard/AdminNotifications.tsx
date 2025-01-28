@@ -231,19 +231,9 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
                 {activeChats.map((chatId) => {
-                  // Find the notification for the current chat
+                  // Retrieve sender information dynamically
                   const chat = notifications.find((n) => n.chatId === chatId);
-                  // Extract the sender name from the message content
-                  const senderName = (() => {
-                    if (chat?.message) {
-                      // Try to extract the sender's name before the first colon
-                      const parts = chat.message.split(':');
-                      return parts.length > 1 ? parts[0].trim() : 'User'; // Use the part before the colon, fallback to 'User'
-                    }
-                    return 'User'; // Fallback if no message is found
-                  })();
-
-                  console.log('Sender Name:', senderName); // Debugging to see the extracted sender name
+                  const senderName = chat?.senderName || 'User'; // Use senderName if available, otherwise default to 'User'
 
                   return (
                     <Button
