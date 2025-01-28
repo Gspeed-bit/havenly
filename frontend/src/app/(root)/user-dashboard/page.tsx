@@ -17,6 +17,10 @@ interface Notification {
   type: 'newMessage';
   message: string;
   chatId: string;
+  propertyDetails?: {
+    agentName?: string;
+    companyName?: string;
+  };
 }
 
 const UserDashboardContent = () => {
@@ -44,20 +48,20 @@ const UserDashboardContent = () => {
     setActiveChats(storedActiveChats);
   }, []);
 
-  const fetchActiveChats = useCallback(async () => {
-    try {
-      const response = await getChatsByUser();
-      if (response.status === 'success' && Array.isArray(response.data)) {
-        const chatIds = response.data.map((chat) => chat._id);
-        setActiveChats(chatIds);
-        localStorage.setItem('activeChats', JSON.stringify(chatIds));
-      } else {
-        console.error('Failed to fetch active chats:', response.message);
-      }
-    } catch (error) {
-      console.error('Error fetching active chats:', error);
+const fetchActiveChats = useCallback(async () => {
+  try {
+    const response = await getChatsByUser();
+    if (response.status === 'success' && Array.isArray(response.data)) {
+      const chatIds = response.data.map((chat) => chat._id);
+      setActiveChats(chatIds);
+      localStorage.setItem('activeChats', JSON.stringify(chatIds));
+    } else {
+      console.error('Failed to fetch active chats:', response.message);
     }
-  }, []);
+  } catch (error) {
+    console.error('Error fetching active chats:', error);
+  }
+}, []);
 
   useEffect(() => {
     fetchActiveChats();
@@ -148,35 +152,45 @@ const UserDashboardContent = () => {
                 )}
               </h2>
               <div className='space-y-2'>
-                {activeChats.map((chatId) => (
-                  <Button
-                    key={chatId}
-                    onClick={() => handleNotificationClick(chatId)}
-                    className={`w-full justify-start text-left p-2 rounded-lg transition-colors ${
-                      selectedChat === chatId
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-gray-100'
-                    }`}
-                    variant='ghost'
-                  >
-                    <Avatar className='h-8 w-8 mr-3'>
-                      <AvatarImage
-                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
-                      />
-                      <AvatarFallback>
-                        {chatId.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='flex flex-col items-start overflow-hidden'>
-                      <span className='font-medium truncate w-full'>
-                        Chat {chatId}
-                      </span>
-                      <span className='text-xs text-muted-foreground truncate w-full'>
-                        Last message...
-                      </span>
-                    </div>
-                  </Button>
-                ))}
+                {activeChats.map((chatId) => {
+                  // Find the corresponding chat from the activeChats data
+                  const chat = notifications.find(
+                    (notif) => notif.chatId === chatId
+                  );
+                  const agentName =
+                    chat?.propertyDetails?.agentName || 'Unknown Agent';
+
+                  return (
+                    <Button
+                      key={chatId}
+                      onClick={() => handleNotificationClick(chatId)}
+                      className={`w-full justify-start text-left p-2 rounded-lg transition-colors ${
+                        selectedChat === chatId
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-gray-100'
+                      }`}
+                      variant='ghost'
+                    >
+                      <Avatar className='h-8 w-8 mr-3'>
+                        <AvatarImage
+                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
+                        />
+                        <AvatarFallback>
+                          {chatId.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex flex-col items-start overflow-hidden'>
+                        <span className='font-medium truncate w-full'>
+                          Chat {chatId}
+                        </span>
+                        {/* Displaying the agent's name */}
+                        <span className='text-xs text-muted-foreground truncate w-full'>
+                          Agent: {agentName}
+                        </span>
+                      </div>
+                    </Button>
+                  );
+                })}
                 {activeChats.length === 0 && (
                   <p className='text-muted-foreground text-center py-4'>
                     No active chats
