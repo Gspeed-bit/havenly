@@ -14,7 +14,7 @@ const Header = () => {
               strokeWidth={1.75}
               className='size-4'
             />
-            <span className='text-sm'>
+            <span className='md:text-sm text-xs'>
               Havenly, Musterstraße 123 45127 Dortmund, Deutschland
             </span>
           </div>
