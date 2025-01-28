@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
@@ -18,7 +18,6 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
-  senderName: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -230,12 +229,14 @@ const AdminDashboard: React.FC = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
-                
                 {activeChats.map((chatId) => {
                   const chat = notifications.find((n) => n.chatId === chatId);
 
-                  // Ensure the chat has the senderName from the notification
-                  const senderName = chat?.senderName || 'Unknown Sender'; // Use senderName directly from the notification payload
+                  // Make sure the message exists and follows the expected format
+                  const message = chat?.message || '';
+                  const senderName = message.includes(':')
+                    ? message.split(':')[0].trim() // Get the part before ':'
+                    : 'Unknown Sender'; // If message doesn't follow the format
 
                   console.log('Sender Name:', senderName); // For debugging
                   return (
