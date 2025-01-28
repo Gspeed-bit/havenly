@@ -96,61 +96,41 @@ const AdminDashboard: React.FC = () => {
       handleCloseChat(data.chatId);
     });
 
-newSocket.on(
-  'newChatNotification',
-  (data: { message: string; chatId: string; senderName: string }) => {
-    console.log('New chat notification received:', data);
-    setNotifications((prev) => {
-      const updatedNotifications: Notification[] = [
-        ...prev,
-        { type: 'newChat', ...data },
-      ];
-      localStorage.setItem(
-        'notifications',
-        JSON.stringify(updatedNotifications)
-      );
+    newSocket.on(
+      'newChatNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New chat notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newChat', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
-      // Remove notification after 5 seconds
-      setTimeout(() => {
-        setNotifications((prevNotifications) =>
-          prevNotifications.filter(
-            (notification) => notification.chatId !== data.chatId
-          )
-        );
-      }, 5000);
-
-      return updatedNotifications;
-    });
-  }
-);
-
-newSocket.on(
-  'newMessageNotification',
-  (data: { message: string; chatId: string; senderName: string }) => {
-    console.log('New message notification received:', data);
-    setNotifications((prev) => {
-      const updatedNotifications: Notification[] = [
-        ...prev,
-        { type: 'newMessage', ...data },
-      ];
-      localStorage.setItem(
-        'notifications',
-        JSON.stringify(updatedNotifications)
-      );
-
-      // Remove notification after 5 seconds
-      setTimeout(() => {
-        setNotifications((prevNotifications) =>
-          prevNotifications.filter(
-            (notification) => notification.chatId !== data.chatId
-          )
-        );
-      }, 5000);
-
-      return updatedNotifications;
-    });
-  }
-);
+    newSocket.on(
+      'newMessageNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New message notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newMessage', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
     return () => {
       newSocket.disconnect();
@@ -253,8 +233,8 @@ newSocket.on(
                 {activeChats.map((chatId) => {
                   // Retrieve sender information dynamically
                   const chat = notifications.find((n) => n.chatId === chatId);
-                  const senderName =
-                  chat?.message.split(':')[0].trim() || 'User'; // Assuming format is "Sender: Message"
+                 const senderName =
+                   (chat?.message.split(':')[0]?.trim() || 'User') ?? 'User';// Assuming format is "Sender: Message"
                   
                   console.log('Sender Name:', senderName);
                   return (
