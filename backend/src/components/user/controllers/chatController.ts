@@ -26,15 +26,17 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
       chat = await Chat.create({
         propertyId,
         users: [userId],
-        adminId: property.adminId, // Assign the specific admin to the chat
+        adminId: property.adminId, // Assign specific admin to the chat
         messages: [],
       });
     }
 
     // Notify the specific admin
     io.to(`admin-${property.adminId}`).emit('newChatNotification', {
+      type: 'newChat',
       message: `A new chat has been started for property "${property.title}".`,
       chatId: chat._id,
+      userId, // Ensure the admin knows which user started the chat
     });
 
     // Notify the user
@@ -43,12 +45,11 @@ export const startChat = async (req: Request, res: Response, io: Server) => {
       chatId: chat._id,
     });
 
-    // Return the chat data in the expected format
     res.status(201).json({
       status: 'success',
-      message: 'Request successful',
+      message: 'Chat started successfully',
       data: {
-        _id: chat._id, // Ensure this field is included
+        _id: chat._id,
         propertyId: chat.propertyId,
         users: chat.users,
         adminId: chat.adminId,
@@ -71,13 +72,10 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
     }
 
     const chat = await Chat.findById(chatId);
-    if (!chat) {
-      return res.status(404).json({ message: 'Chat not found' });
-    }
+    if (!chat) return res.status(404).json({ message: 'Chat not found' });
 
-    if (chat.isClosed) {
+    if (chat.isClosed)
       return res.status(400).json({ message: 'Chat is closed' });
-    }
 
     const newMessage: IMessage = {
       sender,
@@ -90,10 +88,13 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
 
     io.to(chatId).emit('receiveMessage', newMessage);
 
+    // Notify the admin if the message is from a user
     if (sender !== chat.adminId.toString()) {
       io.to(`admin-${chat.adminId}`).emit('newMessageNotification', {
+        type: 'newMessage',
         message: `New message from ${senderName} in chat ${chatId}.`,
         chatId: chat._id,
+        userId: sender, // Ensure admin knows who sent the message
       });
     }
 
