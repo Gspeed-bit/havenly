@@ -43,7 +43,7 @@ const MainContent = () => {
 
   return (
     <>
-      <main className='container mx-auto px-4 mt-8 sm:mt-16 relative z-10'>
+      <main className='container mx-auto px-4 mt-8 sm:mt-16 pb-10 relative z-10'>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center'>
           {/* Left Section */}
           <div className='order-2 lg:order-1'>
@@ -163,10 +163,11 @@ const MainContent = () => {
           </div>
         </div>
         <TrustBanner />
+        <WhoAreWe />
 
         {!isAdmin && <PropertyListForUser filters={filters} />}
       </main>
-      <WhoAreWe />
+
       <OurTeam />
       <Testimonials />
       <BecomeAgent />
