@@ -79,62 +79,71 @@ const AdminDashboard: React.FC = () => {
     [selectedChat]
   );
 
-  useEffect(() => {
-    if (!user || !user.isAdmin) return;
+useEffect(() => {
+  if (!user || !user.isAdmin) return;
 
-    const newSocket = io('https://havenly-chdr.onrender.com', {
-      query: { userId: user._id, isAdmin: true },
-    });
-    setSocket(newSocket);
-
-    newSocket.on('connect', () => {
-      console.log('Admin connected to Socket.io server');
-    });
-
-    newSocket.on('chatClosed', (data: { chatId: string }) => {
-      console.log(
-        `Chat closed notification received for chatId: ${data.chatId}`
-      );
-      handleCloseChat(data.chatId);
-    });
-
-    newSocket.on(
-      'newChatNotification',
-      (data: { message: string; chatId: string }) => {
-        console.log('New chat notification received:', data);
-        setNotifications((prev) => {
-          const updatedNotifications: Notification[] = [
-            ...prev,
-            {
-              type: 'newChat', ...data,
-              senderName: ''
-            },
-          ];
-          localStorage.setItem(
-            'notifications',
-            JSON.stringify(updatedNotifications)
-          );
-          return updatedNotifications;
-        });
-      }
-    );
-
- newSocket.on('newMessageNotification', (data: { message: string; chatId: string, senderName: string }) => {
-  console.log('New message notification received:', data);
-  setNotifications((prev) => {
-    const updatedNotifications: Notification[] = [
-      ...prev,
-      { type: 'newMessage', ...data },
-    ];
-    localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
-    return updatedNotifications;
+  const newSocket = io('https://havenly-chdr.onrender.com', {
+    query: { userId: user._id, isAdmin: true },
   });
-});
+  setSocket(newSocket);
 
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [user, handleCloseChat]);
+  newSocket.on('connect', () => {
+    console.log('Admin connected to Socket.io server');
+  });
+
+  newSocket.on('chatClosed', (data: { chatId: string }) => {
+    console.log(`Chat closed notification received for chatId: ${data.chatId}`);
+    handleCloseChat(data.chatId);
+  });
+
+  newSocket.on(
+    'newChatNotification',
+    (data: { message: string; chatId: string; senderName: string }) => {
+      console.log('New chat notification received:', data);
+      setNotifications((prev) => {
+        const updatedNotifications: Notification[] = [
+          ...prev,
+          {
+            type: 'newChat',
+            ...data,
+            senderName: data.senderName || 'Unknown Sender', // Ensure senderName is set
+          },
+        ];
+        localStorage.setItem(
+          'notifications',
+          JSON.stringify(updatedNotifications)
+        );
+        return updatedNotifications;
+      });
+    }
+  );
+
+  newSocket.on(
+    'newMessageNotification',
+    (data: { message: string; chatId: string; senderName: string }) => {
+      console.log('New message notification received:', data);
+      setNotifications((prev) => {
+        const updatedNotifications: Notification[] = [
+          ...prev,
+          {
+            type: 'newMessage',
+            ...data,
+            senderName: data.senderName || 'Unknown Sender', // Ensure senderName is set
+          },
+        ];
+        localStorage.setItem(
+          'notifications',
+          JSON.stringify(updatedNotifications)
+        );
+        return updatedNotifications;
+      });
+    }
+  );
+
+  return () => {
+    newSocket.disconnect();
+  };
+}, [user, handleCloseChat]);
 
   useEffect(() => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
@@ -200,7 +209,7 @@ const AdminDashboard: React.FC = () => {
                       <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
                       <span className='truncate text-sm'>
                         {notification.message} -{' '}
-                        <strong>{notification.senderName}</strong>
+                        <strong>{notification.senderName}</strong>{' '}
                       </span>
                     </Button>
                   ))}
@@ -239,14 +248,15 @@ const AdminDashboard: React.FC = () => {
                           src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
                         />
                         <AvatarFallback>
-                          {chatId.slice(0, 2).toUpperCase()}
+                          {String(chatId).slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
 
                       <div className='flex flex-col items-start'>
                         <span className='font-medium'>
                           {/* Use the sender's name */}
-                          {notifications.find(n => n.chatId === chatId)?.senderName || 'User'}
+                          {notifications.find((n) => n.chatId === chatId)
+                            ?.senderName || 'User'}
                         </span>
                         <span className='text-xs text-muted-foreground'>
                           Last message...
