@@ -18,6 +18,7 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
+  senderName: string; // Add senderName property
 }
 
 const AdminDashboard: React.FC = () => {
@@ -95,41 +96,41 @@ const AdminDashboard: React.FC = () => {
       handleCloseChat(data.chatId);
     });
 
-    newSocket.on(
-      'newChatNotification',
-      (data: { message: string; chatId: string }) => {
-        console.log('New chat notification received:', data);
-        setNotifications((prev) => {
-          const updatedNotifications: Notification[] = [
-            ...prev,
-            { type: 'newChat', ...data },
-          ];
-          localStorage.setItem(
-            'notifications',
-            JSON.stringify(updatedNotifications)
-          );
-          return updatedNotifications;
-        });
-      }
-    );
+ newSocket.on(
+   'newChatNotification',
+   (data: { message: string; chatId: string; senderName: string }) => {
+     console.log('New chat notification received:', data);
+     setNotifications((prev) => {
+       const updatedNotifications: Notification[] = [
+         ...prev,
+         { type: 'newChat', ...data },
+       ];
+       localStorage.setItem(
+         'notifications',
+         JSON.stringify(updatedNotifications)
+       );
+       return updatedNotifications;
+     });
+   }
+ );
 
-    newSocket.on(
-      'newMessageNotification',
-      (data: { message: string; chatId: string }) => {
-        console.log('New message notification received:', data);
-        setNotifications((prev) => {
-          const updatedNotifications: Notification[] = [
-            ...prev,
-            { type: 'newMessage', ...data },
-          ];
-          localStorage.setItem(
-            'notifications',
-            JSON.stringify(updatedNotifications)
-          );
-          return updatedNotifications;
-        });
-      }
-    );
+ newSocket.on(
+   'newMessageNotification',
+   (data: { message: string; chatId: string; senderName: string }) => {
+     console.log('New message notification received:', data);
+     setNotifications((prev) => {
+       const updatedNotifications: Notification[] = [
+         ...prev,
+         { type: 'newMessage', ...data },
+       ];
+       localStorage.setItem(
+         'notifications',
+         JSON.stringify(updatedNotifications)
+       );
+       return updatedNotifications;
+     });
+   }
+ );
 
     return () => {
       newSocket.disconnect();
@@ -162,7 +163,7 @@ const AdminDashboard: React.FC = () => {
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen((prev) => !prev);
   };
-
+  
   return (
     <div className='flex flex-col md:flex-row h-screen bg-gray-100'>
       {/* Sidebar */}
@@ -171,7 +172,7 @@ const AdminDashboard: React.FC = () => {
           fixed inset-y-0 left-0 z-50 w-[24rem] bg-white shadow-lg transform transition-transform duration-300 ease-in-out
           md:relative md:translate-x-0
           ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+          `}
       >
         <div className='h-full flex flex-col'>
           <div className='p-4 bg-primary_main text-primary-foreground flex justify-between items-center'>
@@ -229,12 +230,14 @@ const AdminDashboard: React.FC = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
+                // Inside the Active Chats section:
                 {activeChats.map((chatId) => {
-                  // Retrieve sender information dynamically
                   const chat = notifications.find((n) => n.chatId === chatId);
-                  const senderName =
-                    chat?.message.split(':')[0].trim() || 'User'; // Assuming format is "Sender: Message"
 
+                  // Ensure the chat has the senderName from the notification
+                  const senderName = chat?.senderName || 'Unknown Sender'; // Use senderName directly from the notification payload
+
+                  console.log('Sender Name:', senderName); // For debugging
                   return (
                     <Button
                       key={chatId}
