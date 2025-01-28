@@ -92,7 +92,7 @@ export const sendMessage = async (req: Request, res: Response, io: Server) => {
     if (sender !== chat.adminId.toString()) {
       io.to(`admin-${chat.adminId}`).emit('newMessageNotification', {
         type: 'newMessage',
-        message: `New message from ${senderName} in chat ${chatId}.`,
+        message: `New message from ${senderName} .`,
         chatId: chat._id,
         userId: sender, // Ensure admin knows who sent the message
       });
@@ -237,9 +237,8 @@ export const getChatsByUser = async (req: Request, res: Response) => {
     // Map the response to match the frontend's expected structure
     const formattedChats = chats.map((chat) => {
       const property = chat.propertyId as unknown as IProperty;
-
       return {
-        _id: chat._id, // Move _id to the top level
+        _id: chat._id,
         propertyDetails: {
           title: property.title,
           agentName: property.agent?.name || 'Unknown Agent',
@@ -250,7 +249,7 @@ export const getChatsByUser = async (req: Request, res: Response) => {
       };
     });
 
-    console.log('Formatted chats:', formattedChats); // Log the formatted chats
+     console.log('Formatted chats:', formattedChats); // Log the formatted chats
 
     // Return the response with data as an array direct
     res.status(200).json(formattedChats); // Remove the `status` and `data` wrapper
