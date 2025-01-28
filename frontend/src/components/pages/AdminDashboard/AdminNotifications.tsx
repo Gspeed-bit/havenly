@@ -18,7 +18,6 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
-  senderName: string; // Add senderName property
 }
 
 const AdminDashboard: React.FC = () => {
@@ -96,41 +95,61 @@ const AdminDashboard: React.FC = () => {
       handleCloseChat(data.chatId);
     });
 
- newSocket.on(
-   'newChatNotification',
-   (data: { message: string; chatId: string; senderName: string }) => {
-     console.log('New chat notification received:', data);
-     setNotifications((prev) => {
-       const updatedNotifications: Notification[] = [
-         ...prev,
-         { type: 'newChat', ...data },
-       ];
-       localStorage.setItem(
-         'notifications',
-         JSON.stringify(updatedNotifications)
-       );
-       return updatedNotifications;
-     });
-   }
- );
+    newSocket.on(
+      'newChatNotification',
+      (data: { message: string; chatId: string; senderName: string }) => {
+        console.log('New chat notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newChat', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
 
- newSocket.on(
-   'newMessageNotification',
-   (data: { message: string; chatId: string; senderName: string }) => {
-     console.log('New message notification received:', data);
-     setNotifications((prev) => {
-       const updatedNotifications: Notification[] = [
-         ...prev,
-         { type: 'newMessage', ...data },
-       ];
-       localStorage.setItem(
-         'notifications',
-         JSON.stringify(updatedNotifications)
-       );
-       return updatedNotifications;
-     });
-   }
- );
+          // Remove notification after 5 seconds
+          setTimeout(() => {
+            setNotifications((prevNotifications) =>
+              prevNotifications.filter(
+                (notification) => notification.chatId !== data.chatId
+              )
+            );
+          }, 5000);
+
+          return updatedNotifications;
+        });
+      }
+    );
+
+    newSocket.on(
+      'newMessageNotification',
+      (data: { message: string; chatId: string; senderName: string }) => {
+        console.log('New message notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newMessage', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+
+          // Remove notification after 5 seconds
+          setTimeout(() => {
+            setNotifications((prevNotifications) =>
+              prevNotifications.filter(
+                (notification) => notification.chatId !== data.chatId
+              )
+            );
+          }, 5000);
+
+          return updatedNotifications;
+        });
+      }
+    );
 
     return () => {
       newSocket.disconnect();
@@ -141,29 +160,10 @@ const AdminDashboard: React.FC = () => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
   }, [activeChats]);
 
-  const handleNotificationClick = (chatId: string) => {
-    setActiveChats((prev) => {
-      if (!prev.includes(chatId)) {
-        return [...prev, chatId];
-      }
-      return prev;
-    });
-    setNotifications((prev) => {
-      const updatedNotifications = prev.filter((n) => n.chatId !== chatId);
-      localStorage.setItem(
-        'notifications',
-        JSON.stringify(updatedNotifications)
-      );
-      return updatedNotifications;
-    });
-    setSelectedChat(chatId);
-    setIsMobileSidebarOpen(false);
-  };
-
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen((prev) => !prev);
   };
-  
+
   return (
     <div className='flex flex-col md:flex-row h-screen bg-gray-100'>
       {/* Sidebar */}
@@ -199,17 +199,15 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <ScrollArea className='h-40 rounded-md border p-2'>
                 {notifications.map((notification, index) => (
-                  <Button
+                  <div
                     key={index}
-                    onClick={() => handleNotificationClick(notification.chatId)}
-                    className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
-                    variant='ghost'
+                    className='w-full p-2 mb-2 rounded-md transition-colors'
                   >
                     <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0 text-primary' />
                     <span className='truncate text-sm'>
                       {notification.message}
                     </span>
-                  </Button>
+                  </div>
                 ))}
                 {notifications.length === 0 && (
                   <p className='text-muted-foreground text-center py-4'>
@@ -230,14 +228,13 @@ const AdminDashboard: React.FC = () => {
                 )}
               </h2>
               <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
-                // Inside the Active Chats section:
                 {activeChats.map((chatId) => {
                   const chat = notifications.find((n) => n.chatId === chatId);
+                  const message = chat?.message || '';
+                  const senderName = message.includes(':')
+                    ? message.split(':')[0].trim()
+                    : 'Unknown Sender';
 
-                  // Ensure the chat has the senderName from the notification
-                  const senderName = chat?.senderName || 'Unknown Sender'; // Use senderName directly from the notification payload
-
-                  console.log('Sender Name:', senderName); // For debugging
                   return (
                     <Button
                       key={chatId}
