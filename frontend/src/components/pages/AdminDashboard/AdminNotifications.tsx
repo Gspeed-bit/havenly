@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import io, { Socket } from 'socket.io-client';
+import type React from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import io, { type Socket } from 'socket.io-client';
 import { useUserStore } from '@/store/users';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Bell, MessageSquare, Menu } from 'lucide-react';
+import { Bell, MessageSquare, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
@@ -17,7 +18,6 @@ interface Notification {
   type: 'newChat' | 'newMessage';
   message: string;
   chatId: string;
-  senderName: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -30,7 +30,7 @@ const AdminDashboard: React.FC = () => {
     JSON.parse(localStorage.getItem('activeChats') || '[]')
   );
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user } = useUserStore();
 
   const handleCloseChat = useCallback(
@@ -44,10 +44,7 @@ const AdminDashboard: React.FC = () => {
         if (response.status === 'success') {
           setActiveChats((prev) => {
             const updatedChats = prev.filter((id) => id !== chatId);
-
-            // Remove from local storage when chat is closed
             localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-
             return updatedChats;
           });
 
@@ -79,71 +76,65 @@ const AdminDashboard: React.FC = () => {
     [selectedChat]
   );
 
-useEffect(() => {
-  if (!user || !user.isAdmin) return;
+  useEffect(() => {
+    if (!user || !user.isAdmin) return;
 
-  const newSocket = io('https://havenly-chdr.onrender.com', {
-    query: { userId: user._id, isAdmin: true },
-  });
-  setSocket(newSocket);
+    const newSocket = io('https://havenly-chdr.onrender.com', {
+      query: { userId: user._id, isAdmin: true },
+    });
+    setSocket(newSocket);
 
-  newSocket.on('connect', () => {
-    console.log('Admin connected to Socket.io server');
-  });
+    newSocket.on('connect', () => {
+      console.log('Admin connected to Socket.io server');
+    });
 
-  newSocket.on('chatClosed', (data: { chatId: string }) => {
-    console.log(`Chat closed notification received for chatId: ${data.chatId}`);
-    handleCloseChat(data.chatId);
-  });
+    newSocket.on('chatClosed', (data: { chatId: string }) => {
+      console.log(
+        `Chat closed notification received for chatId: ${data.chatId}`
+      );
+      handleCloseChat(data.chatId);
+    });
 
-  newSocket.on(
-    'newChatNotification',
-    (data: { message: string; chatId: string; senderName: string }) => {
-      console.log('New chat notification received:', data);
-      setNotifications((prev) => {
-        const updatedNotifications: Notification[] = [
-          ...prev,
-          {
-            type: 'newChat',
-            ...data,
-            senderName: data.senderName || 'Unknown Sender', // Ensure senderName is set
-          },
-        ];
-        localStorage.setItem(
-          'notifications',
-          JSON.stringify(updatedNotifications)
-        );
-        return updatedNotifications;
-      });
-    }
-  );
+    newSocket.on(
+      'newChatNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New chat notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newChat', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
-  newSocket.on(
-    'newMessageNotification',
-    (data: { message: string; chatId: string; senderName: string }) => {
-      console.log('New message notification received:', data);
-      setNotifications((prev) => {
-        const updatedNotifications: Notification[] = [
-          ...prev,
-          {
-            type: 'newMessage',
-            ...data,
-            senderName: data.senderName || 'Unknown Sender', // Ensure senderName is set
-          },
-        ];
-        localStorage.setItem(
-          'notifications',
-          JSON.stringify(updatedNotifications)
-        );
-        return updatedNotifications;
-      });
-    }
-  );
+    newSocket.on(
+      'newMessageNotification',
+      (data: { message: string; chatId: string }) => {
+        console.log('New message notification received:', data);
+        setNotifications((prev) => {
+          const updatedNotifications: Notification[] = [
+            ...prev,
+            { type: 'newMessage', ...data },
+          ];
+          localStorage.setItem(
+            'notifications',
+            JSON.stringify(updatedNotifications)
+          );
+          return updatedNotifications;
+        });
+      }
+    );
 
-  return () => {
-    newSocket.disconnect();
-  };
-}, [user, handleCloseChat]);
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [user, handleCloseChat]);
 
   useEffect(() => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
@@ -165,130 +156,142 @@ useEffect(() => {
       return updatedNotifications;
     });
     setSelectedChat(chatId);
+    setIsMobileSidebarOpen(false);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen((prev) => !prev);
   };
-
+  
   return (
-    <div className='flex flex-col sm:flex-row h-screen bg-gray-100'>
+    <div className='flex flex-col md:flex-row h-screen bg-gray-100'>
+      {/* Sidebar */}
       <div
-        className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? 'w-full sm:w-80' : 'w-0'
-        } ${isSidebarOpen ? 'block' : 'hidden sm:block'}`}
-        aria-hidden={isSidebarOpen ? 'false' : 'true'} // Consider replacing with inert
-        tabIndex={isSidebarOpen ? undefined : -1} // Adding or removing tabIndex for focus management
-      >
-        {isSidebarOpen && (
-          <div className='h-full flex flex-col'>
-            <div className='p-4 bg-primary_main text-primary-foreground'>
-              <h1 className='text-2xl font-bold'>Admin Dashboard</h1>
+        className={`
+          fixed inset-y-0 left-0 z-50 w-[24rem] bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          md:relative md:translate-x-0
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+          >
+        <div className='h-full flex flex-col'>
+          <div className='p-4 bg-primary_main text-primary-foreground flex justify-between items-center'>
+            <h1 className='text-xl font-bold'>Admin Dashboard</h1>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='md:hidden'
+              onClick={toggleMobileSidebar}
+              >
+              <X className='h-6 w-6' />
+            </Button>
+          </div>
+          <div className='flex-1 overflow-hidden'>
+            <div className='p-4 space-y-4'>
+              <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                <Bell className='h-5 w-5 mr-2 text-primary' />
+                Notifications
+                {notifications.length > 0 && (
+                  <Badge variant='destructive' className='ml-2'>
+                    {notifications.length}
+                  </Badge>
+                )}
+              </h2>
+              <ScrollArea className='h-40 rounded-md border p-2'>
+                {notifications.map((notification, index) => (
+                  <Button
+                  key={index}
+                  onClick={() => handleNotificationClick(notification.chatId)}
+                  className='w-full justify-start text-left p-2 hover:bg-gray-100 mb-2 rounded-md transition-colors'
+                  variant='ghost'
+                  >
+                    <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0 text-primary' />
+                    <span className='truncate text-sm'>
+                      {notification.message}
+                    </span>
+                  </Button>
+                ))}
+                {notifications.length === 0 && (
+                  <p className='text-muted-foreground text-center py-4'>
+                    No new notifications
+             </p>
+                )}
+              </ScrollArea>
             </div>
-            <div className='flex-1 overflow-hidden'>
-              <div className='p-4'>
-                <h2 className='text-lg font-semibold mb-2 flex items-center'>
-                  <Bell className='h-5 w-5 mr-2' />
-                  Notifications
-                  {notifications.length > 0 && (
-                    <Badge variant='destructive' className='ml-2'>
-                      {notifications.length}
-                    </Badge>
-                  )}
-                </h2>
-                <ScrollArea className='h-40 rounded-md border'>
-                  {notifications.map((notification, index) => (
-                    <Button
-                      key={index}
-                      onClick={() =>
-                        handleNotificationClick(notification.chatId)
-                      }
-                      className='w-full justify-start text-left p-2 hover:bg-gray-100'
-                      variant='ghost'
-                    >
-                      <MessageSquare className='h-4 w-4 mr-2 flex-shrink-0' />
-                      <span className='truncate text-sm'>
-                        {notification.message} -{' '}
-                        <strong>{notification.senderName}</strong>{' '}
-                      </span>
-                    </Button>
-                  ))}
-                  {notifications.length === 0 && (
-                    <p className='text-muted-foreground text-center py-4'>
-                      No new notifications
-                    </p>
-                  )}
-                </ScrollArea>
-              </div>
-              <Separator />
-              <div className='p-4'>
-                <h2 className='text-lg font-semibold mb-2 flex items-center'>
-                  <MessageSquare className='h-5 w-5 mr-2' />
-                  Active Chats
-                  {activeChats.length > 0 && (
-                    <Badge variant='secondary' className='ml-2'>
-                      {activeChats.length}
-                    </Badge>
-                  )}
-                </h2>
-                <ScrollArea className='h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)]'>
-                  {activeChats.map((chatId) => (
+            <Separator className='my-4' />
+            <div className='p-4 space-y-4'>
+              <h2 className='text-lg font-semibold mb-2 flex items-center'>
+                <MessageSquare className='h-5 w-5 mr-2 text-primary' />
+                
+                Active Chats
+                {activeChats.length > 0 && (
+                  <Badge variant='secondary' className='ml-2'>
+                    {activeChats.length}
+                  </Badge>
+                )}
+              </h2>
+              <ScrollArea className='h-[calc(100vh-360px)] pr-2'>
+                {activeChats.map((chatId) => {
+                  // Retrieve sender information dynamically
+                  const chat = notifications.find((n) => n.chatId === chatId);
+                  const senderName =
+                    chat?.message.split(':')[0].trim() || 'User'; // Assuming format is "Sender: Message"
+
+                  return (
                     <Button
                       key={chatId}
-                      onClick={() => setSelectedChat(chatId)}
-                      className={`w-full justify-start text-left p-2 mb-2 ${
+                      onClick={() => {
+                        setSelectedChat(chatId);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                      className={`w-full justify-start text-left p-2 mb-2 rounded-lg transition-colors ${
                         selectedChat === chatId
                           ? 'bg-primary text-primary-foreground'
                           : 'hover:bg-gray-100'
                       }`}
                       variant='ghost'
                     >
-                      <Avatar className='h-10 w-10 mr-3'>
+                      <Avatar className='h-5 w-5 mr-3'>
                         <AvatarImage
-                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${chatId}`}
+                          src={`https://api.dicebear.com/6.x/initials/svg?seed=${senderName}`}
                         />
                         <AvatarFallback>
-                          {String(chatId).slice(0, 2).toUpperCase()}
+                          {senderName.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-
                       <div className='flex flex-col items-start'>
-                        <span className='font-medium'>
-                          {/* Use the sender's name */}
-                          {notifications.find((n) => n.chatId === chatId)
-                            ?.senderName || 'User'}
-                        </span>
+                        <span className='font-medium'>{senderName}</span>
                         <span className='text-xs text-muted-foreground'>
                           Last message...
                         </span>
                       </div>
                     </Button>
-                  ))}
-                  {activeChats.length === 0 && (
-                    <p className='text-muted-foreground text-center py-4'>
-                      No active chats
-                    </p>
-                  )}
-                </ScrollArea>
-              </div>
+                  );
+                })}
+                {activeChats.length === 0 && (
+                  <p className='text-muted-foreground text-center py-4'>
+                    No active chats
+                  </p>
+                )}
+              </ScrollArea>
             </div>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Main Content */}
       <div className='flex-1 flex flex-col'>
-        <Button
-          onClick={toggleSidebar}
-          className='absolute top-4 left-4 z-10 sm:hidden'
-          variant='outline'
-          size='icon'
-        >
-          <Menu className='h-4 w-4' />
-        </Button>
+        <div className='p-4 bg-white shadow-sm flex justify-between items-center md:hidden'>
+          <h1 className='text-xl font-bold'>Admin Dashboard</h1>
+          <Button variant='outline' size='icon' onClick={toggleMobileSidebar}>
+            <MessageSquare className='h-6 w-6' />
+          </Button>
+        </div>
         <div className='flex-1 p-4 overflow-auto'>
           {selectedChat ? (
             <ChatBox initialChatId={selectedChat} onClose={handleCloseChat} />
           ) : (
             <div className='h-full flex items-center justify-center text-muted-foreground'>
+              <MessageSquare className='h-8 w-8 mr-2 text-primary opacity-50' />
               Select a chat to start messaging
             </div>
           )}
