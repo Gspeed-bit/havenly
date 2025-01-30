@@ -1,6 +1,6 @@
 # Havenly - Property Listing Platform
 
-![Havenly](https://your-image-url.com) <!-- Replace with an actual banner image if available -->
+![Havenly](https://havenly-alpha.vercel.app/) <!-- Replace with an actual banner image if available -->
 
 ## Overview
 Havenly is a modern real estate platform that allows users to **browse, filter, and inquire about properties**. Admins can manage listings, respond to inquiries, and analyze user engagement through a dashboard.
@@ -51,7 +51,7 @@ Havenly is a modern real estate platform that allows users to **browse, filter, 
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/yourusername/havenly.git
+git clone https://github.com/Gspeed-bit/havenly/
 cd havenly
 ```
 
@@ -92,20 +92,20 @@ The frontend will be available at **http://localhost:3000**.
 ## API Endpoints
 
 ### Authentication
-🔹 `POST /api/auth/register` – Register a user  
-🔹 `POST /api/auth/login` – Login a user  
-🔹 `POST /api/auth/verify` – Verify email  
+🔹 `POST /auth/register` – Register a user  
+🔹 `POST /auth/login` – Login a user  
+🔹 `POST /auth/verify` – Verify email  
 🔹 `GET /user/me` – Get user profile  
 
 ### Properties
-🏠 `GET /api/properties` – Fetch all listings  
-🏠 `POST /api/properties/save` – Save a property  
-🏠 `GET /api/properties/saved` – Get saved properties  
+🏠 `GET /properties` – Fetch all listings  
+🏠 `POST /properties/save` – Save a property  
+🏠 `GET /properties/saved` – Get saved properties  
 
 ### Admin Analytics
-📊 `GET /api/analytics/properties` – Property engagement stats  
-📊 `GET /api/analytics/users` – User activity stats  
-📊 `GET /api/analytics/inquiries` – Inquiry stats  
+📊 `GET /analytics/properties` – Property engagement stats  
+📊 `GET /analytics/users` – User activity stats  
+📊 `GET /analytics/inquiries` – Inquiry stats  
 
 ---
 
